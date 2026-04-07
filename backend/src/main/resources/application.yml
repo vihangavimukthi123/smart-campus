@@ -1,0 +1,70 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: smart-campus-incident-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/smartcampus_incidents?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 30MB
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:noreply@smartcampus.com}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    # Set to true to enable actual email delivery
+    enabled: false
+
+# Application-specific settings
+app:
+  jwt:
+    secret: ${JWT_SECRET:SmartCampusIncidentSecretKey2024_ChangeMeInProduction_MustBe256Bits}
+    expiration-ms: 86400000        # 24 hours
+    refresh-expiration-ms: 604800000 # 7 days
+
+  file-storage:
+    upload-dir: uploads
+    allowed-types: image/jpeg,image/png,image/gif,image/webp
+    max-files-per-ticket: 3
+
+  cors:
+    allowed-origins: http://localhost:5173,http://localhost:3000
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+
+logging:
+  level:
+    com.smartcampus: DEBUG
+    org.springframework.security: INFO
