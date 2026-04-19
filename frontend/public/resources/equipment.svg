@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title desc">
+  <title id="title">Equipment</title>
+  <desc id="desc">Stylized equipment illustration with a projector and tool shapes.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.42)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.05)"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" rx="36" fill="url(#bg)"/>
+  <path d="M505 115 L718 278 L505 278 Z" fill="url(#beam)"/>
+  <rect x="188" y="176" width="252" height="126" rx="24" fill="#e2e8f0"/>
+  <rect x="226" y="214" width="176" height="52" rx="14" fill="#0f172a"/>
+  <rect x="260" y="302" width="108" height="72" rx="18" fill="#f8fafc"/>
+  <circle cx="390" cy="240" r="12" fill="#22c55e"/>
+  <circle cx="216" cy="330" r="42" fill="rgba(255,255,255,0.12)"/>
+  <circle cx="564" cy="140" r="54" fill="rgba(255,255,255,0.12)"/>
+  <text x="58" y="458" fill="rgba(255,255,255,0.92)" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="700">EQUIPMENT</text>
+</svg>
