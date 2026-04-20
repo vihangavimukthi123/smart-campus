@@ -1,5 +1,6 @@
 package com.smartcampus.incident.entity;
 
+import com.smartcampus.incident.enums.SlaStatus;
 import com.smartcampus.incident.enums.TicketPriority;
 import com.smartcampus.incident.enums.TicketStatus;
 import jakarta.persistence.*;
@@ -7,6 +8,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +66,25 @@ public class Ticket {
     /** Filled by technician upon resolution */
     @Column(columnDefinition = "TEXT")
     private String resolutionNotes;
+
+    // --- SLA Tracking ---
+
+    @Column
+    private Instant firstResponseAt;
+
+    @Column
+    private Instant resolvedAt;
+
+    @Column
+    private Long ttfrDuration; // seconds
+
+    @Column
+    private Long ttrDuration; // seconds
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private SlaStatus slaStatus = SlaStatus.WITHIN_SLA;
 
     // --- Relationships ---
 
