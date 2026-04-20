@@ -2,6 +2,7 @@ package com.smartcampus.incident.repository;
 
 import com.smartcampus.incident.entity.Ticket;
 import com.smartcampus.incident.entity.User;
+import com.smartcampus.incident.enums.SlaStatus;
 import com.smartcampus.incident.enums.TicketPriority;
 import com.smartcampus.incident.enums.TicketStatus;
 import org.springframework.data.domain.Page;
@@ -15,6 +16,16 @@ import java.util.List;
 
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
+
+    List<Ticket> findAllByStatusInAndSlaStatus(List<TicketStatus> statuses, SlaStatus slaStatus);
+
+    long countBySlaStatus(SlaStatus slaStatus);
+
+    @Query("SELECT AVG(t.ttfrDuration) FROM Ticket t WHERE t.ttfrDuration IS NOT NULL")
+    Double findAverageTtfrSeconds();
+
+    @Query("SELECT AVG(t.ttrDuration) FROM Ticket t WHERE t.ttrDuration IS NOT NULL")
+    Double findAverageTtrSeconds();
 
     // User's own tickets with optional filters
     Page<Ticket> findByCreatedBy(User createdBy, Pageable pageable);

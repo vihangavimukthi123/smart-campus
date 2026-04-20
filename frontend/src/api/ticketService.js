@@ -27,6 +27,9 @@ export const ticketService = {
   delete: (id) =>
     api.delete(`/tickets/${id}`),
 
+  getSlaStats: () =>
+    api.get('/tickets/stats/sla'),
+
   getAttachmentUrl: (ticketId, attachmentId) =>
     `/api/tickets/${ticketId}/attachments/${attachmentId}`,
 }
