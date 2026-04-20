@@ -1,11 +1,19 @@
-import api from './axiosInstance'
+import axios from 'axios'
 
+//get all resources
 export const getResources = async () => {
-  const response = await api.get('/resources')
-  return response.data
+  const res = await axios.get('/api/resources')
+  return res.data
 }
 
+//create resource(admin)
 export const createResource = async (payload) => {
-  const response = await api.post('/resources', payload)
-  return response.data
+  const token = localStorage.getItem('token')
+
+  const res = await axios.post('/api/resources',payload, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+  return res.data
 }

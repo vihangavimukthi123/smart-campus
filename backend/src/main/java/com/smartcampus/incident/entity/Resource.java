@@ -38,13 +38,4 @@ public class Resource {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private ResourceStatus status;
-
-    @Column(length = 300)
-    private String imageStoredPath;
-
-    @Column(length = 120)
-    private String imageContentType;
-
-    @Column(length = 255)
-    private String imageOriginalFileName;
 }

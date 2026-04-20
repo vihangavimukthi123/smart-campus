@@ -1,10 +1,12 @@
 package com.smartcampus.incident.dto.ticket;
 
+import com.smartcampus.incident.enums.SlaStatus;
 import com.smartcampus.incident.enums.TicketPriority;
 import com.smartcampus.incident.enums.TicketStatus;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,6 +24,14 @@ public class TicketResponse {
     private TicketPriority priority;
     private String rejectionReason;
     private String resolutionNotes;
+
+    // SLA tracking
+    private SlaStatus slaStatus;
+    private Instant firstResponseAt;
+    private Instant resolvedAt;
+    private Long ttfrDuration;
+    private Long ttrDuration;
+    private Long secondsUntilBreach;
 
     // Nested minimal user info
     private UserSummary createdBy;

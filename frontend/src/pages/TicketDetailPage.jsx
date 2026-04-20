@@ -4,12 +4,13 @@ import { ticketService } from '../api/ticketService'
 import { userService } from '../api/userService'
 import { useAuth } from '../hooks/useAuth'
 import StatusBadge from '../components/StatusBadge'
+import SlaBadge from '../components/SlaBadge'
 import StateMachineActions from '../components/StateMachineActions'
 import CommentSection from '../components/CommentSection'
 import toast from 'react-hot-toast'
 import { formatDistanceToNow, format } from 'date-fns'
 import {
-  ChevronLeft, MapPin, User, Tag, Calendar,
+  ChevronLeft, MapPin, User, Tag, Calendar, Clock,
   Paperclip, Download, UserCheck, Wrench, AlertTriangle, CheckCircle
 } from 'lucide-react'
 
@@ -24,6 +25,18 @@ export default function TicketDetailPage() {
   const [assignId,    setAssignId]    = useState('')
   const [assigning,   setAssigning]   = useState(false)
   const [showAssign,  setShowAssign]  = useState(false)
+  const [slaCountdown, setSlaCountdown] = useState(null)
+
+  useEffect(() => {
+    let timer;
+    if (ticket && ticket.secondsUntilBreach > 0 && ticket.status !== 'RESOLVED' && ticket.status !== 'CLOSED') {
+      setSlaCountdown(ticket.secondsUntilBreach);
+      timer = setInterval(() => {
+        setSlaCountdown(prev => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [ticket]);
 
   useEffect(() => {
     const load = async () => {
@@ -70,6 +83,14 @@ export default function TicketDetailPage() {
     ? format(new Date(ticket.createdAt), 'MMM d, yyyy · h:mm a')
     : ''
 
+  const formatSeconds = (totalSeconds) => {
+    if (totalSeconds === null || totalSeconds === undefined) return '--:--:--';
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+  }
+
   const initials = (name = '') => name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
   return (
@@ -100,6 +121,7 @@ export default function TicketDetailPage() {
               <MetaChip icon={<MapPin size={13} />}   label={ticket.location} />
               <MetaChip icon={<User size={13} />}     label={ticket.createdBy?.name} />
               <MetaChip icon={<Calendar size={13} />} label={timeAgo} title={fullDate} />
+              {ticket.slaStatus && <SlaBadge status={ticket.slaStatus} />}
             </div>
 
             {/* State machine action buttons */}
@@ -254,7 +276,47 @@ export default function TicketDetailPage() {
               )}
             </dl>
           </div>
+
+          {/* SLA Tracking */}
+          <div className="card" style={{ marginTop: 'var(--space-4)' }}>
+            <h4 className="detail-sidebar__title">
+              <Clock size={15} /> SLA Performance
+            </h4>
+            <dl className="meta-list">
+              <MetaDt label="Time to First Response (TTFR)">
+                <div className={ticket.ttfrDuration ? "text-primary font-mono" : "text-muted italic"}>
+                  {ticket.ttfrDuration ? formatSeconds(ticket.ttfrDuration) : (ticket.status === 'OPEN' ? 'Pending...' : 'N/A')}
+                </div>
+              </MetaDt>
+              <MetaDt label="Time to Resolution (TTR)">
+                <div className={ticket.ttrDuration ? "text-success font-mono" : "text-muted italic"}>
+                  {ticket.ttrDuration ? formatSeconds(ticket.ttrDuration) : (ticket.status !== 'RESOLVED' ? 'Active...' : 'N/A')}
+                </div>
+              </MetaDt>
+              
+              {slaCountdown !== null && slaCountdown > 0 && (
+                <div className="sla-timer-box">
+                  <div className="sla-timer-label">Time until breach:</div>
+                  <div className="sla-timer-value">{formatSeconds(slaCountdown)}</div>
+                </div>
+              )}
+            </dl>
+          </div>
         </aside>
+
+      <style>{`
+        .sla-timer-box {
+          margin-top: var(--space-4);
+          padding: var(--space-3);
+          background: var(--clr-surface-2);
+          border-radius: var(--radius-md);
+          border: 1px dashed var(--clr-border);
+          text-align: center;
+        }
+        .sla-timer-label { font-size: 0.7rem; color: var(--clr-text-3); text-transform: uppercase; }
+        .sla-timer-value { font-family: monospace; font-size: 1.25rem; font-weight: 700; color: var(--clr-primary); }
+        .font-mono { font-family: monospace; font-size: 1rem; }
+      `}</style>
       </div>
 
       <style>{`

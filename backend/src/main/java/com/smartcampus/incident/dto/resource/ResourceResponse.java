@@ -16,5 +16,5 @@ public class ResourceResponse {
     private Integer capacity;
     private String location;
     private ResourceStatus status;
-    private String imageUrl;
+   
 }
