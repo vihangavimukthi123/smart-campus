@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --open",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -15,7 +15,9 @@
     "axios": "^1.7.2",
     "react-hot-toast": "^2.4.1",
     "date-fns": "^3.6.0",
-    "lucide-react": "^0.395.0"
+    "lucide-react": "^0.395.0",
+    "@stomp/stompjs": "^7.0.0",
+    "sockjs-client": "^1.6.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
