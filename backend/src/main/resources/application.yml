@@ -8,9 +8,9 @@ spring:
     name: smart-campus-incident-service
 
   datasource:
-    url: jdbc:mysql://localhost:3306/smartcampus_incidents?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/smartcampus?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
-    password: root
+    password: Root123
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -46,7 +46,7 @@ spring:
 app:
   jwt:
     secret: ${JWT_SECRET:SmartCampusIncidentSecretKey2024_ChangeMeInProduction_MustBe256Bits}
-    expiration-ms: 86400000        # 24 hours
+    expiration-ms: 86400000 # 24 hours
     refresh-expiration-ms: 604800000 # 7 days
 
   file-storage:

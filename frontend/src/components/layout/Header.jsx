@@ -6,6 +6,7 @@ const PAGE_TITLES = {
   '/dashboard':   '📊 Dashboard',
   '/tickets':     '🎫 Tickets',
   '/tickets/new': '➕ New Ticket',
+  '/resources':   '🏢 Resources',
 }
 
 export default function Header() {

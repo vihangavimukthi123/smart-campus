@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
-  LayoutDashboard, Ticket, PlusCircle,
+  LayoutDashboard, Ticket, PlusCircle, Building2,
   LogOut, Shield, Wrench, User
 } from 'lucide-react'
 
@@ -9,12 +9,13 @@ const NAV = [
   { to: '/dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
   { to: '/tickets',   icon: <Ticket size={18} />,          label: 'Tickets' },
   { to: '/tickets/new', icon: <PlusCircle size={18} />,    label: 'New Ticket', roles: ['USER', 'ADMIN'] },
+  { to: '/resources', icon: <Building2 size={18} />,       label: 'Resources' },
 ]
 
 const ROLE_ICON = { ADMIN: <Shield size={14} />, TECHNICIAN: <Wrench size={14} />, USER: <User size={14} /> }
 
 export default function Sidebar() {
-  const { user, logout, isAdmin } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = () => { logout(); navigate('/login') }
