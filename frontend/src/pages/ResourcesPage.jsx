@@ -411,14 +411,25 @@ export default function ResourcesPage() {
                   </div>
                   {isAdmin ? (
                     <button
-                      className="btn btn-secondary"
+                      className="btn"
                       type="button"
                       onClick={() => openEditModal(resource)}
                       aria-label={`Edit ${resource.name}`}
-                      title="Edit"
-                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
+                      title="Edit resource"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.35rem',
+                        minWidth: '2.6rem',
+                        padding: '0.5rem',
+                        background: 'rgba(37, 99, 235, 0.12)',
+                        borderColor: 'rgba(37, 99, 235, 0.35)',
+                        color: '#93c5fd',
+                        boxShadow: 'none',
+                      }}
                     >
-                      <Pencil size={16} />
+                      <Pencil size={17} color="#93c5fd" />
                     </button>
                   ) : null}
                 </div>
