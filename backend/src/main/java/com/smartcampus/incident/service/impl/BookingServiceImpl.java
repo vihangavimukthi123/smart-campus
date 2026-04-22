@@ -63,7 +63,7 @@ public class BookingServiceImpl implements BookingService {
         );
 
         if (hasConflict) {
-            throw new IllegalArgumentException("Booking conflict: The selected resource is already booked for this time period.");
+            throw new IllegalArgumentException("Resource can't be booked for this time because it is already booked.");
         }
 
         Booking booking = Booking.builder()

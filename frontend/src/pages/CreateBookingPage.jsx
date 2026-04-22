@@ -4,6 +4,7 @@ import { getResources } from '../api/resourceService'
 import { createBooking } from '../api/bookingService'
 import toast from 'react-hot-toast'
 import { Calendar, Clock, Users, MessageSquare, ChevronLeft, Send } from 'lucide-react'
+import PopupModal from '../components/PopupModal'
 
 export default function CreateBookingPage() {
   const navigate = useNavigate()
@@ -22,6 +23,8 @@ export default function CreateBookingPage() {
     purpose: '',
     attendees: ''
   })
+
+  const [modal, setModal] = useState({ isOpen: false, message: '', type: 'error' })
 
   useEffect(() => {
     const fetchResources = async () => {
@@ -67,11 +70,24 @@ export default function CreateBookingPage() {
         attendees: form.attendees ? Number(form.attendees) : null
       }
       await createBooking(payload)
-      toast.success('Booking request submitted successfully.')
-      navigate('/resources') // Or to a bookings list page if it existed
+      setModal({
+        isOpen: true,
+        message: 'Booking request submitted successfully.',
+        type: 'success'
+      })
+      // Navigate after the modal closes (4s)
+      setTimeout(() => {
+        navigate('/resources')
+      }, 4000)
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to submit booking request'
-      toast.error(message)
+      const isConflict = message.includes('already booked')
+      
+      setModal({
+        isOpen: true,
+        message: message,
+        type: isConflict ? 'warning' : 'error'
+      })
     } finally {
       setSubmitting(false)
     }
@@ -176,6 +192,13 @@ export default function CreateBookingPage() {
 
         </form>
       </div>
+
+      <PopupModal
+        isOpen={modal.isOpen}
+        message={modal.message}
+        type={modal.type}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+      />
     </div>
   )
 }
