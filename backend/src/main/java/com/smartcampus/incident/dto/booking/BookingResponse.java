@@ -22,6 +22,7 @@ public class BookingResponse {
     private String purpose;
     private Integer attendees;
     private BookingStatus status;
+    private String rejectionReason;
     private LocalDateTime createdAt;
 
     @Data
@@ -29,6 +30,7 @@ public class BookingResponse {
     public static class ResourceSummary {
         private Long id;
         private String name;
+        private String type;
         private String location;
     }
 

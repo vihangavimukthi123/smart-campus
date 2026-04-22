@@ -34,8 +34,15 @@ public class BookingController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get details of a specific booking")
-    public ResponseEntity<BookingResponse> getBooking(@PathVariable Long id) {
+    @Operation(summary = "Get booking details by ID")
+    public ResponseEntity<BookingResponse> getBookingById(@PathVariable Long id) {
         return ResponseEntity.ok(bookingService.getBookingById(id));
+    }
+
+    @PatchMapping("/{id}/cancel")
+    @Operation(summary = "Cancel an approved booking")
+    public ResponseEntity<Void> cancelBooking(@PathVariable Long id) {
+        bookingService.cancelBooking(id);
+        return ResponseEntity.noContent().build();
     }
 }

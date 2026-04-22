@@ -20,5 +20,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                      @Param("start") LocalDateTime start, 
                                      @Param("end") LocalDateTime end);
 
-    List<Booking> findByUserId(Long userId);
+    @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.user.id = :userId")
+    List<Booking> findByUserId(@Param("userId") Long userId);
 }

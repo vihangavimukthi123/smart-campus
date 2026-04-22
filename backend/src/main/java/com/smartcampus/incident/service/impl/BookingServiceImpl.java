@@ -97,14 +97,36 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse getBookingById(Long id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
-        
+
         User currentUser = securityUtils.getCurrentUser();
-        if (!booking.getUser().getId().equals(currentUser.getId()) && 
-            currentUser.getRole().name().equals("USER")) {
-            throw new UnauthorizedException("You do not have permission to view this booking");
+        // Permission check: Only the owner or an Admin can view booking details
+        if (!booking.getUser().getId().equals(currentUser.getId()) && !currentUser.getRole().name().equals("ADMIN")) {
+            throw new UnauthorizedException("You are not authorized to view this booking");
         }
-        
+
         return toResponse(booking);
+    }
+
+    @Override
+    @Transactional
+    public void cancelBooking(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
+
+        User currentUser = securityUtils.getCurrentUser();
+        // Permission check: Only the owner can cancel
+        if (!booking.getUser().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("You are not authorized to cancel this booking");
+        }
+
+        // Requirements check: Only APPROVED bookings can be cancelled
+        if (booking.getStatus() != BookingStatus.APPROVED) {
+            throw new IllegalArgumentException("Only APPROVED bookings can be cancelled. Current status: " + booking.getStatus());
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+        log.info("Booking #{} cancelled by user {}", id, currentUser.getEmail());
     }
 
     private BookingResponse toResponse(Booking booking) {
@@ -113,6 +135,7 @@ public class BookingServiceImpl implements BookingService {
                 .resource(BookingResponse.ResourceSummary.builder()
                         .id(booking.getResource().getId())
                         .name(booking.getResource().getName())
+                        .type(booking.getResource().getType().name())
                         .location(booking.getResource().getLocation())
                         .build())
                 .user(BookingResponse.UserSummary.builder()
@@ -125,6 +148,7 @@ public class BookingServiceImpl implements BookingService {
                 .purpose(booking.getPurpose())
                 .attendees(booking.getAttendees())
                 .status(booking.getStatus())
+                .rejectionReason(booking.getRejectionReason())
                 .createdAt(booking.getCreatedAt())
                 .build();
     }

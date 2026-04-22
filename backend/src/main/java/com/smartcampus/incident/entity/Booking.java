@@ -51,6 +51,10 @@ public class Booking {
     @Builder.Default
     private BookingStatus status = BookingStatus.PENDING;
 
+    /** Admin feedback when booking is rejected */
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

@@ -24,3 +24,11 @@ export const getBookingById = async (id) => {
   const res = await api.get(`/bookings/${id}`)
   return res.data
 }
+
+/**
+ * Cancels a specific booking.
+ */
+export const cancelBooking = async (id) => {
+  const res = await api.patch(`/bookings/${id}/cancel`)
+  return res.data
+}
