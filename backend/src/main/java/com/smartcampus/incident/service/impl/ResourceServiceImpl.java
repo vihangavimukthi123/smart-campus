@@ -3,6 +3,7 @@ package com.smartcampus.incident.service.impl;
 import com.smartcampus.incident.dto.resource.CreateResourceRequest;
 import com.smartcampus.incident.dto.resource.ResourceResponse;
 import com.smartcampus.incident.entity.Resource;
+import com.smartcampus.incident.enums.ResourceStatus;
 import com.smartcampus.incident.exception.ResourceNotFoundException;
 import com.smartcampus.incident.repository.ResourceRepository;
 import com.smartcampus.incident.service.ResourceService;
@@ -21,10 +22,23 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional(readOnly = true)
     public List<ResourceResponse> getAllResources() {
+        return getAllResources(false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ResourceResponse> getAllResources(boolean includeRetired) {
         return resourceRepository.findAll()
                 .stream()
+                .filter(resource -> includeRetired || resource.getStatus() != ResourceStatus.RETIRED)
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ResourceResponse> getAllResourcesIncludingRetired() {
+        return getAllResources(true);
     }
 
     @Override
@@ -85,12 +99,13 @@ public class ResourceServiceImpl implements ResourceService {
                 .build();
     }
 
-    @Override 
+    @Override
     @Transactional
-    public void deleteResource(Long id){
+    public void deleteResource(Long id) {
         Resource resource = resourceRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Resource", id));
-        
-        resourceRepository.delete(resource);
+                .orElseThrow(() -> new ResourceNotFoundException("Resource", id));
+
+        resource.setStatus(ResourceStatus.RETIRED);
+        resourceRepository.save(resource);
     }
 }

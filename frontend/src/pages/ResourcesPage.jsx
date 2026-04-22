@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Pencil } from 'lucide-react'
-import { createResource, getResources, updateResource } from '../api/resourceService'
+import { Pencil, Trash2 } from 'lucide-react'
+import { createResource, deleteResource, getResources, updateResource } from '../api/resourceService'
 import { useAuth } from '../hooks/useAuth'
 
 const emptyForm = {
@@ -84,8 +84,10 @@ export default function ResourcesPage() {
   const [resources, setResources] = useState([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingResource, setEditingResource] = useState(null)
+  const [showRetired, setShowRetired] = useState(false)
 
   const [form, setForm] = useState(emptyForm)
 
@@ -107,7 +109,7 @@ export default function ResourcesPage() {
   const loadResources = async () => {
     setLoading(true)
     try {
-      const response = await getResources()
+      const response = await getResources(isAdmin && showRetired)
 
       const resourcesData = Array.isArray(response)
       ? response
@@ -123,7 +125,7 @@ export default function ResourcesPage() {
 
   useEffect(() => {
     loadResources()
-  }, [])
+  }, [isAdmin, showRetired])
 
   const openCreateModal = () => {
     setEditingResource(null)
@@ -197,6 +199,34 @@ export default function ResourcesPage() {
     }
   }
 
+  const handleDelete = async (resource) => {
+    if (!isAdmin) {
+      toast.error('Only admins can manage resources')
+      return
+    }
+
+    const confirmed = window.confirm(`Delete resource "${resource.name}"?`)
+    if (!confirmed) {
+      return
+    }
+
+    setDeletingId(resource.id)
+    try {
+      await deleteResource(resource.id)
+      if (showRetired) {
+        setResources((prev) => prev.map((item) => (item.id === resource.id ? { ...item, status: 'RETIRED' } : item)))
+      } else {
+        setResources((prev) => prev.filter((item) => item.id !== resource.id))
+      }
+      toast.success('Resource deleted')
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to delete resource'
+      toast.error(message)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <div>
       <header style={{ marginBottom: '1.25rem' }}>
@@ -205,7 +235,16 @@ export default function ResourcesPage() {
       </header>
 
       {isAdmin ? (
-        <section style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+        <section style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', color: 'var(--clr-text-2)', fontSize: '0.9rem' }}>
+            <input
+              type="checkbox"
+              checked={showRetired}
+              onChange={(event) => setShowRetired(event.target.checked)}
+            />
+            Show Retired Resources
+          </label>
+
           <button className="btn btn-primary" type="button" onClick={openCreateModal}>
             Create Resource
           </button>
@@ -410,27 +449,53 @@ export default function ResourcesPage() {
                     </span>
                   </div>
                   {isAdmin ? (
-                    <button
-                      className="btn"
-                      type="button"
-                      onClick={() => openEditModal(resource)}
-                      aria-label={`Edit ${resource.name}`}
-                      title="Edit resource"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.35rem',
-                        minWidth: '2.6rem',
-                        padding: '0.5rem',
-                        background: 'rgba(37, 99, 235, 0.12)',
-                        borderColor: 'rgba(37, 99, 235, 0.35)',
-                        color: '#93c5fd',
-                        boxShadow: 'none',
-                      }}
-                    >
-                      <Pencil size={17} color="#93c5fd" />
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <button
+                        className="btn"
+                        type="button"
+                        onClick={() => openEditModal(resource)}
+                        aria-label={`Edit ${resource.name}`}
+                        title="Edit resource"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.35rem',
+                          minWidth: '2.6rem',
+                          padding: '0.5rem',
+                          background: 'rgba(37, 99, 235, 0.12)',
+                          borderColor: 'rgba(37, 99, 235, 0.35)',
+                          color: '#93c5fd',
+                          boxShadow: 'none',
+                        }}
+                      >
+                        <Pencil size={17} color="#93c5fd" />
+                      </button>
+
+                      <button
+                        className="btn"
+                        type="button"
+                        onClick={() => handleDelete(resource)}
+                        aria-label={`Delete ${resource.name}`}
+                        title="Delete resource"
+                        disabled={deletingId === resource.id}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.35rem',
+                          minWidth: '2.6rem',
+                          padding: '0.5rem',
+                          background: 'rgba(239, 68, 68, 0.12)',
+                          borderColor: 'rgba(239, 68, 68, 0.35)',
+                          color: '#fca5a5',
+                          boxShadow: 'none',
+                          opacity: deletingId === resource.id ? 0.65 : 1,
+                        }}
+                      >
+                        <Trash2 size={17} color="#fca5a5" />
+                      </button>
+                    </div>
                   ) : null}
                 </div>
 

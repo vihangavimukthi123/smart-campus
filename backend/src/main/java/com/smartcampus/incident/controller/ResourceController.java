@@ -19,8 +19,9 @@ public class ResourceController {
     private final ResourceService resourceService;
 
     @GetMapping
-    public List<ResourceResponse> getAll() {
-        return resourceService.getAllResources();
+    public List<ResourceResponse> getAll(
+            @RequestParam(defaultValue = "false") boolean includeRetired) {
+        return resourceService.getAllResources(includeRetired);
     }
 
     @GetMapping("/{id}")
@@ -40,8 +41,8 @@ public class ResourceController {
         return resourceService.updateResource(id, request);
     }
 
-    @DeleteMapping("/id")
-    public void delete(@PathVariable Long id){
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
         resourceService.deleteResource(id);
     }
 
