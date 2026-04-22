@@ -7,7 +7,7 @@ import FilterBar from '../components/FilterBar'
 import { PlusCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function TicketListPage() {
-  const { isAdmin, isTechnician } = useAuth()
+  const { isAdmin, isTechnician, isUser } = useAuth()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -60,7 +60,7 @@ export default function TicketListPage() {
     setPage(0)
   }
 
-  const canCreate = !isTechnician
+  const canCreate = isUser;
 
   return (
     <div className="fade-in">
