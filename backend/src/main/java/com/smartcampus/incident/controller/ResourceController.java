@@ -31,5 +31,8 @@ public class ResourceController {
     public ResourceResponse create(@RequestBody CreateResourceRequest request){
         return resourceService.createResource(request);
     }
+
+    @PutMapping("/{id}")
+    public 
     
 }
