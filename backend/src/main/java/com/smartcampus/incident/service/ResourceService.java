@@ -13,5 +13,5 @@ public interface ResourceService {
 
     ResourceResponse createResource(CreateResourceRequest request);
 
-    // ResourceResponse updateResource(Long id, CreateResourceRequest request);
+    ResourceResponse updateResource(Long id, CreateResourceRequest request);
 }

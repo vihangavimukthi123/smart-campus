@@ -32,7 +32,5 @@ public class ResourceController {
         return resourceService.createResource(request);
     }
 
-    @PutMapping("/{id}")
-    public 
     
 }
