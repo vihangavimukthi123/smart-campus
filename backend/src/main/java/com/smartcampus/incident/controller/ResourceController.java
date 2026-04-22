@@ -31,6 +31,13 @@ public class ResourceController {
     public ResourceResponse create(@RequestBody CreateResourceRequest request){
         return resourceService.createResource(request);
     }
-
+  
+    @PutMapping("/{id}")
+    public ResourceResponse update(
+        @PathVariable Long id,
+        @RequestBody CreateResourceRequest request
+    ){
+        return resourceService.updateResource(id, request);
+    }
     
 }
