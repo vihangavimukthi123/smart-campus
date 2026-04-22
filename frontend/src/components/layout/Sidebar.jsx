@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
   LayoutDashboard, Ticket, PlusCircle, Building2,
-  LogOut, Shield, Wrench, User, Calendar
+  LogOut, Shield, Wrench, User, Calendar, ClipboardCheck
 } from 'lucide-react'
 
 const NAV = [
@@ -10,7 +10,8 @@ const NAV = [
   { to: '/tickets',   icon: <Ticket size={18} />,          label: 'Tickets' },
   { to: '/tickets/new', icon: <PlusCircle size={18} />,    label: 'New Ticket', roles: ['USER', 'ADMIN'] },
   { to: '/resources', icon: <Building2 size={18} />,       label: 'Resources' },
-  { to: '/bookings/my', icon: <Calendar size={18} />,      label: 'My Bookings' },
+  { to: '/bookings/my', icon: <Calendar size={18} />,      label: 'My Bookings', roles: ['USER', 'TECHNICIAN'] },
+  { to: '/admin/bookings', icon: <ClipboardCheck size={18} />, label: 'Manage Bookings', roles: ['ADMIN'] },
 ]
 
 const ROLE_ICON = { ADMIN: <Shield size={14} />, TECHNICIAN: <Wrench size={14} />, USER: <User size={14} /> }

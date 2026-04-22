@@ -386,16 +386,18 @@ export default function ResourcesPage() {
                   </p>
                 </div>
 
-                <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
-                  <button
-                    className="btn btn-primary btn-sm"
-                    style={{ width: '100%' }}
-                    onClick={() => navigate(`/bookings/new?resourceId=${resource.id}`)}
-                    disabled={resource.status !== 'AVAILABLE' && resource.status !== 'ACTIVE'}
-                  >
-                    Book Now
-                  </button>
-                </div>
+                {!isAdmin && (
+                  <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{ width: '100%' }}
+                      onClick={() => navigate(`/bookings/new?resourceId=${resource.id}`)}
+                      disabled={resource.status !== 'AVAILABLE' && resource.status !== 'ACTIVE'}
+                    >
+                      Book Now
+                    </button>
+                  </div>
+                )}
               </article>
               )
             })}

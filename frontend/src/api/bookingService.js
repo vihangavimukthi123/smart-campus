@@ -28,7 +28,23 @@ export const getBookingById = async (id) => {
 /**
  * Cancels a specific booking.
  */
-export const cancelBooking = async (id) => {
-  const res = await api.patch(`/bookings/${id}/cancel`)
-  return res.data
+export const cancelBooking = async (id, data) => {
+  const response = await api.patch(`/bookings/${id}/cancel`, data)
+  return response.data
+}
+
+/** Admin Endpoints */
+export const getAllBookings = async (params) => {
+  const response = await api.get('/bookings', { params })
+  return response.data
+}
+
+export const approveBooking = async (id) => {
+  const response = await api.patch(`/bookings/${id}/approve`)
+  return response.data
+}
+
+export const rejectBooking = async (id, data) => {
+  const response = await api.patch(`/bookings/${id}/reject`, data)
+  return response.data
 }

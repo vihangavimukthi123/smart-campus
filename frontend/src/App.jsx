@@ -11,6 +11,7 @@ import TicketDetailPage from './pages/TicketDetailPage'
 import ResourcesPage from './pages/ResourcesPage'
 import CreateBookingPage from './pages/CreateBookingPage'
 import MyBookingsPage from './pages/MyBookingsPage'
+import AdminBookingsPage from './pages/AdminBookingsPage'
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/resources" element={<ProtectedRoute roles={['ADMIN', 'USER']}><ResourcesPage /></ProtectedRoute>} />
         <Route path="/bookings/new" element={<CreateBookingPage />} />
         <Route path="/bookings/my" element={<ProtectedRoute roles={['ADMIN', 'USER']}><MyBookingsPage /></ProtectedRoute>} />
+        <Route path="/admin/bookings" element={<ProtectedRoute roles={['ADMIN']}><AdminBookingsPage /></ProtectedRoute>} />
       </Route>
 
       {/* Default redirect */}

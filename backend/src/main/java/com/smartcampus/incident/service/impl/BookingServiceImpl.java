@@ -3,6 +3,7 @@ package com.smartcampus.incident.service.impl;
 import com.smartcampus.incident.dto.booking.BookingResponse;
 import com.smartcampus.incident.dto.booking.CancelBookingRequest;
 import com.smartcampus.incident.dto.booking.CreateBookingRequest;
+import com.smartcampus.incident.dto.booking.RejectBookingRequest;
 import com.smartcampus.incident.entity.Booking;
 import com.smartcampus.incident.entity.Resource;
 import com.smartcampus.incident.entity.User;
@@ -12,13 +13,18 @@ import com.smartcampus.incident.exception.ResourceNotFoundException;
 import com.smartcampus.incident.exception.UnauthorizedException;
 import com.smartcampus.incident.repository.BookingRepository;
 import com.smartcampus.incident.repository.ResourceRepository;
+import com.smartcampus.incident.repository.specification.BookingSpecification;
 import com.smartcampus.incident.service.BookingService;
 import com.smartcampus.incident.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -95,6 +101,13 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<BookingResponse> getAllBookings(String status, Long resourceId, Long userId, LocalDate date, Pageable pageable) {
+        Specification<Booking> spec = BookingSpecification.withFilters(status, resourceId, userId, date);
+        return bookingRepository.findAll(spec, pageable).map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public BookingResponse getBookingById(Long id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
@@ -106,6 +119,40 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return toResponse(booking);
+    }
+
+    @Override
+    @Transactional
+    public void approveBooking(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
+
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new IllegalArgumentException("Only PENDING bookings can be approved. Current status: " + booking.getStatus());
+        }
+
+        booking.setStatus(BookingStatus.APPROVED);
+        bookingRepository.save(booking);
+        log.info("Booking #{} approved by admin", id);
+    }
+
+    @Override
+    @Transactional
+    public void rejectBooking(Long id, RejectBookingRequest request) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
+
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new IllegalArgumentException("Only PENDING bookings can be rejected. Current status: " + booking.getStatus());
+        }
+
+        booking.setStatus(BookingStatus.REJECTED);
+        if (request != null && request.getReason() != null) {
+            booking.setRejectionReason(request.getReason());
+        }
+        
+        bookingRepository.save(booking);
+        log.info("Booking #{} rejected by admin. Reason: {}", id, booking.getRejectionReason());
     }
 
     @Override
