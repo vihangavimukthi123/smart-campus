@@ -9,6 +9,8 @@ export default function MyBookingsPage() {
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState('ALL')
   const [cancellingId, setCancellingId] = useState(null)
+  const [cancelReason, setCancelReason] = useState('')
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
 
   useEffect(() => {
     fetchBookings()
@@ -18,9 +20,7 @@ export default function MyBookingsPage() {
     setLoading(true)
     try {
       const data = await getMyBookings()
-      // API returns a list or { data: [...] }
       const list = Array.isArray(data) ? data : data.data || []
-      // Sort by date (latest first)
       const sorted = list.sort((a, b) => new Date(b.startDateTime) - new Date(a.startDateTime))
       setBookings(sorted)
     } catch (error) {
@@ -30,19 +30,21 @@ export default function MyBookingsPage() {
     }
   }
 
-  const handleCancel = async (id) => {
-    if (!window.confirm('Are you sure you want to cancel this booking?')) return
-
+  const initiateCancel = (id) => {
     setCancellingId(id)
+    setCancelReason('')
+    setShowCancelDialog(true)
+  }
+
+  const handleConfirmCancel = async () => {
     try {
-      await cancelBooking(id)
+      await cancelBooking(cancellingId, { reason: cancelReason })
       toast.success('Booking cancelled successfully')
-      fetchBookings() // Refresh list
+      setShowCancelDialog(false)
+      fetchBookings()
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to cancel booking'
       toast.error(message)
-    } finally {
-      setCancellingId(null)
     }
   }
 
@@ -182,6 +184,25 @@ export default function MyBookingsPage() {
                     <p className="text-sm" style={{ color: 'var(--clr-text)' }}>{booking.rejectionReason}</p>
                   </div>
                 )}
+
+                {booking.status === 'CANCELLED' && (
+                  <div style={{ 
+                    padding: '0.75rem 1rem', 
+                    background: 'rgba(100, 116, 139, 0.05)', 
+                    borderLeft: '3px solid var(--clr-closed)',
+                    borderRadius: '0 var(--radius-md) var(--radius-md) 0'
+                  }}>
+                    <div className="text-xs" style={{ color: 'var(--clr-closed)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Cancellation Details</div>
+                    <p className="text-sm">
+                      {booking.cancellationReason ? `Reason: ${booking.cancellationReason}` : 'No reason provided'}
+                    </p>
+                    {booking.cancelledAt && (
+                      <p className="text-xs text-muted" style={{ marginTop: '0.25rem' }}>
+                        Cancelled on: {formatDateTime(booking.cancelledAt)}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
@@ -194,16 +215,51 @@ export default function MyBookingsPage() {
                   <button
                     className="btn btn-danger btn-sm"
                     style={{ marginTop: 'auto' }}
-                    onClick={() => handleCancel(booking.id)}
-                    disabled={cancellingId === booking.id}
+                    onClick={() => initiateCancel(booking.id)}
                   >
                     <Trash2 size={14} />
-                    {cancellingId === booking.id ? 'Cancelling...' : 'Cancel Booking'}
+                    Cancel Booking
                   </button>
                 )}
               </div>
             </article>
           ))}
+        </div>
+      )}
+
+      {/* Cancellation Dialog Overlay */}
+      {showCancelDialog && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div className="card" style={{ width: 'min(450px, 100%)', animation: 'fadeIn 0.3s ease' }}>
+            <h3 className="heading-3" style={{ marginBottom: '1rem' }}>Cancel Booking</h3>
+            <p className="text-sm text-muted" style={{ marginBottom: '1.5rem' }}>
+              Are you sure you want to cancel this booking? This action cannot be undone.
+            </p>
+            
+            <div className="form-group">
+              <label className="form-label">Reason for cancellation (Optional)</label>
+              <textarea 
+                className="form-textarea" 
+                rows="3" 
+                placeholder="Reason for cancellation..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowCancelDialog(false)}>
+                Go Back
+              </button>
+              <button className="btn btn-danger btn-sm" onClick={handleConfirmCancel}>
+                Confirm Cancellation
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

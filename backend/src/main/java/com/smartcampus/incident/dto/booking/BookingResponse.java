@@ -23,6 +23,8 @@ public class BookingResponse {
     private Integer attendees;
     private BookingStatus status;
     private String rejectionReason;
+    private LocalDateTime cancelledAt;
+    private String cancellationReason;
     private LocalDateTime createdAt;
 
     @Data

@@ -55,6 +55,14 @@ public class Booking {
     @Column(columnDefinition = "TEXT")
     private String rejectionReason;
 
+    /** Timestamp when booking was cancelled */
+    @Column
+    private LocalDateTime cancelledAt;
+
+    /** Reason provided by the user for cancellation */
+    @Column(columnDefinition = "TEXT")
+    private String cancellationReason;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

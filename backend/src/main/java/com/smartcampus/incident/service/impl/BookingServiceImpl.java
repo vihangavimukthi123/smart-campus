@@ -1,6 +1,7 @@
 package com.smartcampus.incident.service.impl;
 
 import com.smartcampus.incident.dto.booking.BookingResponse;
+import com.smartcampus.incident.dto.booking.CancelBookingRequest;
 import com.smartcampus.incident.dto.booking.CreateBookingRequest;
 import com.smartcampus.incident.entity.Booking;
 import com.smartcampus.incident.entity.Resource;
@@ -109,7 +110,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public void cancelBooking(Long id) {
+    public void cancelBooking(Long id, CancelBookingRequest request) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
 
@@ -125,8 +126,13 @@ public class BookingServiceImpl implements BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
+        booking.setCancelledAt(LocalDateTime.now());
+        if (request != null && request.getReason() != null) {
+            booking.setCancellationReason(request.getReason());
+        }
+        
         bookingRepository.save(booking);
-        log.info("Booking #{} cancelled by user {}", id, currentUser.getEmail());
+        log.info("Booking #{} cancelled by user {}. Reason: {}", id, currentUser.getEmail(), booking.getCancellationReason());
     }
 
     private BookingResponse toResponse(Booking booking) {
@@ -149,6 +155,8 @@ public class BookingServiceImpl implements BookingService {
                 .attendees(booking.getAttendees())
                 .status(booking.getStatus())
                 .rejectionReason(booking.getRejectionReason())
+                .cancelledAt(booking.getCancelledAt())
+                .cancellationReason(booking.getCancellationReason())
                 .createdAt(booking.getCreatedAt())
                 .build();
     }

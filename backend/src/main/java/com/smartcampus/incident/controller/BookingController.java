@@ -1,6 +1,7 @@
 package com.smartcampus.incident.controller;
 
 import com.smartcampus.incident.dto.booking.BookingResponse;
+import com.smartcampus.incident.dto.booking.CancelBookingRequest;
 import com.smartcampus.incident.dto.booking.CreateBookingRequest;
 import com.smartcampus.incident.service.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,8 +42,8 @@ public class BookingController {
 
     @PatchMapping("/{id}/cancel")
     @Operation(summary = "Cancel an approved booking")
-    public ResponseEntity<Void> cancelBooking(@PathVariable Long id) {
-        bookingService.cancelBooking(id);
+    public ResponseEntity<Void> cancelBooking(@PathVariable Long id, @RequestBody(required = false) CancelBookingRequest request) {
+        bookingService.cancelBooking(id, request);
         return ResponseEntity.noContent().build();
     }
 }
