@@ -1,10 +1,12 @@
 import { useLocation } from 'react-router-dom'
 import NotificationBell from '../NotificationBell'
+import ThemeToggle from '../ThemeToggle'
 
 const PAGE_TITLES = {
   '/dashboard':   '📊 Dashboard',
   '/tickets':     '🎫 Tickets',
   '/tickets/new': '➕ New Ticket',
+  '/resources':   '🏢 Resources',
 }
 
 export default function Header() {
@@ -18,6 +20,7 @@ export default function Header() {
     <header className="top-header">
       <h1 className="top-header__title">{title}</h1>
       <div className="top-header__actions">
+        <ThemeToggle />
         <NotificationBell />
       </div>
 

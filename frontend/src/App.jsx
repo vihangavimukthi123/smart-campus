@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage'
 import TicketListPage from './pages/TicketListPage'
 import CreateTicketPage from './pages/CreateTicketPage'
 import TicketDetailPage from './pages/TicketDetailPage'
+import ResourcesPage from './pages/ResourcesPage'
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -21,22 +22,36 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/dashboard" replace />} />
-      <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to="/dashboard" replace />} />
+    <>
+      <Routes>
+        {/* Public routes */}
+        <Route
+          path="/login"
+          element={!user ? <LoginPage /> : <Navigate to="/dashboard" replace />}
+        />
 
-      {/* Protected routes */}
-      <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/tickets" element={<TicketListPage />} />
-        <Route path="/tickets/new" element={<CreateTicketPage />} />
-        <Route path="/tickets/:id" element={<TicketDetailPage />} />
-      </Route>
+        <Route
+          path="/register"
+          element={!user ? <RegisterPage /> : <Navigate to="/dashboard" replace />}
+        />
 
-      {/* Default redirect */}
-      <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Protected routes */}
+        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/tickets" element={<TicketListPage />} />
+          <Route path="/tickets/new" element={<CreateTicketPage />} />
+          <Route path="/tickets/:id" element={<TicketDetailPage />} />
+          <Route path="/resources" element={<ResourcesPage />} />
+        </Route>
+
+        {/* Default redirect */}
+        <Route
+          path="/"
+          element={<Navigate to={user ? "/dashboard" : "/login"} replace />}
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   )
 }

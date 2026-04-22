@@ -11,13 +11,15 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Centralised exception handler that translates exceptions to RFC-7807 Problem Details format.
+ * Centralised exception handler that translates exceptions to RFC-7807 Problem
+ * Details format.
  */
 @RestControllerAdvice
 @Slf4j
@@ -33,12 +35,12 @@ public class GlobalExceptionHandler {
         });
 
         ApiError error = ApiError.builder()
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.BAD_REQUEST.value())
-            .error("Validation Failed")
-            .message("One or more fields are invalid")
-            .fieldErrors(fieldErrors)
-            .build();
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Validation Failed")
+                .message("One or more fields are invalid")
+                .fieldErrors(fieldErrors)
+                .build();
         return ResponseEntity.badRequest().body(error);
     }
 
@@ -46,17 +48,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiError> handleConstraintViolation(ConstraintViolationException ex) {
         ApiError error = ApiError.builder()
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.BAD_REQUEST.value())
-            .error("Constraint Violation")
-            .message(ex.getMessage())
-            .build();
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Constraint Violation")
+                .message(ex.getMessage())
+                .build();
         return ResponseEntity.badRequest().body(error);
     }
 
     // ── Not found ──────────────────────────────────────────────────────────────
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiError> handleNoResourceFound(NoResourceFoundException ex) {
         return buildResponse(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage());
     }
 
@@ -75,7 +82,8 @@ public class GlobalExceptionHandler {
     // ── Spring Security access denied ─────────────────────────────────────────
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex) {
-        return buildResponse(HttpStatus.FORBIDDEN, "Access Denied", "You do not have permission to perform this action");
+        return buildResponse(HttpStatus.FORBIDDEN, "Access Denied",
+                "You do not have permission to perform this action");
     }
 
     // ── Bad credentials ───────────────────────────────────────────────────────
@@ -88,7 +96,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ApiError> handleFileTooLarge(MaxUploadSizeExceededException ex) {
         return buildResponse(HttpStatus.PAYLOAD_TOO_LARGE, "File Too Large",
-            "Maximum upload size exceeded. Each file must be under 10MB");
+                "Maximum upload size exceeded. Each file must be under 10MB");
     }
 
     // ── File storage failure ──────────────────────────────────────────────────
@@ -103,17 +111,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleGeneric(Exception ex, WebRequest request) {
         log.error("Unhandled exception: {}", ex.getMessage(), ex);
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
-            "An unexpected error occurred. Please try again later.");
+                "An unexpected error occurred. Please try again later.");
     }
 
     // ── Builder helper ────────────────────────────────────────────────────────
     private ResponseEntity<ApiError> buildResponse(HttpStatus status, String error, String message) {
         ApiError body = ApiError.builder()
-            .timestamp(LocalDateTime.now())
-            .status(status.value())
-            .error(error)
-            .message(message)
-            .build();
+                .timestamp(LocalDateTime.now())
+                .status(status.value())
+                .error(error)
+                .message(message)
+                .build();
         return ResponseEntity.status(status).body(body);
     }
 

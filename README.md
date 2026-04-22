@@ -19,12 +19,12 @@ d:\paf\
 
 ## ⚙️ Prerequisites
 
-| Tool       | Version  | Check Command      |
-|------------|----------|--------------------|
-| Java       | 17+      | `java -version`    |
-| Maven      | 3.9+     | `mvn -version`     |
-| Node.js    | 18+      | `node -v`          |
-| MySQL      | 8.0+     | `mysql --version`  |
+| Tool    | Version | Check Command     |
+| ------- | ------- | ----------------- |
+| Java    | 17+     | `java -version`   |
+| Maven   | 3.9+    | `mvn -version`    |
+| Node.js | 18+     | `node -v`         |
+| MySQL   | 8.0+    | `mysql --version` |
 
 ---
 
@@ -33,12 +33,13 @@ d:\paf\
 ### 1️⃣ Configure Database
 
 Edit `backend/src/main/resources/application.yml`:
+
 ```yaml
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/smartcampus_incidents?createDatabaseIfNotExist=true
-    username: root       # ← your MySQL username
-    password: root       # ← your MySQL password
+    username: root # ← your MySQL username
+    password: root # ← your MySQL password
 ```
 
 The database `smartcampus_incidents` will be **created automatically** on first run.
@@ -111,28 +112,28 @@ Response includes `accessToken` — use as `Authorization: Bearer <token>`.
 
 ## 📡 API Endpoints
 
-| Method   | Endpoint                                 | Role(s)            | Description                  |
-|----------|------------------------------------------|--------------------|------------------------------|
-| `POST`   | `/api/auth/register`                     | Public             | Create account               |
-| `POST`   | `/api/auth/login`                        | Public             | Login, get JWT               |
-| `GET`    | `/api/users/me`                          | All                | Get current user profile     |
-| `GET`    | `/api/users/technicians`                 | ADMIN              | List active technicians      |
-| `POST`   | `/api/tickets`                           | USER, ADMIN        | Create ticket                |
-| `GET`    | `/api/tickets`                           | All                | List tickets (role-filtered) |
-| `GET`    | `/api/tickets/{id}`                      | All                | Get ticket details           |
-| `PATCH`  | `/api/tickets/{id}/status`               | ADMIN, TECHNICIAN  | Update ticket status         |
-| `PUT`    | `/api/tickets/{id}/assign`               | ADMIN              | Assign technician            |
-| `DELETE` | `/api/tickets/{id}`                      | ADMIN              | Delete ticket                |
-| `POST`   | `/api/tickets/{id}/attachments`          | USER, ADMIN        | Upload images (multipart)    |
-| `GET`    | `/api/tickets/{id}/attachments/{fileId}` | All                | Download/view attachment     |
-| `POST`   | `/api/tickets/{id}/comments`             | All                | Add comment                  |
-| `GET`    | `/api/tickets/{id}/comments`             | All                | Get all comments             |
-| `PUT`    | `/api/tickets/{id}/comments/{cId}`       | Comment owner      | Edit comment                 |
-| `DELETE` | `/api/tickets/{id}/comments/{cId}`       | Owner or ADMIN     | Delete comment               |
-| `GET`    | `/api/notifications`                     | All                | Get my notifications         |
-| `GET`    | `/api/notifications/unread-count`        | All                | Get unread count             |
-| `PATCH`  | `/api/notifications/{id}/read`           | All                | Mark notification as read    |
-| `PATCH`  | `/api/notifications/read-all`            | All                | Mark all as read             |
+| Method   | Endpoint                                 | Role(s)           | Description                  |
+| -------- | ---------------------------------------- | ----------------- | ---------------------------- |
+| `POST`   | `/api/auth/register`                     | Public            | Create account               |
+| `POST`   | `/api/auth/login`                        | Public            | Login, get JWT               |
+| `GET`    | `/api/users/me`                          | All               | Get current user profile     |
+| `GET`    | `/api/users/technicians`                 | ADMIN             | List active technicians      |
+| `POST`   | `/api/tickets`                           | USER, ADMIN       | Create ticket                |
+| `GET`    | `/api/tickets`                           | All               | List tickets (role-filtered) |
+| `GET`    | `/api/tickets/{id}`                      | All               | Get ticket details           |
+| `PATCH`  | `/api/tickets/{id}/status`               | ADMIN, TECHNICIAN | Update ticket status         |
+| `PUT`    | `/api/tickets/{id}/assign`               | ADMIN             | Assign technician            |
+| `DELETE` | `/api/tickets/{id}`                      | ADMIN             | Delete ticket                |
+| `POST`   | `/api/tickets/{id}/attachments`          | USER, ADMIN       | Upload images (multipart)    |
+| `GET`    | `/api/tickets/{id}/attachments/{fileId}` | All               | Download/view attachment     |
+| `POST`   | `/api/tickets/{id}/comments`             | All               | Add comment                  |
+| `GET`    | `/api/tickets/{id}/comments`             | All               | Get all comments             |
+| `PUT`    | `/api/tickets/{id}/comments/{cId}`       | Comment owner     | Edit comment                 |
+| `DELETE` | `/api/tickets/{id}/comments/{cId}`       | Owner or ADMIN    | Delete comment               |
+| `GET`    | `/api/notifications`                     | All               | Get my notifications         |
+| `GET`    | `/api/notifications/unread-count`        | All               | Get unread count             |
+| `PATCH`  | `/api/notifications/{id}/read`           | All               | Mark notification as read    |
+| `PATCH`  | `/api/notifications/read-all`            | All               | Mark all as read             |
 
 ---
 
@@ -144,13 +145,13 @@ OPEN  ──→  IN_PROGRESS  ──→  RESOLVED  ──→  CLOSED
   └──────────────→ REJECTED
 ```
 
-| Transition           | Who Can Do It              | Extra Requirement              |
-|----------------------|----------------------------|-------------------------------|
-| OPEN → IN_PROGRESS   | ADMIN (via assign)         | Must assign a TECHNICIAN       |
+| Transition             | Who Can Do It              | Extra Requirement             |
+| ---------------------- | -------------------------- | ----------------------------- |
+| OPEN → IN_PROGRESS     | ADMIN (via assign)         | Must assign a TECHNICIAN      |
 | IN_PROGRESS → RESOLVED | TECHNICIAN (assigned only) | Must provide resolution notes |
-| RESOLVED → CLOSED    | ADMIN or ticket creator    | —                              |
-| OPEN → REJECTED      | ADMIN                      | Must provide rejection reason  |
-| IN_PROGRESS → REJECTED | ADMIN                    | Must provide rejection reason  |
+| RESOLVED → CLOSED      | ADMIN or ticket creator    | —                             |
+| OPEN → REJECTED        | ADMIN                      | Must provide rejection reason |
+| IN_PROGRESS → REJECTED | ADMIN                      | Must provide rejection reason |
 
 Invalid transitions return **HTTP 422 Unprocessable Entity**.
 
@@ -159,6 +160,7 @@ Invalid transitions return **HTTP 422 Unprocessable Entity**.
 ## 📤 Sample API Requests
 
 ### Create a Ticket (USER)
+
 ```http
 POST /api/tickets
 Authorization: Bearer <user_token>
@@ -175,6 +177,7 @@ Content-Type: application/json
 ```
 
 ### Assign Technician (ADMIN)
+
 ```http
 PUT /api/tickets/1/assign
 Authorization: Bearer <admin_token>
@@ -186,6 +189,7 @@ Content-Type: application/json
 ```
 
 ### Update Status to RESOLVED (TECHNICIAN)
+
 ```http
 PATCH /api/tickets/1/status
 Authorization: Bearer <technician_token>
@@ -198,6 +202,7 @@ Content-Type: application/json
 ```
 
 ### Upload Images
+
 ```http
 POST /api/tickets/1/attachments
 Authorization: Bearer <user_token>
@@ -208,6 +213,7 @@ files=@image2.jpg
 ```
 
 ### Reject a Ticket (ADMIN)
+
 ```http
 PATCH /api/tickets/1/status
 Authorization: Bearer <admin_token>
@@ -225,43 +231,43 @@ Content-Type: application/json
 
 Tables auto-created by Hibernate:
 
-| Table           | Key Columns                                                           |
-|-----------------|-----------------------------------------------------------------------|
-| `users`         | id, name, email, password, role, phone, department, active           |
+| Table           | Key Columns                                                                                 |
+| --------------- | ------------------------------------------------------------------------------------------- |
+| `users`         | id, name, email, password, role, phone, department, active                                  |
 | `tickets`       | id, title, description, category, location, status, priority, created_by_id, assigned_to_id |
-| `comments`      | id, content, ticket_id, author_id, created_at, updated_at            |
-| `attachments`   | id, original_file_name, stored_path, content_type, file_size, ticket_id |
-| `notifications` | id, recipient_id, message, type, ticket_id, is_read, created_at      |
+| `comments`      | id, content, ticket_id, author_id, created_at, updated_at                                   |
+| `attachments`   | id, original_file_name, stored_path, content_type, file_size, ticket_id                     |
+| `notifications` | id, recipient_id, message, type, ticket_id, is_read, created_at                             |
 
 ---
 
 ## 🏗️ Architecture Patterns Used
 
-| Pattern                    | Implementation                                         |
-|----------------------------|--------------------------------------------------------|
-| Layered Architecture       | Controller → Service → Repository                      |
-| State Machine              | `VALID_TRANSITIONS` map in `TicketServiceImpl`         |
-| Repository Pattern         | Spring Data JPA interfaces                             |
-| DTO Pattern                | Request DTOs / Response DTOs separated from entities   |
-| Global Exception Handling  | `@RestControllerAdvice` in `GlobalExceptionHandler`    |
-| JWT Stateless Auth         | `JwtAuthenticationFilter` + `JwtTokenProvider`         |
-| Async Notifications        | `@Async` on notification methods (`@EnableAsync`)      |
-| Protected Routes           | `ProtectedRoute` component in React                    |
-| Context + Hooks            | `AuthContext`, `NotificationContext` with polling       |
-| Optimistic UI updates      | Comments update locally before server confirm          |
+| Pattern                   | Implementation                                       |
+| ------------------------- | ---------------------------------------------------- |
+| Layered Architecture      | Controller → Service → Repository                    |
+| State Machine             | `VALID_TRANSITIONS` map in `TicketServiceImpl`       |
+| Repository Pattern        | Spring Data JPA interfaces                           |
+| DTO Pattern               | Request DTOs / Response DTOs separated from entities |
+| Global Exception Handling | `@RestControllerAdvice` in `GlobalExceptionHandler`  |
+| JWT Stateless Auth        | `JwtAuthenticationFilter` + `JwtTokenProvider`       |
+| Async Notifications       | `@Async` on notification methods (`@EnableAsync`)    |
+| Protected Routes          | `ProtectedRoute` component in React                  |
+| Context + Hooks           | `AuthContext`, `NotificationContext` with polling    |
+| Optimistic UI updates     | Comments update locally before server confirm        |
 
 ---
 
 ## 🎨 Frontend Pages
 
-| Page              | Route              | Description                              |
-|-------------------|--------------------|------------------------------------------|
-| Login             | `/login`           | JWT auth with show/hide password         |
-| Register          | `/register`        | Role selection (USER / TECHNICIAN)       |
-| Dashboard         | `/dashboard`       | Stats overview, recent tickets           |
-| Ticket List       | `/tickets`         | Paginated, filtered, URL-synced          |
-| Create Ticket     | `/tickets/new`     | 4-step wizard with image upload          |
-| Ticket Detail     | `/tickets/:id`     | Full detail, state actions, comments     |
+| Page          | Route          | Description                          |
+| ------------- | -------------- | ------------------------------------ |
+| Login         | `/login`       | JWT auth with show/hide password     |
+| Register      | `/register`    | Role selection (USER / TECHNICIAN)   |
+| Dashboard     | `/dashboard`   | Stats overview, recent tickets       |
+| Ticket List   | `/tickets`     | Paginated, filtered, URL-synced      |
+| Create Ticket | `/tickets/new` | 4-step wizard with image upload      |
+| Ticket Detail | `/tickets/:id` | Full detail, state actions, comments |
 
 ---
 
@@ -280,6 +286,7 @@ Tables auto-created by Hibernate:
 ## 📁 File Storage
 
 Uploaded files are stored at:
+
 ```
 backend/uploads/tickets/{ticketId}/{uuid}.{ext}
 ```
@@ -287,3 +294,5 @@ backend/uploads/tickets/{ticketId}/{uuid}.{ext}
 Served via: `GET /api/tickets/{id}/attachments/{fileId}`
 
 > For production: replace `FileStorageServiceImpl` with an AWS S3 adapter.
+
+---

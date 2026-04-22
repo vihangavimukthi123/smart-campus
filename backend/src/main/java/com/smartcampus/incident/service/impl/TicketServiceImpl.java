@@ -34,6 +34,7 @@ public class TicketServiceImpl implements TicketService {
     private final CommentRepository commentRepository;
     private final FileStorageService fileStorageService;
     private final NotificationService notificationService;
+    private final SlaService slaService;
     private final SecurityUtils securityUtils;
 
     @Value("${app.file-storage.max-files-per-ticket}")
@@ -175,6 +176,16 @@ public class TicketServiceImpl implements TicketService {
             }
         }
 
+        // SLA: First Response check
+        if ((to == TicketStatus.IN_PROGRESS || to == TicketStatus.RESOLVED) && ticket.getFirstResponseAt() == null) {
+            slaService.markFirstResponse(ticket);
+        }
+        
+        // SLA: Resolution check
+        if (to == TicketStatus.RESOLVED) {
+            slaService.markResolution(ticket);
+        }
+
         ticket.setStatus(to);
         ticket = ticketRepository.save(ticket);
         log.info("Ticket #{} status changed from {} to {} by {}", ticketId, from, to, currentUser.getEmail());
@@ -209,6 +220,10 @@ public class TicketServiceImpl implements TicketService {
         // Auto-transition to IN_PROGRESS if still OPEN
         if (ticket.getStatus() == TicketStatus.OPEN) {
             ticket.setStatus(TicketStatus.IN_PROGRESS);
+            // SLA: Mark first response when assigned
+            if (ticket.getFirstResponseAt() == null) {
+                slaService.markFirstResponse(ticket);
+            }
         }
 
         ticket = ticketRepository.save(ticket);
@@ -293,6 +308,12 @@ public class TicketServiceImpl implements TicketService {
             .priority(ticket.getPriority())
             .rejectionReason(ticket.getRejectionReason())
             .resolutionNotes(ticket.getResolutionNotes())
+            .slaStatus(ticket.getSlaStatus())
+            .firstResponseAt(ticket.getFirstResponseAt())
+            .resolvedAt(ticket.getResolvedAt())
+            .ttfrDuration(ticket.getTtfrDuration())
+            .ttrDuration(ticket.getTtrDuration())
+            .secondsUntilBreach(slaService.getSecondsUntilBreach(ticket))
             .createdBy(toUserSummary(ticket.getCreatedBy()))
             .assignedTo(ticket.getAssignedTo() != null ? toUserSummary(ticket.getAssignedTo()) : null)
             .commentCount(commentCount)
