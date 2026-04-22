@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { createResource, getResources } from '../api/resourceService'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 const emptyForm = {
@@ -79,6 +80,7 @@ const getStatusCardStyle = (status) => {
 }
 
 export default function ResourcesPage() {
+  const navigate = useNavigate()
   const { isAdmin } = useAuth()
   const [resources, setResources] = useState([])
   const [loading, setLoading] = useState(true)
@@ -383,6 +385,19 @@ export default function ResourcesPage() {
                     <strong style={{ color: 'var(--clr-text)' }}>Location:</strong> {resource.location}
                   </p>
                 </div>
+
+                {!isAdmin && (
+                  <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{ width: '100%' }}
+                      onClick={() => navigate(`/bookings/new?resourceId=${resource.id}`)}
+                      disabled={resource.status !== 'AVAILABLE' && resource.status !== 'ACTIVE'}
+                    >
+                      Book Now
+                    </button>
+                  </div>
+                )}
               </article>
               )
             })}
