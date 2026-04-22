@@ -60,4 +60,28 @@ public class ResourceServiceImpl implements ResourceService {
                 .status(resource.getStatus())
                 .build();
     }
+
+    @Override
+    @Transactional
+    public ResourceResponse updateResource(Long id, CreateResourceRequest request){
+        Resource resource = resourceRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Resource", id));
+
+        resource.setName(request.getName());
+        resource.setType(request.getType());
+        resource.setCapacity(request.getCapacity());
+        resource.setLocation(request.getLocation());
+        resource.setStatus(request.getStatus());
+
+        Resource updated = resourceRepository.save(resource);
+
+        return ResourceResponse.builder()
+            .id(updated.getId())
+            .name(updated.getName())
+            .type(updated.getType())
+            .capacity(updated.getCapacity())
+            .location(updated.getLocation())
+            .status(updated.getStatus())
+            .build();
+    }
 }
