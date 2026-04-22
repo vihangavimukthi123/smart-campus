@@ -40,4 +40,9 @@ public class ResourceController {
         return resourceService.updateResource(id, request);
     }
 
+    @DeleteMapping("/id")
+    public void delete(@PathVariable Long id){
+        resourceService.deleteResource(id);
+    }
+
 }
