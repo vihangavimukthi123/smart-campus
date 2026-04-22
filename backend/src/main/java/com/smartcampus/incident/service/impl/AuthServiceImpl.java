@@ -8,6 +8,10 @@ import com.smartcampus.incident.security.JwtTokenProvider;
 import com.smartcampus.incident.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.time.LocalDateTime;
+import java.util.Random;
+
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,6 +42,9 @@ public class AuthServiceImpl implements AuthService {
             role = com.smartcampus.incident.enums.Role.USER;
         }
 
+        //geenrate a random 6-digit OTP for email verification 
+        String otp = String.format("%06d", new Random().nextInt(999999));
+
         User user = User.builder()
             .name(request.getName())
             .email(request.getEmail())
@@ -45,13 +52,62 @@ public class AuthServiceImpl implements AuthService {
             .role(role)
             .phone(request.getPhone())
             .department(request.getDepartment())
+            .active(true)        // Account active
+            .verified(false)   // Not verified
+            .otp(otp)            // save OTP
+            .otpExpiry(LocalDateTime.now().plusMinutes(5)) // Winadi 5kin expire wenawa
             .build();
 
         user = userRepository.save(user);
         log.info("New user registered: {} [{}]", user.getEmail(), user.getRole());
 
-        String token = tokenProvider.generateToken(user.getEmail());
-        return buildAuthResponse(user, token);
+        //notification 
+        //for now display in the console
+        System.out.println("DEBUG: Sending OTP " + otp + " to email " + user.getEmail());
+
+        //need to login again after registering so the account is still not verified
+        return buildAuthResponse(user, null);
+    }
+
+    @Override
+    @Transactional
+    public String verifyOtp(String email, String otp) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UnauthorizedException("User not found with email: " + email));
+
+        // check OTP and time
+        if (user.getOtp() != null && user.getOtp().equals(otp)) {
+            if (user.getOtpExpiry().isAfter(LocalDateTime.now())) {
+                user.setVerified(true);
+                user.setOtp(null); // delete OTP after successful verification
+                user.setOtpExpiry(null);
+                userRepository.save(user);
+                return "Account Verified Successfully! You can now login.";
+            } else {
+                throw new UnauthorizedException("OTP has expired! Please request a new one.");
+            }
+        } else {
+            throw new UnauthorizedException("Invalid OTP code!");
+        }
+    }
+
+    @Override
+@Transactional
+public String resendOtp(String email) {
+    User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new UnauthorizedException("User not found with email: " + email));
+
+    // Aluth OTP ekak generate karanna
+    String newOtp = String.format("%06d", new java.util.Random().nextInt(999999));
+    
+    user.setOtp(newOtp);
+    user.setOtpExpiry(LocalDateTime.now().plusMinutes(5)); // Ayeth winadi 5k damma
+    userRepository.save(user);
+
+    // Console eke print karamu (Email nathi nisa)
+    System.out.println("DEBUG: Resending NEW OTP " + newOtp + " to email " + email);
+    
+    return "New OTP sent to your email!";
     }
 
     @Override
@@ -63,8 +119,14 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail())
             .orElseThrow(() -> new UnauthorizedException("User not found"));
 
+        if (!user.isVerified()){
+            throw new UnauthorizedException("Account not verified! Please verify your email before logging in.");
+        }
+
+        //generate token
         String token = tokenProvider.generateToken(authentication);
         log.info("User logged in: {}", user.getEmail());
+
         return buildAuthResponse(user, token);
     }
 
@@ -72,11 +134,12 @@ public class AuthServiceImpl implements AuthService {
         return AuthResponse.builder()
             .accessToken(token)
             .tokenType("Bearer")
-            .userId(user.getId())
+            .userId(user.getUserId())
             .name(user.getName())
             .email(user.getEmail())
             .role(user.getRole())
             .expiresIn(tokenProvider.getExpirationMs())
             .build();
     }
+
 }

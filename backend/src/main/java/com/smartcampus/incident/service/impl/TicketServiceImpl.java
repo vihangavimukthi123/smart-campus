@@ -115,9 +115,9 @@ public class TicketServiceImpl implements TicketService {
     // ── READ BY ID ─────────────────────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
-    public TicketResponse getTicketById(Long id) {
+    public TicketResponse getTicketById(Long userId) {
         User currentUser = securityUtils.getCurrentUser();
-        Ticket ticket = findTicketById(id);
+        Ticket ticket = findTicketById(userId);
         enforceReadAccess(ticket, currentUser);
         return toResponse(ticket, currentUser);
     }
@@ -149,7 +149,7 @@ public class TicketServiceImpl implements TicketService {
                     throw new UnauthorizedException("Only the assigned TECHNICIAN can resolve a ticket");
                 }
                 if (ticket.getAssignedTo() == null ||
-                    !ticket.getAssignedTo().getId().equals(currentUser.getId())) {
+                    !ticket.getAssignedTo().getUserId().equals(currentUser.getUserId())) {
                     throw new UnauthorizedException("You are not the assigned technician for this ticket");
                 }
                 if (request.getResolutionNotes() == null || request.getResolutionNotes().isBlank()) {
@@ -168,7 +168,7 @@ public class TicketServiceImpl implements TicketService {
             }
             case CLOSED -> {
                 boolean isAdmin = currentUser.getRole() == Role.ADMIN;
-                boolean isCreator = ticket.getCreatedBy().getId().equals(currentUser.getId());
+                boolean isCreator = ticket.getCreatedBy().getUserId().equals(currentUser.getUserId());
                 if (!isAdmin && !isCreator) {
                     throw new UnauthorizedException("Only ADMIN or the ticket creator can close a ticket");
                 }
@@ -180,7 +180,7 @@ public class TicketServiceImpl implements TicketService {
         log.info("Ticket #{} status changed from {} to {} by {}", ticketId, from, to, currentUser.getEmail());
 
         // Async notification to ticket creator (if not the one making the change)
-        if (!ticket.getCreatedBy().getId().equals(currentUser.getId())) {
+        if (!ticket.getCreatedBy().getUserId().equals(currentUser.getUserId())) {
             notificationService.notifyStatusChange(ticketId, ticket.getCreatedBy(), to.name());
         }
 
@@ -304,7 +304,7 @@ public class TicketServiceImpl implements TicketService {
 
     private TicketResponse.UserSummary toUserSummary(User user) {
         return TicketResponse.UserSummary.builder()
-            .id(user.getId())
+            .id(user.getUserId())
             .name(user.getName())
             .email(user.getEmail())
             .role(user.getRole().name())
@@ -327,11 +327,11 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private void enforceReadAccess(Ticket ticket, User user) {
-        if (user.getRole() == Role.USER && !ticket.getCreatedBy().getId().equals(user.getId())) {
+        if (user.getRole() == Role.USER && !ticket.getCreatedBy().getUserId().equals(user.getUserId())) {
             throw new UnauthorizedException("You do not have access to this ticket");
         }
         if (user.getRole() == Role.TECHNICIAN &&
-            (ticket.getAssignedTo() == null || !ticket.getAssignedTo().getId().equals(user.getId()))) {
+            (ticket.getAssignedTo() == null || !ticket.getAssignedTo().getUserId().equals(user.getUserId()))) {
             throw new UnauthorizedException("This ticket is not assigned to you");
         }
     }

@@ -67,7 +67,7 @@ public class NotificationServiceImpl implements NotificationService {
         Notification notification = notificationRepository.findById(notificationId)
             .orElseThrow(() -> new ResourceNotFoundException("Notification", notificationId));
 
-        if (!notification.getRecipient().getId().equals(current.getId())) {
+        if (!notification.getRecipient().getUserId().equals(current.getUserId())) {
             throw new UnauthorizedException("You cannot modify other users' notifications");
         }
 
