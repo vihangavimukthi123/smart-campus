@@ -68,6 +68,12 @@ public class TicketServiceImpl implements TicketService {
 
         ticket = ticketRepository.save(ticket);
         log.info("Ticket #{} created by user {}", ticket.getId(), currentUser.getEmail());
+
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        for (User admin : admins) {
+            notificationService.notifyNewTicket(ticket.getId(), admin, ticket.getTitle());
+        }
+
         return toResponse(ticket, currentUser);
     }
 
@@ -193,6 +199,14 @@ public class TicketServiceImpl implements TicketService {
         // Async notification to ticket creator (if not the one making the change)
         if (!ticket.getCreatedBy().getId().equals(currentUser.getId())) {
             notificationService.notifyStatusChange(ticketId, ticket.getCreatedBy(), to.name());
+        }
+
+        // Notify Admins
+        List<User> admins = userRepository.findByRole(Role.ADMIN);
+        for (User admin : admins) {
+            if (!admin.getId().equals(currentUser.getId()) && !admin.getId().equals(ticket.getCreatedBy().getId())) {
+                notificationService.notifyStatusChange(ticketId, admin, to.name());
+            }
         }
 
         return toResponse(ticket, currentUser);

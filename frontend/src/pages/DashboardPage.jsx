@@ -29,7 +29,7 @@ const STAT_CONFIGS = {
 }
 
 export default function DashboardPage() {
-  const { user, isAdmin, isTechnician } = useAuth()
+  const { user, isAdmin, isTechnician, isUser } = useAuth()
   const navigate = useNavigate()
   const [tickets,  setTickets]  = useState([])
   const [counts,   setCounts]   = useState({})
@@ -79,7 +79,7 @@ export default function DashboardPage() {
                 : 'Submit and track your maintenance requests here.'}
             </p>
           </div>
-          {!isTechnician && (
+          {isUser && (
             <button
               className="btn btn-primary"
               onClick={() => navigate('/tickets/new')}
@@ -169,7 +169,7 @@ export default function DashboardPage() {
           <div className="empty-state">
             <div className="empty-state-icon">🎫</div>
             <p style={{ marginBottom: 'var(--space-4)' }}>No tickets yet</p>
-            {!isTechnician && (
+            {isUser && (
               <button className="btn btn-primary" onClick={() => navigate('/tickets/new')}>
                 Submit Your First Ticket
               </button>
