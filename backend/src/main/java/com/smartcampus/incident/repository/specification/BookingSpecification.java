@@ -2,6 +2,7 @@ package com.smartcampus.incident.repository.specification;
 
 import com.smartcampus.incident.entity.Booking;
 import com.smartcampus.incident.enums.BookingStatus;
+import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,6 +12,12 @@ public class BookingSpecification {
 
     public static Specification<Booking> withFilters(String status, Long resourceId, Long userId, LocalDate date) {
         return (root, query, cb) -> {
+            // Fix 500 Error: Fetch associations for the main result query
+            if (query.getResultType() != Long.class) {
+                root.fetch("resource", JoinType.LEFT);
+                root.fetch("user", JoinType.LEFT);
+            }
+
             var predicates = cb.conjunction();
 
             if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {

@@ -3,7 +3,7 @@ package com.smartcampus.incident.service.impl;
 import com.smartcampus.incident.dto.booking.BookingResponse;
 import com.smartcampus.incident.dto.booking.CancelBookingRequest;
 import com.smartcampus.incident.dto.booking.CreateBookingRequest;
-import com.smartcampus.incident.dto.booking.RejectBookingRequest;
+import com.smartcampus.incident.dto.booking.BookingStatusRequest;
 import com.smartcampus.incident.entity.Booking;
 import com.smartcampus.incident.entity.Resource;
 import com.smartcampus.incident.entity.User;
@@ -123,36 +123,40 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public void approveBooking(Long id) {
+    public void updateBookingStatus(Long id, BookingStatusRequest request) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
 
         if (booking.getStatus() != BookingStatus.PENDING) {
-            throw new IllegalArgumentException("Only PENDING bookings can be approved. Current status: " + booking.getStatus());
+            throw new IllegalArgumentException("Only PENDING bookings can be updated. Current status: " + booking.getStatus());
         }
 
-        booking.setStatus(BookingStatus.APPROVED);
-        bookingRepository.save(booking);
-        log.info("Booking #{} approved by admin", id);
-    }
-
-    @Override
-    @Transactional
-    public void rejectBooking(Long id, RejectBookingRequest request) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
-
-        if (booking.getStatus() != BookingStatus.PENDING) {
-            throw new IllegalArgumentException("Only PENDING bookings can be rejected. Current status: " + booking.getStatus());
-        }
-
-        booking.setStatus(BookingStatus.REJECTED);
-        if (request != null && request.getReason() != null) {
-            booking.setRejectionReason(request.getReason());
-        }
+        BookingStatus newStatus = BookingStatus.valueOf(request.getStatus().toUpperCase());
         
+        if (newStatus == BookingStatus.APPROVED) {
+            // Requirement 6: Re-check for conflict during approval
+            boolean hasConflict = bookingRepository.existsOverlappingBooking(
+                    booking.getResource().getId(),
+                    booking.getStartDateTime(),
+                    booking.getEndDateTime()
+            );
+
+            if (hasConflict) {
+                throw new IllegalArgumentException("Booking conflict detected. Another booking already occupies this slot.");
+            }
+            log.info("Booking #{} approved by admin", id);
+        } else if (newStatus == BookingStatus.REJECTED) {
+            if (request.getReason() == null || request.getReason().trim().isEmpty()) {
+                throw new IllegalArgumentException("Rejection reason is required.");
+            }
+            booking.setRejectionReason(request.getReason());
+            log.info("Booking #{} rejected by admin. Reason: {}", id, request.getReason());
+        } else {
+            throw new IllegalArgumentException("Invalid status transition for admin update.");
+        }
+
+        booking.setStatus(newStatus);
         bookingRepository.save(booking);
-        log.info("Booking #{} rejected by admin. Reason: {}", id, booking.getRejectionReason());
     }
 
     @Override

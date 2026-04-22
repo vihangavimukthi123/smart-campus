@@ -3,7 +3,7 @@ package com.smartcampus.incident.controller;
 import com.smartcampus.incident.dto.booking.BookingResponse;
 import com.smartcampus.incident.dto.booking.CancelBookingRequest;
 import com.smartcampus.incident.dto.booking.CreateBookingRequest;
-import com.smartcampus.incident.dto.booking.RejectBookingRequest;
+import com.smartcampus.incident.dto.booking.BookingStatusRequest;
 import com.smartcampus.incident.service.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -73,19 +73,11 @@ public class BookingController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{id}/approve")
+    @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Approve a pending booking (Admin only)")
-    public ResponseEntity<Void> approveBooking(@PathVariable Long id) {
-        bookingService.approveBooking(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PatchMapping("/{id}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Reject a pending booking (Admin only)")
-    public ResponseEntity<Void> rejectBooking(@PathVariable Long id, @RequestBody(required = false) RejectBookingRequest request) {
-        bookingService.rejectBooking(id, request);
-        return ResponseEntity.noContent().build();
+    @Operation(summary = "Approve or Reject a booking (Admin only)")
+    public ResponseEntity<Void> updateBookingStatus(@PathVariable Long id, @Valid @RequestBody BookingStatusRequest request) {
+        bookingService.updateBookingStatus(id, request);
+        return ResponseEntity.ok().build();
     }
 }

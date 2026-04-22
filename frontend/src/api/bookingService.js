@@ -39,12 +39,7 @@ export const getAllBookings = async (params) => {
   return response.data
 }
 
-export const approveBooking = async (id) => {
-  const response = await api.patch(`/bookings/${id}/approve`)
-  return response.data
-}
-
-export const rejectBooking = async (id, data) => {
-  const response = await api.patch(`/bookings/${id}/reject`, data)
+export const updateBookingStatus = async (id, data) => {
+  const response = await api.put(`/bookings/${id}/status`, data)
   return response.data
 }
