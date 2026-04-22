@@ -3,6 +3,8 @@ package com.smartcampus.incident.security;
 import com.smartcampus.incident.entity.User;
 import com.smartcampus.incident.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,10 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("User account is disabled");
         }
 
+        if (!user.isVerified()) {
+            throw new DisabledException("User account is not verified");
+        }
+        
         return org.springframework.security.core.userdetails.User.builder()
             .username(user.getEmail())
             .password(user.getPassword())

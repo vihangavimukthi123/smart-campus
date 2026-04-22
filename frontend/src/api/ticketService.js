@@ -30,6 +30,8 @@ export const ticketService = {
   getSlaStats: () =>
     api.get('/tickets/stats/sla'),
 
-  getAttachmentUrl: (ticketId, attachmentId) =>
-    `/api/tickets/${ticketId}/attachments/${attachmentId}`,
+  getAttachmentUrl: (ticketId, attachmentId) => {
+    const token = localStorage.getItem('token');
+    return `/api/tickets/${ticketId}/attachments/${attachmentId}${token ? `?token=${token}` : ''}`;
+  },
 }

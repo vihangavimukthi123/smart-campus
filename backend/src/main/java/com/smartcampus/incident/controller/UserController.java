@@ -31,10 +31,11 @@ public class UserController {
         List<User> technicians = userRepository.findByRoleAndActiveTrue(Role.TECHNICIAN);
         List<Map<String, Object>> result = technicians.stream().map(t -> {
             Map<String, Object> map = new LinkedHashMap<>();
-            map.put("id", t.getId());
+            map.put("id", t.getUserId());
             map.put("name", t.getName());
             map.put("email", t.getEmail());
             map.put("department", t.getDepartment());
+
             long assigned = ticketRepository.findByAssignedTo(t,
                 org.springframework.data.domain.PageRequest.of(0, Integer.MAX_VALUE)).getTotalElements();
             map.put("assignedTickets", assigned);
@@ -48,7 +49,7 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> getMe() {
         User user = securityUtils.getCurrentUser();
         Map<String, Object> profile = new LinkedHashMap<>();
-        profile.put("id", user.getId());
+        profile.put("id", user.getUserId());
         profile.put("name", user.getName());
         profile.put("email", user.getEmail());
         profile.put("role", user.getRole());

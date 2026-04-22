@@ -7,19 +7,31 @@ export function AuthProvider({ children }) {
   const [user, setUser]     = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Rehydrate from localStorage on app boot
+  // Rehydrate and verify session from localStorage on app boot
   useEffect(() => {
-    const stored = localStorage.getItem('user')
-    const token  = localStorage.getItem('token')
-    if (stored && token) {
-      try {
-        setUser(JSON.parse(stored))
-      } catch {
-        localStorage.removeItem('user')
-        localStorage.removeItem('token')
+    const initAuth = async () => {
+      const stored = localStorage.getItem('user')
+      const token  = localStorage.getItem('token')
+
+      if (stored && token) {
+        try {
+          // Verify token with backend
+          const { data } = await authService.getMe()
+          // Update user data with latest from backend
+          setUser(data)
+        } catch (err) {
+          console.error('Session verification failed:', err)
+          localStorage.removeItem('user')
+          localStorage.removeItem('token')
+          setUser(null)
+        }
+      } else {
+        setUser(null)
       }
+      setLoading(false)
     }
-    setLoading(false)
+
+    initAuth()
   }, [])
 
   const login = useCallback(async (email, password) => {
