@@ -84,4 +84,13 @@ public class ResourceServiceImpl implements ResourceService {
                 .status(updated.getStatus())
                 .build();
     }
+
+    @Override 
+    @Transactional
+    public void deleteResource(Long id){
+        Resource resource = resourceRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Resource", id));
+        
+        resourceRepository.delete(resource);
+    }
 }
