@@ -36,6 +36,17 @@ const formatEnumLabel = (value) =>
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
 
+const normalizeResourceStatus = (status) => {
+  if (status === 'ACTIVE') return 'AVAILABLE'
+  if (status === 'OUT_OF_SERVICE') return 'MAINTENANCE'
+  return status
+}
+
+const normalizeResource = (resource) => ({
+  ...resource,
+  status: normalizeResourceStatus(resource.status),
+})
+
 const getStatusBadgeClass = (status) => {
   if (status === 'AVAILABLE' || status === 'ACTIVE') return 'badge-resolved'
   if (status === 'OCCUPIED') return 'badge-open'
@@ -93,6 +104,7 @@ export default function ResourcesPage() {
 
   const [filters, setFilters] = useState({
     type: 'ALL',
+    status: 'ALL',
     location: '',
     minCapacity: '',
   })
@@ -100,9 +112,10 @@ export default function ResourcesPage() {
   const filteredResources = useMemo(() => {
     return resources.filter((resource) => {
       const typeOk = filters.type === 'ALL' || resource.type === filters.type
+      const statusOk = filters.status === 'ALL' || resource.status === filters.status
       const locationOk = !filters.location || (resource.location || '').toLowerCase().includes(filters.location.toLowerCase())
       const capacityOk = !filters.minCapacity || Number(resource.capacity) >= Number(filters.minCapacity)
-      return typeOk && locationOk && capacityOk
+      return typeOk && statusOk && locationOk && capacityOk
     })
   }, [resources, filters])
 
@@ -115,7 +128,7 @@ export default function ResourcesPage() {
       ? response
       : response.data || response.content || []
 
-      setResources(resourcesData)
+      setResources(resourcesData.map(normalizeResource))
     } catch (error) {
       toast.error('Failed to load resources')
     } finally {
@@ -180,11 +193,12 @@ export default function ResourcesPage() {
 
       if (editingResource) {
         const updated = await updateResource(editingResource.id, payload)
-        setResources((prev) => prev.map((resource) => (resource.id === updated.id ? updated : resource)))
+        const normalizedUpdated = normalizeResource(updated)
+        setResources((prev) => prev.map((resource) => (resource.id === normalizedUpdated.id ? normalizedUpdated : resource)))
         toast.success('Resource updated')
       } else {
         const created = await createResource(payload)
-        setResources((prev) => [created, ...prev])
+        setResources((prev) => [normalizeResource(created), ...prev])
         toast.success('Resource created')
       }
 
@@ -385,6 +399,20 @@ export default function ResourcesPage() {
             >
               <option value="ALL">ALL</option>
               {typeOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Status</label>
+            <select
+              className="form-select"
+              value={filters.status}
+              onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
+            >
+              <option value="ALL">ALL</option>
+              {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>

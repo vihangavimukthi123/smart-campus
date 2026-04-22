@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
 @RequiredArgsConstructor
@@ -16,10 +17,13 @@ import org.springframework.context.annotation.Configuration;
 public class ResourceDataSeeder {
 
     private final ResourceRepository resourceRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     @Bean
     public CommandLineRunner seedResources() {
         return args -> {
+            migrateLegacyResourceTypes();
+
             if (resourceRepository.count() > 0) {
                 return;
             }
@@ -29,15 +33,15 @@ public class ResourceDataSeeder {
                     .type(ResourceType.LAB)
                     .capacity(40)
                     .location("Engineering Block - Floor 2")
-                    .status(ResourceStatus.ACTIVE)
+                    .status(ResourceStatus.AVAILABLE)
                     .build());
 
             resourceRepository.save(Resource.builder()
                     .name("Seminar Room 1")
-                    .type(ResourceType.ROOM)
+                    .type(ResourceType.MEETING_ROOM)
                     .capacity(60)
                     .location("Main Building - Floor 1")
-                    .status(ResourceStatus.ACTIVE)
+                    .status(ResourceStatus.AVAILABLE)
                     .build());
 
             resourceRepository.save(Resource.builder()
@@ -45,10 +49,30 @@ public class ResourceDataSeeder {
                     .type(ResourceType.EQUIPMENT)
                     .capacity(1)
                     .location("Asset Store")
-                    .status(ResourceStatus.OUT_OF_SERVICE)
+                    .status(ResourceStatus.MAINTENANCE)
                     .build());
 
             log.info("Seeded initial resource catalogue records");
         };
+    }
+
+    private void migrateLegacyResourceTypes() {
+        int updatedRows = jdbcTemplate.update("UPDATE resources SET type = 'MEETING_ROOM' WHERE type = 'ROOM'");
+        if (updatedRows > 0) {
+            log.info("Migrated {} legacy resources from ROOM to MEETING_ROOM", updatedRows);
+        }
+
+        jdbcTemplate.execute("""
+                ALTER TABLE resources
+                MODIFY COLUMN type ENUM(
+                    'LECTURE_HALL',
+                    'LAB',
+                    'MEETING_ROOM',
+                    'STUDY_ROOM',
+                    'SPORT',
+                    'AUDITORIUM',
+                    'EQUIPMENT'
+                ) NOT NULL
+                """);
     }
 }

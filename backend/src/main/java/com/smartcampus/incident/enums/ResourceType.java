@@ -7,7 +7,5 @@ public enum ResourceType {
     STUDY_ROOM,
     SPORT,
     AUDITORIUM,
-    // Legacy type kept for backward compatibility with existing rows.
-    ROOM,
     EQUIPMENT
 }

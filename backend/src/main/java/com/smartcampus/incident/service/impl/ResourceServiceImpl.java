@@ -30,6 +30,7 @@ public class ResourceServiceImpl implements ResourceService {
     public List<ResourceResponse> getAllResources(boolean includeRetired) {
         return resourceRepository.findAll()
                 .stream()
+                .filter(resource -> !resource.isDeleted())
                 .filter(resource -> includeRetired || resource.getStatus() != ResourceStatus.RETIRED)
                 .map(this::toResponse)
                 .toList();
@@ -46,6 +47,10 @@ public class ResourceServiceImpl implements ResourceService {
     public ResourceResponse getResourceById(Long id) {
         Resource resource = resourceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Resource", id));
+
+        if (resource.isDeleted()) {
+            throw new ResourceNotFoundException("Resource", id);
+        }
 
         return toResponse(resource);
     }
@@ -106,6 +111,7 @@ public class ResourceServiceImpl implements ResourceService {
                 .orElseThrow(() -> new ResourceNotFoundException("Resource", id));
 
         resource.setStatus(ResourceStatus.RETIRED);
+        resource.setDeleted(true);
         resourceRepository.save(resource);
     }
 }
