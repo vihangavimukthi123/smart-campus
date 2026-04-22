@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { createResource, getResources } from '../api/resourceService'
+import { Pencil } from 'lucide-react'
+import { createResource, getResources, updateResource } from '../api/resourceService'
 import { useAuth } from '../hooks/useAuth'
 
 const emptyForm = {
@@ -84,6 +85,7 @@ export default function ResourcesPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editingResource, setEditingResource] = useState(null)
 
   const [form, setForm] = useState(emptyForm)
 
@@ -96,7 +98,7 @@ export default function ResourcesPage() {
   const filteredResources = useMemo(() => {
     return resources.filter((resource) => {
       const typeOk = filters.type === 'ALL' || resource.type === filters.type
-      const locationOk = !filters.location || (resource.location || '') .toLowerCase().includes(filters.location.toLowerCase())
+      const locationOk = !filters.location || (resource.location || '').toLowerCase().includes(filters.location.toLowerCase())
       const capacityOk = !filters.minCapacity || Number(resource.capacity) >= Number(filters.minCapacity)
       return typeOk && locationOk && capacityOk
     })
@@ -106,8 +108,6 @@ export default function ResourcesPage() {
     setLoading(true)
     try {
       const response = await getResources()
-
-      console.log("API RESPONSE:", response)
 
       const resourcesData = Array.isArray(response)
       ? response
@@ -125,11 +125,39 @@ export default function ResourcesPage() {
     loadResources()
   }, [])
 
-  const handleCreate = async (event) => {
+  const openCreateModal = () => {
+    setEditingResource(null)
+    setForm(emptyForm)
+    setShowCreateModal(true)
+  }
+
+  const openEditModal = (resource) => {
+    setEditingResource(resource)
+    setForm({
+      name: resource.name || '',
+      type: resource.type || 'LECTURE_HALL',
+      capacity: resource.capacity ?? 1,
+      location: resource.location || '',
+      status: resource.status || 'AVAILABLE',
+    })
+    setShowCreateModal(true)
+  }
+
+  const closeResourceModal = () => {
+    if (submitting) {
+      return
+    }
+
+    setShowCreateModal(false)
+    setEditingResource(null)
+    setForm(emptyForm)
+  }
+
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
     if (!isAdmin) {
-      toast.error('Only admins can create resources')
+      toast.error('Only admins can manage resources')
       return
     }
 
@@ -148,13 +176,21 @@ export default function ResourcesPage() {
         return
       }
 
-      const created = await createResource(payload)
-      setResources((prev) => [created, ...prev])
+      if (editingResource) {
+        const updated = await updateResource(editingResource.id, payload)
+        setResources((prev) => prev.map((resource) => (resource.id === updated.id ? updated : resource)))
+        toast.success('Resource updated')
+      } else {
+        const created = await createResource(payload)
+        setResources((prev) => [created, ...prev])
+        toast.success('Resource created')
+      }
+
       setForm(emptyForm)
+      setEditingResource(null)
       setShowCreateModal(false)
-      toast.success('Resource created')
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to create resource'
+      const message = error.response?.data?.message || (editingResource ? 'Failed to update resource' : 'Failed to create resource')
       toast.error(message)
     } finally {
       setSubmitting(false)
@@ -170,7 +206,7 @@ export default function ResourcesPage() {
 
       {isAdmin ? (
         <section style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
-          <button className="btn btn-primary" type="button" onClick={() => setShowCreateModal(true)}>
+          <button className="btn btn-primary" type="button" onClick={openCreateModal}>
             Create Resource
           </button>
         </section>
@@ -180,17 +216,17 @@ export default function ResourcesPage() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Create Resource"
+          aria-label={editingResource ? 'Edit Resource' : 'Create Resource'}
           style={{
             position: 'fixed',
             inset: 0,
             background: 'rgba(10, 15, 30, 0.7)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000,
-            padding: '4vh 1rem 1rem',
+            padding: '1rem',
           }}
           onClick={() => {
             if (!submitting) {
@@ -204,16 +240,17 @@ export default function ResourcesPage() {
               width: 'min(900px, 100%)',
               maxHeight: '90vh',
               overflowY: 'auto',
+              marginTop: '0',
               marginBottom: 0,
             }}
             onClick={(event) => event.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <h2 className="heading-3">Create Resource</h2>
+              <h2 className="heading-3">{editingResource ? 'Edit Resource' : 'Create Resource'}</h2>
               <button
                 className="btn btn-ghost"
                 type="button"
-                onClick={() => setShowCreateModal(false)}
+                onClick={closeResourceModal}
                 disabled={submitting}
                 aria-label="Close"
               >
@@ -221,7 +258,7 @@ export default function ResourcesPage() {
               </button>
             </div>
 
-            <form onSubmit={handleCreate}>
+            <form onSubmit={handleSubmit}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '1rem' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Name</label>
@@ -285,11 +322,11 @@ export default function ResourcesPage() {
               </div>
 
               <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                <button className="btn btn-secondary" type="button" onClick={() => setShowCreateModal(false)} disabled={submitting}>
+                <button className="btn btn-secondary" type="button" onClick={closeResourceModal} disabled={submitting}>
                   Cancel
                 </button>
                 <button className="btn btn-primary" type="submit" disabled={submitting}>
-                  {submitting ? 'Creating...' : 'Create Resource'}
+                  {submitting ? (editingResource ? 'Saving...' : 'Creating...') : (editingResource ? 'Save Changes' : 'Create Resource')}
                 </button>
               </div>
             </form>
@@ -366,10 +403,24 @@ export default function ResourcesPage() {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'flex-start' }}>
-                  <h3 className="heading-3" style={{ fontSize: '1.05rem' }}>{resource.name}</h3>
-                  <span className={`badge ${badgeClass}`}>
-                    {formatEnumLabel(resource.status)}
-                  </span>
+                  <div>
+                    <h3 className="heading-3" style={{ fontSize: '1.05rem' }}>{resource.name}</h3>
+                    <span className={`badge ${badgeClass}`} style={{ marginTop: '0.35rem' }}>
+                      {formatEnumLabel(resource.status)}
+                    </span>
+                  </div>
+                  {isAdmin ? (
+                    <button
+                      className="btn btn-secondary"
+                      type="button"
+                      onClick={() => openEditModal(resource)}
+                      aria-label={`Edit ${resource.name}`}
+                      title="Edit"
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
+                    >
+                      <Pencil size={16} />
+                    </button>
+                  ) : null}
                 </div>
 
                 <div style={{ display: 'grid', gap: '0.4rem' }}>
