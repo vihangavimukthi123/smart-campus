@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Navigate } from 'react-router-dom'
 import { ticketService } from '../api/ticketService'
+import { useAuth } from '../hooks/useAuth'
 import ImageUploader from '../components/ImageUploader'
 import toast from 'react-hot-toast'
 import { Send, ChevronLeft, Info } from 'lucide-react'
@@ -22,6 +23,8 @@ const INITIAL = {
 
 export default function CreateTicketPage() {
   const navigate = useNavigate()
+  const { isUser } = useAuth()
+  
   const [step,    setStep]    = useState(0)
   const [form,    setForm]    = useState(INITIAL)
   const [files,   setFiles]   = useState([])
@@ -78,6 +81,10 @@ export default function CreateTicketPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (!isUser) {
+    return <Navigate to="/dashboard" replace />
   }
 
   return (

@@ -22,6 +22,7 @@ public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
     private final TicketRepository ticketRepository;
+    private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final SecurityUtils securityUtils;
 
@@ -41,14 +42,24 @@ public class CommentServiceImpl implements CommentService {
         log.info("Comment added to ticket #{} by {}", ticketId, currentUser.getEmail());
 
         // Notify the ticket owner if someone else commented
-        if (!ticket.getCreatedBy().getId().equals(currentUser.getId())) {
+        if (!ticket.getCreatedBy().getUserId().equals(currentUser.getUserId())) {
             notificationService.notifyNewComment(ticketId, ticket.getCreatedBy(), currentUser.getName());
         }
         // Notify the assigned technician if they're different from commenter and creator
         if (ticket.getAssignedTo() != null &&
-            !ticket.getAssignedTo().getId().equals(currentUser.getId()) &&
-            !ticket.getAssignedTo().getId().equals(ticket.getCreatedBy().getId())) {
+            !ticket.getAssignedTo().getUserId().equals(currentUser.getUserId()) &&
+            !ticket.getAssignedTo().getUserId().equals(ticket.getCreatedBy().getUserId())) {
             notificationService.notifyNewComment(ticketId, ticket.getAssignedTo(), currentUser.getName());
+        }
+
+        // Notify Admins
+        java.util.List<User> admins = userRepository.findByRole(Role.ADMIN);
+        for (User admin : admins) {
+            if (!admin.getId().equals(currentUser.getId()) &&
+                !admin.getId().equals(ticket.getCreatedBy().getId()) &&
+                (ticket.getAssignedTo() == null || !admin.getId().equals(ticket.getAssignedTo().getId()))) {
+                notificationService.notifyNewComment(ticketId, admin, currentUser.getName());
+            }
         }
 
         return toResponse(comment, currentUser);
@@ -94,7 +105,7 @@ public class CommentServiceImpl implements CommentService {
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private void enforceOwnership(Comment comment, User user) {
-        if (!comment.getAuthor().getId().equals(user.getId())) {
+        if (!comment.getAuthor().getUserId().equals(user.getUserId())) {
             throw new UnauthorizedException("You can only edit or delete your own comments");
         }
     }
@@ -119,13 +130,13 @@ public class CommentServiceImpl implements CommentService {
             .content(comment.getContent())
             .ticketId(comment.getTicket().getId())
             .author(CommentResponse.AuthorSummary.builder()
-                .id(comment.getAuthor().getId())
+                .id(comment.getAuthor().getUserId())
                 .name(comment.getAuthor().getName())
                 .role(comment.getAuthor().getRole().name())
                 .build())
             .createdAt(comment.getCreatedAt())
             .updatedAt(comment.getUpdatedAt())
-            .editable(comment.getAuthor().getId().equals(currentUser.getId()))
+            .editable(comment.getAuthor().getUserId().equals(currentUser.getUserId()))
             .build();
     }
 }

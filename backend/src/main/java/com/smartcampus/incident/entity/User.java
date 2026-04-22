@@ -17,6 +17,7 @@ import java.util.List;
 @Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = "email"))
 @Getter
 @Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -24,7 +25,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long userId;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -48,6 +49,12 @@ public class User {
     @Column(nullable = false)
     @Builder.Default
     private boolean active = true;
+
+    @Builder.Default
+    private boolean verified = false;
+
+    private String otp;
+    private LocalDateTime otpExpiry;
 
     @CreationTimestamp
     @Column(updatable = false)
