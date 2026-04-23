@@ -15,7 +15,7 @@ const NAV = [
   { to: '/admin/users', icon: <Users size={18} />,         label: 'User Management', roles: ['ADMIN'] },
   { to: '/tickets/new', icon: <PlusCircle size={18} />,    label: 'New Ticket', roles: ['USER'] },
   { to: '/resources', icon: <Building2 size={18} />,       label: 'Resources' },
-  { to: '/bookings/my', icon: <Calendar size={18} />,      label: 'My Bookings', roles: ['USER', 'TECHNICIAN'] },
+  { to: '/bookings/my', icon: <Calendar size={18} />,      label: 'My Bookings', roles: ['USER'] },
   { to: '/admin/bookings', icon: <ClipboardCheck size={18} />, label: 'Manage Bookings', roles: ['ADMIN'] },
 ]
 

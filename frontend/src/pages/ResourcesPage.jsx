@@ -93,7 +93,7 @@ const getStatusCardStyle = (status) => {
 
 export default function ResourcesPage() {
   const navigate = useNavigate()
-  const { isAdmin } = useAuth()
+  const { isAdmin, isTechnician } = useAuth()
   const [resources, setResources] = useState([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -541,7 +541,7 @@ export default function ResourcesPage() {
                   </p>
                 </div>
 
-                {!isAdmin && (
+                {!isAdmin && !isTechnician && (
                   <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
                     <button
                       className="btn btn-primary btn-sm"
