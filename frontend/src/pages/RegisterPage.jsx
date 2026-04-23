@@ -1,40 +1,107 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import toast from 'react-hot-toast'
-import { UserPlus } from 'lucide-react'
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { authService } from "../api/authService";
+import toast from "react-hot-toast";
+import { UserPlus, CheckCircle } from "lucide-react";
 
-const ROLES = ['USER', 'TECHNICIAN']
+const ROLES = ["USER", "TECHNICIAN"];
 
 export default function RegisterPage() {
-  const { register } = useAuth()
-  const navigate     = useNavigate()
+  const { register } = useAuth();
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
-    name: '', email: '', password: '', phone: '', department: '', role: 'USER'
-  })
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState('')
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    department: "",
+    role: "USER",
+  });
 
-  const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showOtp, setShowOtp] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [timer, setTimer] = useState(300);
 
-  const submit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      await register(form)
-      toast.success('Account created! Welcome to SmartCampus.')
-      navigate('/dashboard')
-    } catch (err) {
-      const msg = err.response?.data?.message
-        || Object.values(err.response?.data?.fieldErrors || {}).join(', ')
-        || 'Registration failed'
-      setError(msg)
-      toast.error(msg)
-    } finally {
-      setLoading(false)
+  const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+
+  // --- PASSWORD VALIDATION LOGIC ---
+  const passwordRequirements = [
+    { label: "At least 8 characters", test: (pw) => pw.length >= 8 },
+    { label: "One uppercase letter", test: (pw) => /[A-Z]/.test(pw) },
+    { label: "One number", test: (pw) => /[0-9]/.test(pw) },
+    {
+      label: "One special character (@$!%*?)",
+      test: (pw) => /[@$!%*?&#]/.test(pw),
+    },
+  ];
+
+  useEffect(() => {
+    let interval;
+    if (showOtp && timer > 0) {
+      interval = setInterval(() => setTimer((t) => t - 1), 1000);
     }
-  }
+    return () => clearInterval(interval);
+  }, [showOtp, timer]);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
+  const submitRegistration = async (e) => {
+    e.preventDefault();
+    // Backend ekata yanna kalin frontend validation ekak karamu
+    const allMet = passwordRequirements.every((req) => req.test(form.password));
+    if (!allMet) {
+      toast.error("Please meet all password requirements");
+      return;
+    }
+
+    setError("");
+    setLoading(true);
+    try {
+      await register(form);
+      toast.success("Registration successful! Please check your email for OTP");
+      setShowOtp(true);
+    } catch (err) {
+      const msg = err.response?.data?.message || "Registration failed";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitVerify = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await authService.verifyOtp({ email: form.email, otp });
+      toast.success("Email verified successfully! You can now log in.");
+      navigate("/login");
+    } catch (err) {
+      const msg = err.response?.data?.error || "OTP verification failed";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    try {
+      await authService.resendOtp(form.email);
+      setTimer(300);
+      setOtp("");
+      toast.success("New OTP sent to your email.");
+    } catch (err) {
+      toast.error("Failed to resend OTP.");
+    }
+  };
 
   return (
     <div className="auth-page">
@@ -50,141 +117,263 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <h2 className="auth-heading">Create your account</h2>
-        <p className="auth-sub">Join the campus maintenance system.</p>
+        {!showOtp ? (
+          <>
+            <h2 className="auth-heading">Create your account</h2>
+            <p className="auth-sub">Join the campus maintenance system.</p>
 
-        {error && <div className="auth-error">{error}</div>}
+            {error && <div className="auth-error">{error}</div>}
 
-        <form onSubmit={submit}>
-          <div className="grid-2" style={{ gap: 'var(--space-4)' }}>
-            <div className="form-group">
-              <label className="form-label">Full Name <span style={{ color: 'var(--clr-error)' }}>*</span></label>
-              <input className="form-input" placeholder="Jane Smith" value={form.name}
-                onChange={e => set('name', e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Email <span style={{ color: 'var(--clr-error)' }}>*</span></label>
-              <input className="form-input" type="email" placeholder="you@campus.edu" value={form.email}
-                onChange={e => set('email', e.target.value)} required />
-            </div>
-          </div>
+            <form onSubmit={submitRegistration} autoComplete="off">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "1rem",
+                }}
+              >
+                <div className="form-group">
+                  <label className="form-label">Full Name *</label>
+                  <input
+                    className="form-input"
+                    placeholder="Jane Smith"
+                    value={form.name}
+                    onChange={(e) => set("name", e.target.value)}
+                    required
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Email *</label>
+                  <input
+                    className="form-input"
+                    type="email"
+                    placeholder="you@campus.edu"
+                    value={form.email}
+                    onChange={(e) => set("email", e.target.value)}
+                    required
+                    autoComplete="new-password"
+                  />
+                </div>
+              </div>
 
-          <div className="form-group">
-            <label className="form-label">Password <span style={{ color: 'var(--clr-error)' }}>*</span></label>
-            <input className="form-input" type="password" placeholder="Min 8 chars, upper + lower + digit"
-              value={form.password} onChange={e => set('password', e.target.value)} required />
-          </div>
+              <div className="form-group" style={{ marginTop: "1rem" }}>
+                <label className="form-label">Password *</label>
+                <input
+                  className="form-input"
+                  type="password"
+                  placeholder="••••••••"
+                  value={form.password}
+                  onChange={(e) => set("password", e.target.value)}
+                  required
+                  autoComplete="new-password"
+                />
 
-          <div className="grid-2" style={{ gap: 'var(--space-4)' }}>
-            <div className="form-group">
-              <label className="form-label">Phone</label>
-              <input className="form-input" placeholder="+91 9876543210" value={form.phone}
-                onChange={e => set('phone', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Department</label>
-              <input className="form-input" placeholder="Engineering" value={form.department}
-                onChange={e => set('department', e.target.value)} />
-            </div>
-          </div>
+                {/* --- LIVE PASSWORD CHECKER UI --- */}
+                <div
+                  style={{
+                    marginTop: "0.75rem",
+                    padding: "0.75rem",
+                    background: "rgba(255,255,255,0.03)",
+                    borderRadius: "8px",
+                  }}
+                >
+                  {passwordRequirements.map((req, i) => {
+                    const isMet = req.test(form.password);
+                    return (
+                      <div
+                        key={i}
+                        style={{
+                          fontSize: "0.75rem",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          color: isMet ? "#10b981" : "#94a3b8",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "12px",
+                            height: "12px",
+                            borderRadius: "50%",
+                            border: isMet ? "none" : "1px solid #475569",
+                            background: isMet ? "#10b981" : "transparent",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {isMet && <CheckCircle size={10} color="white" />}
+                        </div>
+                        {req.label}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-          <div className="form-group">
-            <label className="form-label">Account Type</label>
-            <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-              {ROLES.map(r => (
-                <label key={r} className={`role-chip ${form.role === r ? 'role-chip--active' : ''}`}>
-                  <input type="radio" name="role" value={r} checked={form.role === r}
-                    onChange={() => set('role', r)} hidden />
-                  {r === 'USER' ? '👤 Student / Staff' : '🔧 Technician'}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "1rem",
+                  marginTop: "1rem",
+                }}
+              >
+                <div className="form-group">
+                  <label className="form-label">Phone</label>
+                  <input
+                    className="form-input"
+                    placeholder="+94 77 123 4567"
+                    value={form.phone}
+                    onChange={(e) => set("phone", e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Department</label>
+                  <input
+                    className="form-input"
+                    placeholder="Engineering"
+                    value={form.department}
+                    onChange={(e) => set("department", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginTop: "1.5rem" }}>
+                <label
+                  className="form-label"
+                  style={{ marginBottom: "0.75rem", display: "block" }}
+                >
+                  I am a...
                 </label>
-              ))}
-            </div>
-          </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "1rem",
+                  }}
+                >
+                  {ROLES.map((r) => (
+                    <label
+                      key={r}
+                      style={{
+                        cursor: "pointer",
+                        padding: "12px",
+                        borderRadius: "12px",
+                        border: `2px solid ${form.role === r ? "var(--clr-primary, #3b82f6)" : "var(--clr-border, #1e293b)"}`,
+                        background:
+                          form.role === r
+                            ? "rgba(59, 130, 246, 0.1)"
+                            : "transparent",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "10px",
+                        transition: "all 0.2s ease",
+                        color:
+                          form.role === r
+                            ? "white"
+                            : "var(--clr-text-3, #94a3b8)",
+                        fontWeight: form.role === r ? "600" : "400",
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="role"
+                        value={r}
+                        checked={form.role === r}
+                        onChange={() => set("role", r)}
+                        style={{ display: "none" }} // Radio button එක හංගනවා
+                      />
+                      <span style={{ fontSize: "1.2rem" }}>
+                        {r === "USER" ? "👤" : "🔧"}
+                      </span>
+                      {r === "USER" ? "Student / Staff" : "Technician"}
+                    </label>
+                  ))}
+                </div>
+              </div>
 
-          <button
-            type="submit"
-            id="register-submit"
-            className="btn btn-primary btn-lg"
-            style={{ width: '100%', marginTop: 'var(--space-2)' }}
-            disabled={loading}
-          >
-            {loading
-              ? <span className="spinner" style={{ width: 18, height: 18 }} />
-              : <><UserPlus size={16} /> Create Account</>
-            }
-          </button>
-        </form>
+              <button
+                type="submit"
+                className="btn btn-primary btn-lg"
+                style={{ width: "100%", marginTop: "1.5rem" }}
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="spinner" />
+                ) : (
+                  <>
+                    <UserPlus size={16} /> Create Account
+                  </>
+                )}
+              </button>
+            </form>
+          </>
+        ) : (
+          <div className="otp-view" style={{ textAlign: "center" }}>
+            {/* OTP UI Section (Kalin widiyatama thiyanna) */}
+            <h2 className="auth-heading">Verify Your Email</h2>
+            <p className="auth-sub">
+              Enter the code sent to <b>{form.email}</b>
+            </p>
+            <form onSubmit={submitVerify}>
+              <input
+                className="form-input"
+                style={{
+                  fontSize: "2rem",
+                  textAlign: "center",
+                  letterSpacing: "0.5rem",
+                  fontWeight: "bold",
+                }}
+                maxLength="6"
+                placeholder="000000"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                required
+              />
+              <p
+                style={{
+                  marginTop: "1rem",
+                  color: timer === 0 ? "red" : "inherit",
+                }}
+              >
+                {formatTime(timer)}
+              </p>
+              <button
+                type="submit"
+                className="btn btn-primary btn-lg"
+                style={{ width: "100%", marginTop: "1rem" }}
+                disabled={loading}
+              >
+                Verify
+              </button>
+            </form>
+            <button
+              onClick={handleResend}
+              disabled={timer > 0}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--clr-primary)",
+                marginTop: "1rem",
+                cursor: "pointer",
+              }}
+            >
+              Resend OTP
+            </button>
+          </div>
+        )}
 
         <p className="auth-footer">
-          Already have an account?{' '}
-          <Link to="/login" className="auth-link">Sign in</Link>
+          Already have an account?{" "}
+          <Link to="/login" className="auth-link">
+            Sign in
+          </Link>
         </p>
       </div>
-
-      <style>{`
-        .auth-page {
-          min-height: 100vh;
-          display: flex; align-items: center; justify-content: center;
-          background: var(--clr-bg);
-          position: relative; overflow: hidden;
-          padding: var(--space-6);
-        }
-        .auth-glow {
-          position: absolute;
-          width: 500px; height: 500px;
-          border-radius: 50%;
-          filter: blur(120px);
-          opacity: 0.12;
-          pointer-events: none;
-        }
-        .auth-glow--left  { background: var(--clr-primary); top: -100px; left: -150px; }
-        .auth-glow--right { background: var(--clr-secondary); bottom: -100px; right: -150px; }
-
-        .auth-card {
-          position: relative; z-index: 1;
-          width: 100%; max-width: 520px;
-          background: var(--clr-surface);
-          border: 1px solid var(--clr-border);
-          border-radius: var(--radius-xl);
-          padding: var(--space-10);
-          box-shadow: var(--shadow-lg);
-          animation: fadeIn 0.4s ease;
-        }
-        .auth-brand { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-8); }
-        .auth-brand__logo { font-size: 2.5rem; }
-        .auth-brand__title { font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; font-weight: 700; }
-        .auth-brand__sub   { font-size: 0.75rem; color: var(--clr-text-3); }
-        .auth-heading { font-size: 1.375rem; font-weight: 700; margin-bottom: var(--space-2); }
-        .auth-sub     { font-size: 0.875rem; color: var(--clr-text-2); margin-bottom: var(--space-6); }
-        .auth-error {
-          padding: var(--space-3) var(--space-4);
-          background: rgba(239,68,68,0.1);
-          border: 1px solid rgba(239,68,68,0.3);
-          border-radius: var(--radius-md);
-          font-size: 0.875rem; color: var(--clr-error);
-          margin-bottom: var(--space-4);
-        }
-        .auth-footer { text-align: center; font-size: 0.875rem; color: var(--clr-text-2); margin-top: var(--space-6); }
-        .auth-link { color: var(--clr-primary); font-weight: 500; }
-        .auth-link:hover { text-decoration: underline; }
-
-        .role-chip {
-          flex: 1;
-          padding: var(--space-3) var(--space-4);
-          background: var(--clr-surface-2);
-          border: 1px solid var(--clr-border);
-          border-radius: var(--radius-md);
-          font-size: 0.875rem; font-weight: 500;
-          cursor: pointer; text-align: center;
-          transition: var(--transition);
-        }
-        .role-chip:hover { border-color: var(--clr-primary); }
-        .role-chip--active {
-          border-color: var(--clr-primary);
-          background: rgba(99,102,241,0.1);
-          color: var(--clr-primary);
-        }
-      `}</style>
     </div>
-  )
+  );
 }

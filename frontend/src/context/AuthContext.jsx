@@ -36,6 +36,7 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const { data } = await authService.login({ email, password })
+    //saves data if login is successful
     localStorage.setItem('token', data.accessToken)
     localStorage.setItem('user', JSON.stringify(data))
     setUser(data)
@@ -44,9 +45,6 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(async (payload) => {
     const { data } = await authService.register(payload)
-    localStorage.setItem('token', data.accessToken)
-    localStorage.setItem('user', JSON.stringify(data))
-    setUser(data)
     return data
   }, [])
 

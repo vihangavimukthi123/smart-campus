@@ -5,12 +5,12 @@ import toast from 'react-hot-toast'
 import { LogIn, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
-  const { login } = useAuth()
-  const navigate  = useNavigate()
+  const { login } = useAuth() 
+  const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState('')
+  const [error, setError] = useState('')
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
@@ -19,13 +19,30 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      await login(form.email, form.password)
+      // 1. call Login function 
+      const user = await login(form.email, form.password)
       toast.success('Welcome back!')
-      navigate('/dashboard')
+      
+      // 2. decide dashboard based on role
+      if (user.role === 'TECHNICIAN') {
+        navigate('/technician-dashboard') 
+      } else {
+        navigate('/dashboard')
+      }
+
     } catch (err) {
-      const msg = err.response?.data?.message || 'Invalid email or password'
-      setError(msg)
-      toast.error(msg)
+      // Backend error message
+      const msg = err.response?.data?.error || err.response?.data?.message || 'Invalid email or password'
+      
+      // 3. unverified emails get redirected to register
+      if (msg.toLowerCase().includes('not verified')) {
+        toast.error('Please verify your email first!')
+        // send to register page with email pre-filled
+        navigate('/register', { state: { email: form.email, autoShowOtp: true } })
+      } else {
+        setError(msg)
+        toast.error(msg)
+      }
     } finally {
       setLoading(false)
     }
@@ -33,11 +50,11 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
+      
       <div className="auth-glow auth-glow--left" />
       <div className="auth-glow auth-glow--right" />
 
       <div className="auth-card">
-        {/* Brand */}
         <div className="auth-brand">
           <span className="auth-brand__logo">🏛️</span>
           <div>
@@ -55,7 +72,6 @@ export default function LoginPage() {
           <div className="form-group">
             <label className="form-label">Email address</label>
             <input
-              id="email"
               type="email"
               className="form-input"
               placeholder="you@campus.edu"
@@ -70,7 +86,6 @@ export default function LoginPage() {
             <label className="form-label">Password</label>
             <div style={{ position: 'relative' }}>
               <input
-                id="password"
                 type={showPw ? 'text' : 'password'}
                 className="form-input"
                 placeholder="••••••••"
@@ -96,7 +111,6 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            id="login-submit"
             className="btn btn-primary btn-lg"
             style={{ width: '100%', marginTop: 'var(--space-2)' }}
             disabled={loading}
@@ -113,61 +127,8 @@ export default function LoginPage() {
           <Link to="/register" className="auth-link">Create one</Link>
         </p>
       </div>
-
-      <style>{`
-        .auth-page {
-          min-height: 100vh;
-          display: flex; align-items: center; justify-content: center;
-          background: var(--clr-bg);
-          position: relative; overflow: hidden;
-          padding: var(--space-6);
-        }
-        .auth-glow {
-          position: absolute;
-          width: 500px; height: 500px;
-          border-radius: 50%;
-          filter: blur(120px);
-          opacity: 0.12;
-          pointer-events: none;
-        }
-        .auth-glow--left  { background: var(--clr-primary); top: -100px; left: -150px; }
-        .auth-glow--right { background: var(--clr-secondary); bottom: -100px; right: -150px; }
-
-        .auth-card {
-          position: relative; z-index: 1;
-          width: 100%; max-width: 440px;
-          background: var(--clr-surface);
-          border: 1px solid var(--clr-border);
-          border-radius: var(--radius-xl);
-          padding: var(--space-10);
-          box-shadow: var(--shadow-lg);
-          animation: fadeIn 0.4s ease;
-        }
-
-        .auth-brand {
-          display: flex; align-items: center; gap: var(--space-3);
-          margin-bottom: var(--space-8);
-        }
-        .auth-brand__logo { font-size: 2.5rem; }
-        .auth-brand__title { font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; font-weight: 700; }
-        .auth-brand__sub   { font-size: 0.75rem; color: var(--clr-text-3); }
-
-        .auth-heading { font-size: 1.375rem; font-weight: 700; margin-bottom: var(--space-2); }
-        .auth-sub     { font-size: 0.875rem; color: var(--clr-text-2); margin-bottom: var(--space-6); }
-
-        .auth-error {
-          padding: var(--space-3) var(--space-4);
-          background: rgba(239,68,68,0.1);
-          border: 1px solid rgba(239,68,68,0.3);
-          border-radius: var(--radius-md);
-          font-size: 0.875rem; color: var(--clr-error);
-          margin-bottom: var(--space-4);
-        }
-
-        .auth-footer { text-align: center; font-size: 0.875rem; color: var(--clr-text-2); margin-top: var(--space-6); }
-        .auth-link { color: var(--clr-primary); font-weight: 500; }
-        .auth-link:hover { text-decoration: underline; }
-      `}</style>
+      
+      {/* Oyaage <style> tag eka methana thiyenna ona */}
     </div>
   )
 }
