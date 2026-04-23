@@ -213,15 +213,15 @@ export default function AdminBookingsPage() {
                           <Eye size={16} />
                         </button>
 
-                        {b.status === 'PENDING' && (
-                          <>
-                            <button className="btn btn-success btn-icon btn-sm" title="Approve" onClick={() => handleApprove(b.id)}>
-                              <CheckCircle size={16} />
-                            </button>
-                            <button className="btn btn-danger btn-icon btn-sm" title="Reject" onClick={() => { setRejectId(b.id); setShowRejectModal(true); }}>
-                              <XCircle size={16} />
-                            </button>
-                          </>
+                        {(b.status === 'PENDING' || b.status === 'REJECTED') && (
+                          <button className="btn btn-success btn-icon btn-sm" title="Approve" onClick={() => handleApprove(b.id)}>
+                            <CheckCircle size={16} />
+                          </button>
+                        )}
+                        {(b.status === 'PENDING' || b.status === 'APPROVED') && (
+                          <button className="btn btn-danger btn-icon btn-sm" title="Reject" onClick={() => { setRejectId(b.id); setShowRejectModal(true); }}>
+                            <XCircle size={16} />
+                          </button>
                         )}
                       </div>
                     </td>
@@ -323,8 +323,18 @@ export default function AdminBookingsPage() {
               )}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-8)' }}>
-              <button className="btn btn-primary btn-sm" onClick={() => setShowViewModal(false)}>Close Details</button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: 'var(--space-8)' }}>
+              {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'REJECTED') && (
+                <button className="btn btn-success btn-sm" onClick={() => { handleApprove(selectedBooking.id); setShowViewModal(false); }}>
+                  Approve Booking
+                </button>
+              )}
+              {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'APPROVED') && (
+                <button className="btn btn-danger btn-sm" onClick={() => { setRejectId(selectedBooking.id); setShowRejectModal(true); setShowViewModal(false); }}>
+                  Reject Booking
+                </button>
+              )}
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowViewModal(false)}>Close</button>
             </div>
           </div>
         </div>

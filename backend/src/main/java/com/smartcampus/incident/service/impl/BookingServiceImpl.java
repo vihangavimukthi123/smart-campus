@@ -128,12 +128,32 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
 
-        if (booking.getStatus() != BookingStatus.PENDING) {
-            throw new IllegalArgumentException("Only PENDING bookings can be updated. Current status: " + booking.getStatus());
+        BookingStatus currentStatus = booking.getStatus();
+        BookingStatus newStatus = BookingStatus.valueOf(request.getStatus().toUpperCase());
+
+        // Only allow transitions:
+        // PENDING -> APPROVED or REJECTED
+        // APPROVED -> REJECTED
+        // REJECTED -> APPROVED
+        if (currentStatus == BookingStatus.PENDING) {
+            if (newStatus != BookingStatus.APPROVED && newStatus != BookingStatus.REJECTED) {
+                throw new IllegalArgumentException("Invalid status transition from PENDING: " + newStatus);
+            }
+        } else if (currentStatus == BookingStatus.APPROVED) {
+            if (newStatus != BookingStatus.REJECTED) {
+                throw new IllegalArgumentException("Only REJECTED status is allowed for already APPROVED bookings.");
+            }
+        } else if (currentStatus == BookingStatus.REJECTED) {
+            if (newStatus != BookingStatus.APPROVED) {
+                throw new IllegalArgumentException("Only APPROVED status is allowed for already REJECTED bookings.");
+            }
+            // Clear rejection reason if moving to APPROVED
+            booking.setRejectionReason(null);
+            log.info("Booking #{} changed from REJECTED to APPROVED by admin", id);
+        } else {
+            throw new IllegalArgumentException("Cannot update status for bookings that are " + currentStatus);
         }
 
-        BookingStatus newStatus = BookingStatus.valueOf(request.getStatus().toUpperCase());
-        
         if (newStatus == BookingStatus.APPROVED) {
             // Requirement 6: Re-check for conflict during approval
             boolean hasConflict = bookingRepository.existsOverlappingBooking(
@@ -153,8 +173,6 @@ public class BookingServiceImpl implements BookingService {
             }
             booking.setRejectionReason(request.getReason());
             log.info("Booking #{} rejected by admin. Reason: {}", id, request.getReason());
-        } else {
-            throw new IllegalArgumentException("Invalid status transition for admin update.");
         }
 
         booking.setStatus(newStatus);
