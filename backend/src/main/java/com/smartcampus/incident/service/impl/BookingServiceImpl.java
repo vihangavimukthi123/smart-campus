@@ -94,7 +94,7 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public List<BookingResponse> getMyBookings() {
         User currentUser = securityUtils.getCurrentUser();
-        return bookingRepository.findByUserId(currentUser.getId()).stream()
+        return bookingRepository.findByUserId(currentUser.getUserId()).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -114,7 +114,7 @@ public class BookingServiceImpl implements BookingService {
 
         User currentUser = securityUtils.getCurrentUser();
         // Permission check: Only the owner or an Admin can view booking details
-        if (!booking.getUser().getId().equals(currentUser.getId()) && !currentUser.getRole().name().equals("ADMIN")) {
+        if (!booking.getUser().getUserId().equals(currentUser.getUserId()) && !currentUser.getRole().name().equals("ADMIN")) {
             throw new UnauthorizedException("You are not authorized to view this booking");
         }
 
@@ -167,7 +167,7 @@ public class BookingServiceImpl implements BookingService {
 
         User currentUser = securityUtils.getCurrentUser();
         // Permission check: Only the owner can cancel
-        if (!booking.getUser().getId().equals(currentUser.getId())) {
+        if (!booking.getUser().getUserId().equals(currentUser.getUserId())) {
             throw new UnauthorizedException("You are not authorized to cancel this booking");
         }
 
@@ -196,7 +196,7 @@ public class BookingServiceImpl implements BookingService {
                         .location(booking.getResource().getLocation())
                         .build())
                 .user(BookingResponse.UserSummary.builder()
-                        .id(booking.getUser().getId())
+                        .id(booking.getUser().getUserId())
                         .name(booking.getUser().getName())
                         .email(booking.getUser().getEmail())
                         .build())
