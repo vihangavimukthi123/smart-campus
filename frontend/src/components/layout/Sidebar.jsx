@@ -2,31 +2,42 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
   LayoutDashboard, Ticket, PlusCircle,
-  LogOut, Shield, Wrench, User
+  LogOut, Shield, Wrench, User, Users // 'Users' icon eka add kala
 } from 'lucide-react'
 
+// Navigation links configuration
 const NAV = [
   { to: '/dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
   { to: '/tickets',   icon: <Ticket size={18} />,          label: 'Tickets' },
   { to: '/tickets/new', icon: <PlusCircle size={18} />,    label: 'New Ticket', roles: ['USER', 'ADMIN'] },
+  // Admin ta vitharak pena User Management link eka
+  { to: '/admin/users', icon: <Users size={18} />,         label: 'User Management', roles: ['ADMIN'] },
 ]
 
-const ROLE_ICON = { ADMIN: <Shield size={14} />, TECHNICIAN: <Wrench size={14} />, USER: <User size={14} /> }
+const ROLE_ICON = { 
+  ADMIN: <Shield size={14} />, 
+  TECHNICIAN: <Wrench size={14} />, 
+  USER: <User size={14} /> 
+}
 
 export default function Sidebar() {
-  const { user, logout, isAdmin } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogout = () => { logout(); navigate('/login') }
+  const handleLogout = () => { 
+    logout()
+    navigate('/login') 
+  }
 
   const initials = (name = '') =>
     name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
+  // Methana thama role eka anuwa filter wenne
   const navItems = NAV.filter(n => !n.roles || n.roles.includes(user?.role))
 
   return (
     <aside className="sidebar">
-      {/* Brand */}
+      {/* Brand Section */}
       <div className="sidebar__brand">
         <div className="sidebar__logo">🏛️</div>
         <div>
@@ -35,7 +46,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Nav */}
+      {/* Navigation Section */}
       <nav className="sidebar__nav">
         {navItems.map(item => (
           <NavLink
@@ -52,10 +63,10 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Spacer */}
+      {/* Spacer - Push footer to bottom */}
       <div style={{ flex: 1 }} />
 
-      {/* User profile */}
+      {/* User profile / Footer Section */}
       <div className="sidebar__footer">
         <div className="sidebar__user">
           <div className="avatar">{initials(user?.name)}</div>
@@ -137,8 +148,14 @@ export default function Sidebar() {
           display: flex; align-items: center; gap: 4px;
           font-size: 0.7rem; color: var(--clr-text-3); text-transform: uppercase; letter-spacing: 0.04em;
         }
-        .sidebar__logout { color: var(--clr-text-3); }
-        .sidebar__logout:hover { color: var(--clr-error); }
+        .sidebar__logout { color: var(--clr-text-3); cursor: pointer; transition: 0.2s; background: none; border: none; }
+        .sidebar__logout:hover { color: #ef4444; }
+        
+        .avatar {
+          width: 32px; height: 32px; background: var(--clr-primary); color: white;
+          border-radius: 50%; display: flex; align-items: center; justify-content: center;
+          font-size: 0.8rem; font-weight: bold;
+        }
       `}</style>
     </aside>
   )

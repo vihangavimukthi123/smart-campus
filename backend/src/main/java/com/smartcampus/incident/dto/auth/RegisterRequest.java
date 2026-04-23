@@ -23,7 +23,11 @@ public class RegisterRequest {
     )
     private String password;
 
-    @Pattern(regexp = "^[+]?[0-9]{7,15}$", message = "Invalid phone number format")
+    @NotBlank(message = "Phone number is required")
+    @Pattern(
+        regexp = "^[0-9]{10}$", 
+        message = "Phone number must be exactly 10 digits (e.g., 0712345678)"
+    )
     private String phone;
 
     @Size(max = 100, message = "Department name too long")

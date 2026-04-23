@@ -40,6 +40,9 @@ public class SecurityConfig {
                 // Public
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+
                 // File serving (authenticated but not role-restricted)
                 .requestMatchers(HttpMethod.GET, "/tickets/*/attachments/**").authenticated()
                 // Require authentication for everything else
