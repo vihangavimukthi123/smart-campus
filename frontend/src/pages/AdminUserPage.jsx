@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axiosInstance';
 import { 
   Search, UserPlus, Edit, Trash2, X, 
   ShieldCheck, Wrench, Users, Filter 
 } from 'lucide-react';
-
-// API Configuration
-const API_URL = 'http://localhost:8080/api/admin/users';
-const getHeaders = () => ({
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-});
 
 export default function AdminUserPage() {
     const [users, setUsers] = useState([]);
@@ -26,8 +20,8 @@ export default function AdminUserPage() {
     const loadUsers = async () => {
         try {
             setLoading(true);
-            const { data } = await axios.get(API_URL, getHeaders());
-            setUsers(data);
+            const { data } = await api.get('/admin/users');
+            setUsers(Array.isArray(data) ? data : data.content || []);
         } catch (err) {
             console.error("Failed to load users", err);
         } finally {
@@ -52,9 +46,9 @@ export default function AdminUserPage() {
         e.preventDefault();
         try {
             if (selectedUser) {
-                await axios.put(`${API_URL}/${selectedUser.userId}`, formData, getHeaders());
+                await api.put(`/admin/users/${selectedUser.userId}`, formData);
             } else {
-                await axios.post(API_URL, formData, getHeaders());
+                await api.post('/admin/users', formData);
             }
             setIsModalOpen(false);
             loadUsers();
@@ -66,7 +60,7 @@ export default function AdminUserPage() {
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this user?")) {
             try {
-                await axios.delete(`${API_URL}/${id}`, getHeaders());
+                await api.delete(`/admin/users/${id}`);
                 loadUsers();
             } catch (err) {
                 alert("Delete failed");
