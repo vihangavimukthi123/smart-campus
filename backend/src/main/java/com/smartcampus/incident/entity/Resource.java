@@ -38,4 +38,8 @@ public class Resource {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private ResourceStatus status;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean deleted = false;
 }

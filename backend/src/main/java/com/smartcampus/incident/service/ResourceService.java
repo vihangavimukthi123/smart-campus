@@ -9,9 +9,15 @@ public interface ResourceService {
 
     List<ResourceResponse> getAllResources();
 
+    List<ResourceResponse> getAllResources(boolean includeRetired);
+
+    List<ResourceResponse> getAllResourcesIncludingRetired();
+
     ResourceResponse getResourceById(Long id);
 
     ResourceResponse createResource(CreateResourceRequest request);
 
-    // ResourceResponse updateResource(Long id, CreateResourceRequest request);
+    ResourceResponse updateResource(Long id, CreateResourceRequest request);
+
+    void deleteResource(Long id);
 }
