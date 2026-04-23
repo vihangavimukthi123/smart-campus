@@ -5,6 +5,7 @@ import com.smartcampus.incident.entity.Notification;
 import com.smartcampus.incident.entity.User;
 import com.smartcampus.incident.repository.NotificationRepository;
 import com.smartcampus.incident.service.NotificationService;
+import com.smartcampus.incident.util.SecurityUtils;
 import com.smartcampus.incident.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,6 +22,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final EmailService emailService;
+    private final SecurityUtils securityUtils;
 
     // 1. state change in ticket
     @Override
@@ -101,7 +103,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     // Helper method to get current logged in user
     private User getCurrentUser() {
-        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return securityUtils.getCurrentUser();
     }
 
     private NotificationResponse convertToResponse(Notification n) {
