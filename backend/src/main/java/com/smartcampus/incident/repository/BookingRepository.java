@@ -16,10 +16,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
 
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.resource.id = :resourceId " +
            "AND b.status NOT IN ('REJECTED', 'CANCELLED') " +
+           "AND b.id <> :excludeId " +
            "AND (b.startDateTime < :end AND b.endDateTime > :start)")
-    boolean existsOverlappingBooking(@Param("resourceId") Long resourceId, 
-                                     @Param("start") LocalDateTime start, 
-                                     @Param("end") LocalDateTime end);
+    boolean existsOverlappingBooking(@Param("resourceId") Long resourceId,
+                                     @Param("start") LocalDateTime start,
+                                     @Param("end") LocalDateTime end,
+                                     @Param("excludeId") Long excludeId);
 
     @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.user.id = :userId")
     List<Booking> findByUserId(@Param("userId") Long userId);
