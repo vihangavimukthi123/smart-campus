@@ -29,10 +29,11 @@ const STAT_CONFIGS = {
 }
 
 export default function DashboardPage() {
-  const { user, isAdmin, isTechnician } = useAuth()
+  const { user, isAdmin, isTechnician, isUser } = useAuth()
   const navigate = useNavigate()
   const [tickets,  setTickets]  = useState([])
   const [counts,   setCounts]   = useState({})
+  const [slaStats, setSlaStats] = useState(null)
   const [loading,  setLoading]  = useState(true)
 
   useEffect(() => {
@@ -44,6 +45,11 @@ export default function DashboardPage() {
         const c = {}
         all.forEach(t => { c[t.status] = (c[t.status] || 0) + 1 })
         setCounts(c)
+
+        if (isAdmin) {
+          const { data: stats } = await ticketService.getSlaStats()
+          setSlaStats(stats)
+        }
       } catch {}
       finally { setLoading(false) }
     }
@@ -73,7 +79,7 @@ export default function DashboardPage() {
                 : 'Submit and track your maintenance requests here.'}
             </p>
           </div>
-          {!isTechnician && (
+          {isUser && (
             <button
               className="btn btn-primary"
               onClick={() => navigate('/tickets/new')}
@@ -106,6 +112,47 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* SLA Analytics Section (Admin only) */}
+      {isAdmin && slaStats && (
+        <div className="sla-dashboard card">
+          <div className="flex-between" style={{ marginBottom: 'var(--space-4)' }}>
+            <h3 className="heading-3">
+              <Clock size={18} style={{ display: 'inline', marginRight: 8 }} />
+              SLA Analytics
+            </h3>
+            <div className="breach-rate">
+              <span className="text-xs text-muted">Overall Breach Rate:</span>
+              <span className={`breach-percent ${slaStats.breachRate > 20 ? 'red' : 'green'}`}>
+                {slaStats.breachRate.toFixed(1)}%
+              </span>
+            </div>
+          </div>
+          
+          <div className="sla-stats-grid">
+            <div className="sla-stat-item">
+              <div className="sla-stat-item__label">Avg. First Response</div>
+              <div className="sla-stat-item__value">
+                {Math.floor(slaStats.averageTtfrSeconds / 3600)}h {Math.floor((slaStats.averageTtfrSeconds % 3600) / 60)}m
+              </div>
+            </div>
+            <div className="sla-stat-item">
+              <div className="sla-stat-item__label">Avg. Resolution</div>
+              <div className="sla-stat-item__value">
+                {Math.floor(slaStats.averageTtrSeconds / 3600)}h {Math.floor((slaStats.averageTtrSeconds % 3600) / 60)}m
+              </div>
+            </div>
+            <div className="sla-stat-item">
+              <div className="sla-stat-item__label">Breached Tickets</div>
+              <div className="sla-stat-item__value text-danger">{slaStats.breachedTickets}</div>
+            </div>
+            <div className="sla-stat-item">
+              <div className="sla-stat-item__label">Total Tracked</div>
+              <div className="sla-stat-item__value">{slaStats.totalTickets}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Recent tickets */}
       <div className="card" style={{ marginTop: 'var(--space-6)' }}>
         <div className="flex-between" style={{ marginBottom: 'var(--space-5)' }}>
@@ -122,7 +169,7 @@ export default function DashboardPage() {
           <div className="empty-state">
             <div className="empty-state-icon">🎫</div>
             <p style={{ marginBottom: 'var(--space-4)' }}>No tickets yet</p>
-            {!isTechnician && (
+            {isUser && (
               <button className="btn btn-primary" onClick={() => navigate('/tickets/new')}>
                 Submit Your First Ticket
               </button>
@@ -239,6 +286,17 @@ export default function DashboardPage() {
         .recent-item__body { flex: 1; min-width: 0; }
         .recent-item__title { font-size: 0.9rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .recent-item__meta { font-size: 0.75rem; color: var(--clr-text-3); margin-top: 2px; }
+
+        .sla-dashboard { margin-bottom: var(--space-6); background: var(--clr-surface-2); border-color: rgba(99,102,241,0.2); }
+        .breach-percent { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.1rem; margin-left: 8px; }
+        .breach-percent.green { color: #10b981; }
+        .breach-percent.red { color: #ef4444; }
+        
+        .sla-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-4); margin-top: var(--space-2); }
+        .sla-stat-item { padding: var(--space-4); background: var(--clr-surface); border-radius: var(--radius-md); border: 1px solid var(--clr-border); }
+        .sla-stat-item__label { font-size: 0.75rem; color: var(--clr-text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-1); }
+        .sla-stat-item__value { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 600; }
+        .text-danger { color: #ef4444; }
       `}</style>
     </div>
   )

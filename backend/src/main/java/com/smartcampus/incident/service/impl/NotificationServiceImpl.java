@@ -52,6 +52,15 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @Async
+    @Transactional
+    public void notifyNewTicket(Long ticketId, User admin, String ticketTitle) {
+        persist(admin,
+            String.format("New ticket submitted: \"%s\" (#%d)", ticketTitle, ticketId),
+            "STATUS_CHANGE", ticketId);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Page<NotificationResponse> getMyNotifications(Pageable pageable) {
         User current = securityUtils.getCurrentUser();

@@ -22,6 +22,7 @@ public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
     private final TicketRepository ticketRepository;
+    private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final SecurityUtils securityUtils;
 
@@ -49,6 +50,16 @@ public class CommentServiceImpl implements CommentService {
             !ticket.getAssignedTo().getUserId().equals(currentUser.getUserId()) &&
             !ticket.getAssignedTo().getUserId().equals(ticket.getCreatedBy().getUserId())) {
             notificationService.notifyNewComment(ticketId, ticket.getAssignedTo(), currentUser.getName());
+        }
+
+        // Notify Admins
+        java.util.List<User> admins = userRepository.findByRole(Role.ADMIN);
+        for (User admin : admins) {
+            if (!admin.getId().equals(currentUser.getId()) &&
+                !admin.getId().equals(ticket.getCreatedBy().getId()) &&
+                (ticket.getAssignedTo() == null || !admin.getId().equals(ticket.getAssignedTo().getId()))) {
+                notificationService.notifyNewComment(ticketId, admin, currentUser.getName());
+            }
         }
 
         return toResponse(comment, currentUser);

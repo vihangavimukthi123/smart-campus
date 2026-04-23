@@ -29,6 +29,7 @@ import java.util.List;
 public class TicketController {
 
     private final TicketService ticketService;
+    private final SlaService slaService;
     private final FileStorageService fileStorageService;
     private final AttachmentRepository attachmentRepository;
 
@@ -119,5 +120,19 @@ public class TicketController {
     public ResponseEntity<Void> deleteTicket(@PathVariable Long id) {
         ticketService.deleteTicket(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/sla")
+    @Operation(summary = "Get SLA details for a specific ticket")
+    public ResponseEntity<TicketResponse> getTicketSla(@PathVariable Long id) {
+        // Since TicketResponse already contains SLA fields, we can just return it.
+        // This is useful for focused frontend refresh.
+        return ResponseEntity.ok(ticketService.getTicketById(id));
+    }
+
+    @GetMapping("/stats/sla")
+    @Operation(summary = "Get overall SLA performance stats (ADMIN only)")
+    public ResponseEntity<SlaStatsResponse> getSlaStats() {
+        return ResponseEntity.ok(slaService.getSlaStats());
     }
 }

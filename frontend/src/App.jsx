@@ -8,6 +8,10 @@ import DashboardPage from './pages/DashboardPage'
 import TicketListPage from './pages/TicketListPage'
 import CreateTicketPage from './pages/CreateTicketPage'
 import TicketDetailPage from './pages/TicketDetailPage'
+import ResourcesPage from './pages/ResourcesPage'
+import CreateBookingPage from './pages/CreateBookingPage'
+import MyBookingsPage from './pages/MyBookingsPage'
+import AdminBookingsPage from './pages/AdminBookingsPage'
 
 // --- MEWA KATUTH ADD KARANNA (MEWA NATHTHAM WHITE SCREEN ENNA PULUWAN) ---
 import OverallDashboard from './pages/OverallDashboard'
@@ -25,10 +29,13 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/dashboard" replace />} />
-      <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to="/dashboard" replace />} />
+    <>
+      <Routes>
+        {/* Public routes */}
+        <Route
+          path="/login"
+          element={!user ? <LoginPage /> : <Navigate to="/dashboard" replace />}
+        />
 
       {/* Protected routes - Hama pituwakma me Layout eka athule thiyenna ona */}
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
@@ -45,11 +52,36 @@ export default function App() {
         <Route path="/tickets" element={<TicketListPage />} />
         <Route path="/tickets/new" element={<CreateTicketPage />} />
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
+        <Route path="/resources" element={<ProtectedRoute roles={['ADMIN', 'USER']}><ResourcesPage /></ProtectedRoute>} />
+        <Route path="/bookings/new" element={<CreateBookingPage />} />
+        <Route path="/bookings/my" element={<ProtectedRoute roles={['ADMIN', 'USER']}><MyBookingsPage /></ProtectedRoute>} />
+        <Route path="/admin/bookings" element={<ProtectedRoute roles={['ADMIN']}><AdminBookingsPage /></ProtectedRoute>} />
       </Route>
 
+<<<<<<< HEAD
       {/* Default redirect - Meka thamai gedara main door eka */}
       <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+=======
+        {/* Protected routes */}
+        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/tickets" element={<TicketListPage />} />
+          <Route path="/tickets/new" element={<CreateTicketPage />} />
+          <Route path="/tickets/:id" element={<TicketDetailPage />} />
+          <Route path="/resources" element={<ResourcesPage />} />
+        </Route>
+
+        {/* Default redirect */}
+        <Route
+          path="/"
+          element={<Navigate to={user ? "/dashboard" : "/login"} replace />}
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
+>>>>>>> main
   )
 }

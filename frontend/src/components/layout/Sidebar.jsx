@@ -2,7 +2,9 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
   LayoutDashboard, Ticket, PlusCircle,
-  LogOut, Shield, Wrench, User, Users // 'Users' icon eka add kala
+  LogOut, Shield, Wrench, User, Users ,// 'Users' icon eka add kala
+  LayoutDashboard, Ticket, PlusCircle, Building2,
+  LogOut, Shield, Wrench, User, Calendar, ClipboardCheck
 } from 'lucide-react'
 
 // Navigation links configuration
@@ -12,6 +14,10 @@ const NAV = [
   { to: '/tickets/new', icon: <PlusCircle size={18} />,    label: 'New Ticket', roles: ['USER', 'ADMIN'] },
   // Admin ta vitharak pena User Management link eka
   { to: '/admin/users', icon: <Users size={18} />,         label: 'User Management', roles: ['ADMIN'] },
+  { to: '/tickets/new', icon: <PlusCircle size={18} />,    label: 'New Ticket', roles: ['USER'] },
+  { to: '/resources', icon: <Building2 size={18} />,       label: 'Resources' },
+  { to: '/bookings/my', icon: <Calendar size={18} />,      label: 'My Bookings', roles: ['USER', 'TECHNICIAN'] },
+  { to: '/admin/bookings', icon: <ClipboardCheck size={18} />, label: 'Manage Bookings', roles: ['ADMIN'] },
 ]
 
 const ROLE_ICON = { 

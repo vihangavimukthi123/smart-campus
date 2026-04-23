@@ -27,6 +27,11 @@ export const ticketService = {
   delete: (id) =>
     api.delete(`/tickets/${id}`),
 
-  getAttachmentUrl: (ticketId, attachmentId) =>
-    `/api/tickets/${ticketId}/attachments/${attachmentId}`,
+  getSlaStats: () =>
+    api.get('/tickets/stats/sla'),
+
+  getAttachmentUrl: (ticketId, attachmentId) => {
+    const token = localStorage.getItem('token');
+    return `/api/tickets/${ticketId}/attachments/${attachmentId}${token ? `?token=${token}` : ''}`;
+  },
 }
