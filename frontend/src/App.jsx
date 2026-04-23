@@ -14,6 +14,7 @@ import MyBookingsPage from './pages/MyBookingsPage'
 import AdminBookingsPage from './pages/AdminBookingsPage'
 import OverallDashboard from './pages/OverallDashboard'
 import AdminUserPage from './pages/AdminUserPage'
+import BookingVerifyPage from './pages/BookingVerifyPage'
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -36,6 +37,10 @@ export default function App() {
       <Route
         path="/register"
         element={!user ? <RegisterPage /> : <Navigate to="/dashboard" replace />}
+      />
+      <Route
+        path="/verify/:token"
+        element={<BookingVerifyPage />}
       />
 
       {/* 2. Protected routes - Login wechcha aya layout ekath ekka meka athule inne */}

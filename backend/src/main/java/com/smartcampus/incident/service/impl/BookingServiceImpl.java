@@ -15,6 +15,7 @@ import com.smartcampus.incident.repository.BookingRepository;
 import com.smartcampus.incident.repository.ResourceRepository;
 import com.smartcampus.incident.repository.specification.BookingSpecification;
 import com.smartcampus.incident.service.BookingService;
+import com.smartcampus.incident.service.QrCodeService;
 import com.smartcampus.incident.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final ResourceRepository resourceRepository;
     private final SecurityUtils securityUtils;
+    private final QrCodeService qrCodeService;
 
     @Override
     @Transactional
@@ -92,10 +94,24 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<BookingResponse> getMyBookings() {
         User currentUser = securityUtils.getCurrentUser();
-        return bookingRepository.findByUserId(currentUser.getUserId()).stream()
+        List<Booking> bookings = bookingRepository.findByUserId(currentUser.getUserId());
+        
+        // Ensure approved bookings have verification tokens
+        boolean updated = false;
+        for (Booking booking : bookings) {
+            if (booking.getStatus() == BookingStatus.APPROVED && booking.getVerificationToken() == null) {
+                booking.setVerificationToken(qrCodeService.generateVerificationToken(booking.getId()));
+                updated = true;
+            }
+        }
+        if (updated) {
+            bookingRepository.saveAll(bookings);
+        }
+
+        return bookings.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -166,6 +182,11 @@ public class BookingServiceImpl implements BookingService {
             if (hasConflict) {
                 throw new IllegalArgumentException("Booking conflict detected. Another booking already occupies this slot.");
             }
+
+            // Generate verification token if not already present
+            if (booking.getVerificationToken() == null) {
+                booking.setVerificationToken(qrCodeService.generateVerificationToken(id));
+            }
             log.info("Booking #{} approved by admin", id);
         } else if (newStatus == BookingStatus.REJECTED) {
             if (request.getReason() == null || request.getReason().trim().isEmpty()) {
@@ -206,6 +227,14 @@ public class BookingServiceImpl implements BookingService {
         log.info("Booking #{} cancelled by user {}. Reason: {}", id, currentUser.getEmail(), booking.getCancellationReason());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public BookingResponse getBookingByToken(String token) {
+        Booking booking = bookingRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking with token: " + token, 0L));
+        return toResponse(booking);
+    }
+
     private BookingResponse toResponse(Booking booking) {
         return BookingResponse.builder()
                 .id(booking.getId())
@@ -229,6 +258,10 @@ public class BookingServiceImpl implements BookingService {
                 .cancelledAt(booking.getCancelledAt())
                 .cancellationReason(booking.getCancellationReason())
                 .createdAt(booking.getCreatedAt())
+                .verificationToken(booking.getVerificationToken())
+                .qrCodeImage(booking.getStatus() == BookingStatus.APPROVED && booking.getVerificationToken() != null 
+                        ? qrCodeService.generateQrCodeImage(booking.getVerificationToken()) 
+                        : null)
                 .build();
     }
 }

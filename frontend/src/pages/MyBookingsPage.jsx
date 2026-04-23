@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { getMyBookings, cancelBooking } from '../api/bookingService'
 import toast from 'react-hot-toast'
-import { Calendar, Clock, MapPin, Users, AlertCircle, Trash2, Search, Filter } from 'lucide-react'
+import { Calendar, Clock, MapPin, Users, AlertCircle, Trash2, Search, Filter, QrCode } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import QrCodeModal from '../components/QrCodeModal'
 
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState([])
@@ -11,6 +12,10 @@ export default function MyBookingsPage() {
   const [cancellingId, setCancellingId] = useState(null)
   const [cancelReason, setCancelReason] = useState('')
   const [showCancelDialog, setShowCancelDialog] = useState(false)
+  
+  // QR Code Modal State
+  const [showQrModal, setShowQrModal] = useState(false)
+  const [selectedBooking, setSelectedBooking] = useState(null)
 
   useEffect(() => {
     fetchBookings()
@@ -46,6 +51,11 @@ export default function MyBookingsPage() {
       const message = error.response?.data?.message || 'Failed to cancel booking'
       toast.error(message)
     }
+  }
+
+  const openQrModal = (booking) => {
+    setSelectedBooking(booking)
+    setShowQrModal(true)
   }
 
   const getStatusBadgeClass = (status) => {
@@ -212,20 +222,37 @@ export default function MyBookingsPage() {
                 </div>
                 
                 {booking.status === 'APPROVED' && (
-                  <button
-                    className="btn btn-danger btn-sm"
-                    style={{ marginTop: 'auto' }}
-                    onClick={() => initiateCancel(booking.id)}
-                  >
-                    <Trash2 size={14} />
-                    Cancel Booking
-                  </button>
+                  <>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{ marginTop: 'auto', background: '#10b981', borderColor: '#10b981' }}
+                      onClick={() => openQrModal(booking)}
+                    >
+                      <QrCode size={14} />
+                      Scan QR
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => initiateCancel(booking.id)}
+                    >
+                      <Trash2 size={14} />
+                      Cancel Booking
+                    </button>
+                  </>
                 )}
               </div>
             </article>
           ))}
         </div>
       )}
+
+      {/* QR Code Modal */}
+      <QrCodeModal 
+        isOpen={showQrModal} 
+        onClose={() => setShowQrModal(false)} 
+        qrCodeImage={selectedBooking?.qrCodeImage}
+        bookingId={selectedBooking?.id}
+      />
 
       {/* Cancellation Dialog Overlay */}
       {showCancelDialog && (
