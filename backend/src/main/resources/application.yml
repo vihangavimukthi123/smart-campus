@@ -31,8 +31,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME:noreply@smartcampus.com}
-    password: ${MAIL_PASSWORD:}
+    username: cbombugala@gmail.com
+    password: mfirocwkyumvhvbb
     properties:
       mail:
         smtp:
@@ -40,7 +40,7 @@ spring:
           starttls:
             enable: true
     # Set to true to enable actual email delivery
-    enabled: false
+    enabled: true
 
 # Application-specific settings
 app:

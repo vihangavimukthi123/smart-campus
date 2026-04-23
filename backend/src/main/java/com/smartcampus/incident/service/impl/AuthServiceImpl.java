@@ -6,6 +6,8 @@ import com.smartcampus.incident.exception.UnauthorizedException;
 import com.smartcampus.incident.repository.UserRepository;
 import com.smartcampus.incident.security.JwtTokenProvider;
 import com.smartcampus.incident.service.AuthService;
+import com.smartcampus.incident.service.EmailService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,6 +29,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -62,8 +65,7 @@ public class AuthServiceImpl implements AuthService {
         log.info("New user registered: {} [{}]", user.getEmail(), user.getRole());
 
         //notification 
-        //for now display in the console
-        System.out.println("DEBUG: Sending OTP " + otp + " to email " + user.getEmail());
+        emailService.sendOtpEmail(user.getEmail(), otp);
 
         //need to login again after registering so the account is still not verified
         return buildAuthResponse(user, null);
@@ -104,8 +106,7 @@ public String resendOtp(String email) {
     user.setOtpExpiry(LocalDateTime.now().plusMinutes(5)); // Ayeth winadi 5k damma
     userRepository.save(user);
 
-    // Console eke print karamu (Email nathi nisa)
-    System.out.println("DEBUG: Resending NEW OTP " + newOtp + " to email " + email);
+    emailService.sendOtpEmail(email, newOtp);
     
     return "New OTP sent to your email!";
     }
