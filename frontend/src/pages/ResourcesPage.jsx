@@ -4,6 +4,7 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { createResource, deleteResource, getResources, updateResource } from '../api/resourceService'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import ConfirmModal from '../components/ConfirmModal'
 
 const emptyForm = {
   name: '',
@@ -101,6 +102,8 @@ export default function ResourcesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingResource, setEditingResource] = useState(null)
   const [showRetired, setShowRetired] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [resourceToConfirm, setResourceToConfirm] = useState(null)
 
   const [form, setForm] = useState(emptyForm)
 
@@ -215,17 +218,17 @@ export default function ResourcesPage() {
     }
   }
 
-  const handleDelete = async (resource) => {
+  const handleDelete = (resource) => {
     if (!isAdmin) {
       toast.error('Only admins can manage resources')
       return
     }
+    setResourceToConfirm(resource)
+    setShowConfirmModal(true)
+  }
 
-    const confirmed = window.confirm(`Delete resource "${resource.name}"?`)
-    if (!confirmed) {
-      return
-    }
-
+  const executeDelete = async () => {
+    const resource = resourceToConfirm
     setDeletingId(resource.id)
     try {
       await deleteResource(resource.id)
@@ -559,6 +562,16 @@ export default function ResourcesPage() {
           </div>
         )}
       </section>
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={executeDelete}
+        title="Delete Resource"
+        message={`Are you sure you want to delete "${resourceToConfirm?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        type="danger"
+      />
     </div>
   )
 }

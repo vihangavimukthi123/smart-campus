@@ -3,19 +3,23 @@ import NotificationBell from '../NotificationBell'
 import ThemeToggle from '../ThemeToggle'
 
 const PAGE_TITLES = {
-  '/dashboard':   '📊 Dashboard',
-  '/tickets':     '🎫 Tickets',
-  '/tickets/new': '➕ New Ticket',
-  '/admin/users':    '👥 User Management',
-  '/resources':   '🏢 Resources',
+  '/dashboard':        '📊 Overview',
+  '/tickets':          '🎫 Tickets',
+  '/tickets/dashboard': '📈 Ticket Stats',
+  '/tickets/new':      '➕ New Ticket',
+  '/resources':        '🏢 Resources',
+  '/bookings/new':     '📅 New Booking',
+  '/bookings/my':      '📔 My Bookings',
+  '/admin/users':      '👥 User Management',
+  '/admin/bookings':   '📅 Manage Bookings',
 }
 
 export default function Header() {
   const { pathname } = useLocation()
 
   const title = Object.entries(PAGE_TITLES).find(([path]) =>
-    pathname === path || (path !== '/tickets' && pathname.startsWith(path))
-  )?.[1] || '🎫 Ticket Details'
+    pathname === path || (path.length > 1 && pathname.startsWith(path))
+  )?.[1] || (pathname.startsWith('/tickets/') ? '🎫 Ticket Details' : '')
 
   return (
     <header className="top-header">

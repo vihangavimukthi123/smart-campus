@@ -4,6 +4,7 @@ import {
   Search, UserPlus, Edit, Trash2, X, 
   ShieldCheck, Wrench, Users, Filter 
 } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 
 // API Configuration
 const API_URL = '/admin/users';
@@ -14,6 +15,8 @@ export default function AdminUserPage() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [userToDelete, setUserToDelete] = useState(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -60,14 +63,17 @@ export default function AdminUserPage() {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this user?")) {
-            try {
-                await api.delete(`${API_URL}/${id}`);
-                loadUsers();
-            } catch (err) {
-                alert("Delete failed");
-            }
+    const handleDelete = (id) => {
+        setUserToDelete(id);
+        setShowConfirmModal(true);
+    };
+
+    const executeDelete = async () => {
+        try {
+            await api.delete(`${API_URL}/${userToDelete}`);
+            loadUsers();
+        } catch (err) {
+            alert("Delete failed");
         }
     };
 
@@ -207,6 +213,16 @@ export default function AdminUserPage() {
                     </div>
                 </div>
             )}
+
+            <ConfirmModal
+                isOpen={showConfirmModal}
+                onClose={() => setShowConfirmModal(false)}
+                onConfirm={executeDelete}
+                title="Delete User"
+                message="Are you sure you want to delete this user? This action cannot be undone and will remove all associated data."
+                confirmText="Delete"
+                type="danger"
+            />
 
             <style>{`
                 .admin-page-container { padding: 2rem; max-width: 1200px; margin: 0 auto; }

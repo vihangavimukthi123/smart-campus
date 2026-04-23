@@ -5,6 +5,7 @@ import {
   CheckCircle, XCircle, Info, Search, Filter, Eye,
   ChevronLeft, ChevronRight, Calendar, User, Building2, MapPin, Users, Clock
 } from 'lucide-react'
+import ConfirmModal from '../components/ConfirmModal'
 
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState([])
@@ -25,6 +26,8 @@ export default function AdminBookingsPage() {
   const [rejectId, setRejectId] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [confirmId, setConfirmId] = useState(null)
 
   const fetchBookings = useCallback(async () => {
     setLoading(true)
@@ -55,9 +58,13 @@ export default function AdminBookingsPage() {
   }, [fetchBookings])
 
   const handleApprove = async (id) => {
-    if (!window.confirm('Are you sure you want to approve this booking?')) return
+    setConfirmId(id)
+    setShowConfirmModal(true)
+  }
+
+  const executeApprove = async () => {
     try {
-      await updateBookingStatus(id, { status: 'APPROVED' })
+      await updateBookingStatus(confirmId, { status: 'APPROVED' })
       toast.success('Booking approved')
       fetchBookings()
     } catch (error) {
@@ -216,13 +223,6 @@ export default function AdminBookingsPage() {
                             </button>
                           </>
                         )}
-                        {(b.status === 'REJECTED' || b.status === 'CANCELLED') && (
-                           <button className="btn btn-ghost btn-icon btn-sm" 
-                             title="View Reason" 
-                             onClick={() => { setSelectedBooking(b); setShowViewModal(true); }}>
-                             <Info size={16} />
-                           </button>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -334,9 +334,10 @@ export default function AdminBookingsPage() {
       {showRejectModal && (
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          backdropFilter: 'blur(4px)'
         }}>
-          <div className="card" style={{ width: '400px' }}>
+          <div className="card-glass" style={{ width: '400px', padding: '2rem' }}>
             <h3 className="heading-3" style={{ marginBottom: '1rem' }}>Reject Booking</h3>
             <div className="form-group">
               <label className="form-label">Reason for rejection</label>
@@ -348,7 +349,7 @@ export default function AdminBookingsPage() {
                 onChange={(e) => setRejectReason(e.target.value)}
               />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
               <button className="btn btn-secondary btn-sm" onClick={() => setShowRejectModal(false)}>Cancel</button>
               <button className="btn btn-danger btn-sm" onClick={handleReject} disabled={submitting}>
                 {submitting ? 'Rejecting...' : 'Reject Booking'}
@@ -357,6 +358,17 @@ export default function AdminBookingsPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={executeApprove}
+        title="Approve Booking"
+        message="Are you sure you want to approve this booking request? This will reserve the resource for the selected time."
+        confirmText="Approve"
+        type="success"
+      />
 
       <style>{`
         .btn-success {
