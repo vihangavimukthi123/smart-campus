@@ -3,122 +3,115 @@ package com.smartcampus.incident.service.impl;
 import com.smartcampus.incident.dto.notification.NotificationResponse;
 import com.smartcampus.incident.entity.Notification;
 import com.smartcampus.incident.entity.User;
-import com.smartcampus.incident.exception.ResourceNotFoundException;
-import com.smartcampus.incident.exception.UnauthorizedException;
 import com.smartcampus.incident.repository.NotificationRepository;
 import com.smartcampus.incident.service.NotificationService;
-import com.smartcampus.incident.util.SecurityUtils;
+import com.smartcampus.incident.service.EmailService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
-    private final SecurityUtils securityUtils;
+    private final EmailService emailService;
 
+    // 1. state change in ticket
     @Override
-    @Async
     @Transactional
     public void notifyStatusChange(Long ticketId, User recipient, String newStatus) {
-        persist(recipient,
-            String.format("Your ticket #%d status has been updated to: %s", ticketId, newStatus),
-            "STATUS_CHANGE", ticketId);
+        String message = "Your ticket #" + ticketId + " status has been updated to: " + newStatus;
+        saveAndSend(recipient, message, "STATUS_CHANGE", ticketId);
     }
 
+    // 2. new comment added to ticket 
     @Override
-    @Async
     @Transactional
     public void notifyNewComment(Long ticketId, User recipient, String commenterName) {
-        persist(recipient,
-            String.format("%s added a comment on ticket #%d", commenterName, ticketId),
-            "NEW_COMMENT", ticketId);
+        String message = commenterName + " added a new comment to your ticket #" + ticketId;
+        saveAndSend(recipient, message, "NEW_COMMENT", ticketId);
     }
 
     @Override
-    @Async
     @Transactional
     public void notifyAssignment(Long ticketId, User technician, String ticketTitle) {
-        persist(technician,
-            String.format("You have been assigned to ticket #%d: \"%s\"", ticketId, ticketTitle),
-            "ASSIGNMENT", ticketId);
+        String message = "New ticket assigned to you: " + ticketTitle;
+        saveAndSend(technician, message, "ASSIGNMENT", ticketId);
     }
 
     @Override
-    @Async
     @Transactional
     public void notifyNewTicket(Long ticketId, User admin, String ticketTitle) {
-        persist(admin,
-            String.format("New ticket submitted: \"%s\" (#%d)", ticketTitle, ticketId),
-            "STATUS_CHANGE", ticketId);
+        String message = "New incident reported: " + ticketTitle;
+        saveAndSend(admin, message, "NEW_TICKET", ticketId);
+    }
+
+    
+    private void saveAndSend(User recipient, String message, String type, Long ticketId) {
+        // save to DB
+        Notification notification = Notification.builder()
+                .recipient(recipient)
+                .message(message)
+                .type(type)
+                .relatedId(ticketId) // relatedId ලෙස අපේ entity එකේ තිබිය යුතුයි
+                .read(false)
+                .build();
+        notificationRepository.save(notification);
+
+        // send email notifications if user has enabled email notifications
+        if (recipient.isEmailNotify()) {
+            emailService.sendSimpleEmail(recipient.getEmail(), "SmartCampus Update", message);
+        }
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Page<NotificationResponse> getMyNotifications(Pageable pageable) {
-        User current = securityUtils.getCurrentUser();
-        return notificationRepository
-            .findByRecipientOrderByCreatedAtDesc(current, pageable)
-            .map(this::toResponse);
+        User currentUser = getCurrentUser();
+        return notificationRepository.findByRecipientOrderByCreatedAtDesc(currentUser, pageable)
+                .map(this::convertToResponse);
     }
 
     @Override
     @Transactional
     public NotificationResponse markAsRead(Long notificationId) {
-        User current = securityUtils.getCurrentUser();
-        Notification notification = notificationRepository.findById(notificationId)
-            .orElseThrow(() -> new ResourceNotFoundException("Notification", notificationId));
-
-        if (!notification.getRecipient().getUserId().equals(current.getUserId())) {
-            throw new UnauthorizedException("You cannot modify other users' notifications");
-        }
-
+        User currentUser = getCurrentUser();
+        Notification notification = notificationRepository.findByIdAndRecipient(notificationId, currentUser)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+        
         notification.setRead(true);
-        return toResponse(notificationRepository.save(notification));
+        return convertToResponse(notificationRepository.save(notification));
     }
 
     @Override
-    @Transactional(readOnly = true)
     public long getUnreadCount() {
-        User current = securityUtils.getCurrentUser();
-        return notificationRepository.countByRecipientAndReadFalse(current);
+        return notificationRepository.countByRecipientAndReadFalse(getCurrentUser());
     }
 
     @Override
     @Transactional
     public void markAllAsRead() {
-        User current = securityUtils.getCurrentUser();
-        notificationRepository.markAllAsReadForUser(current);
+        notificationRepository.markAllAsReadForUser(getCurrentUser());
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
-
-    private void persist(User recipient, String message, String type, Long ticketId) {
-        Notification notification = Notification.builder()
-            .recipient(recipient)
-            .message(message)
-            .type(type)
-            .ticketId(ticketId)
-            .build();
-        notificationRepository.save(notification);
-        log.debug("Notification [{}] sent to user {}: {}", type, recipient.getEmail(), message);
+    // Helper method to get current logged in user
+    private User getCurrentUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
-    private NotificationResponse toResponse(Notification n) {
+    private NotificationResponse convertToResponse(Notification n) {
         return NotificationResponse.builder()
-            .id(n.getId())
-            .message(n.getMessage())
-            .type(n.getType())
-            .ticketId(n.getTicketId())
-            .read(n.isRead())
-            .createdAt(n.getCreatedAt())
-            .build();
+                .id(n.getId())
+                .message(n.getMessage())
+                .type(n.getType())
+                .read(n.isRead())
+                .createdAt(n.getCreatedAt())
+                .relatedId(n.getRelatedId())
+                .build();
     }
 }

@@ -63,6 +63,13 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    //notification sound management
+    @Column(nullable = false)
+    private boolean soundNotify = true; // sound enable/disable
+
+    @Column(nullable = false)
+    private boolean emailNotify = true;  //enable/ disable user notifications
+
     // Tickets created by this user
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
