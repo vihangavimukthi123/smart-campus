@@ -1,12 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-<<<<<<< resource-management
 import { Pencil, Trash2 } from 'lucide-react'
 import { createResource, deleteResource, getResources, updateResource } from '../api/resourceService'
-=======
-import { createResource, getResources } from '../api/resourceService'
 import { useNavigate } from 'react-router-dom'
->>>>>>> main
 import { useAuth } from '../hooks/useAuth'
 
 const emptyForm = {

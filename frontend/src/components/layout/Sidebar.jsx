@@ -2,9 +2,8 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import {
   LayoutDashboard, Ticket, PlusCircle,
-  LogOut, Shield, Wrench, User, Users ,// 'Users' icon eka add kala
-  LayoutDashboard, Ticket, PlusCircle, Building2,
-  LogOut, Shield, Wrench, User, Calendar, ClipboardCheck
+  LogOut, Shield, Wrench, User, Users,
+  Building2, Calendar, ClipboardCheck
 } from 'lucide-react'
 
 // Navigation links configuration

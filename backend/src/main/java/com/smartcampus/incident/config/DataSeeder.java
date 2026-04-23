@@ -66,6 +66,7 @@ public class DataSeeder {
             .phone(phone)
             .department(department)
             .active(true)
+            .verified(true)
             .build();
         userRepository.save(user);
         log.info("✅ Seeded {} account: {} / {}", role, email, rawPassword);

@@ -15,9 +15,11 @@ import java.util.List;
 public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpecificationExecutor<Booking> {
 
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.resource.id = :resourceId " +
+           "AND b.id <> :bookingId " +
            "AND b.status NOT IN ('REJECTED', 'CANCELLED') " +
            "AND (b.startDateTime < :end AND b.endDateTime > :start)")
     boolean existsOverlappingBooking(@Param("resourceId") Long resourceId, 
+                                     @Param("bookingId") Long bookingId,
                                      @Param("start") LocalDateTime start, 
                                      @Param("end") LocalDateTime end);
 

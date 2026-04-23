@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axiosInstance';
 import { useAuth } from '../hooks/useAuth';
 import { 
   Users, Ticket, Clock, CheckCircle, 
@@ -18,10 +18,8 @@ export default function OverallDashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
-        
         // 1. Tickets data (Hamaotama ona)
-        const tRes = await axios.get('http://localhost:8080/api/tickets', { headers });
+        const tRes = await api.get('/tickets');
         const allTickets = tRes.data.content || [];
         setTicketStats({
           total: allTickets.length,
@@ -30,7 +28,7 @@ export default function OverallDashboard() {
 
         // 2. Users data (Admin nam vitharak gannawa)
         if (isAdmin) {
-          const uRes = await axios.get('http://localhost:8080/api/admin/users', { headers });
+          const uRes = await api.get('/admin/users');
           setUserStats({ total: uRes.data.length });
         }
       } catch (err) {
