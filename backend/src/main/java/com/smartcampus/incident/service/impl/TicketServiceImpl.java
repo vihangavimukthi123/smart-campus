@@ -204,7 +204,7 @@ public class TicketServiceImpl implements TicketService {
         // Notify Admins
         List<User> admins = userRepository.findByRole(Role.ADMIN);
         for (User admin : admins) {
-            if (!admin.getId().equals(currentUser.getId()) && !admin.getId().equals(ticket.getCreatedBy().getId())) {
+            if (!admin.getUserId().equals(currentUser.getUserId()) && !admin.getUserId().equals(ticket.getCreatedBy().getUserId())) {
                 notificationService.notifyStatusChange(ticketId, admin, to.name());
             }
         }

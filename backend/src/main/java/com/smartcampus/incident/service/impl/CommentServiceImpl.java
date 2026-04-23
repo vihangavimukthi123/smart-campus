@@ -55,9 +55,9 @@ public class CommentServiceImpl implements CommentService {
         // Notify Admins
         java.util.List<User> admins = userRepository.findByRole(Role.ADMIN);
         for (User admin : admins) {
-            if (!admin.getId().equals(currentUser.getId()) &&
-                !admin.getId().equals(ticket.getCreatedBy().getId()) &&
-                (ticket.getAssignedTo() == null || !admin.getId().equals(ticket.getAssignedTo().getId()))) {
+            if (!admin.getUserId().equals(currentUser.getUserId()) &&
+                !admin.getUserId().equals(ticket.getCreatedBy().getUserId()) &&
+                (ticket.getAssignedTo() == null || !admin.getUserId().equals(ticket.getAssignedTo().getUserId()))) {
                 notificationService.notifyNewComment(ticketId, admin, currentUser.getName());
             }
         }

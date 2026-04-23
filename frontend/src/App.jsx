@@ -12,8 +12,6 @@ import ResourcesPage from './pages/ResourcesPage'
 import CreateBookingPage from './pages/CreateBookingPage'
 import MyBookingsPage from './pages/MyBookingsPage'
 import AdminBookingsPage from './pages/AdminBookingsPage'
-
-// --- MEWA KATUTH ADD KARANNA (MEWA NATHTHAM WHITE SCREEN ENNA PULUWAN) ---
 import OverallDashboard from './pages/OverallDashboard'
 import AdminUserPage from './pages/AdminUserPage'
 
@@ -29,59 +27,42 @@ export default function App() {
   }
 
   return (
-    <>
-      <Routes>
-        {/* Public routes */}
-        <Route
-          path="/login"
-          element={!user ? <LoginPage /> : <Navigate to="/dashboard" replace />}
-        />
+    <Routes>
+      {/* 1. Public routes - Log wela nathnam witharai yanna puluwan */}
+      <Route
+        path="/login"
+        element={!user ? <LoginPage /> : <Navigate to="/dashboard" replace />}
+      />
+      <Route
+        path="/register"
+        element={!user ? <RegisterPage /> : <Navigate to="/dashboard" replace />}
+      />
 
-      {/* Protected routes - Hama pituwakma me Layout eka athule thiyenna ona */}
+      {/* 2. Protected routes - Login wechcha aya layout ekath ekka meka athule inne */}
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         
-        {/* Main Dashboard - Admin tath Userslatath denatama meka thamai penne */}
+        {/* Main Dashboard */}
         <Route path="/dashboard" element={<OverallDashboard />} />
 
-        {/* Parana Ticket Dashboard eka balanna ona nam meka */}
-        <Route path="/tickets/dashboard" element={<DashboardPage />} />
-
-        {/* Admin ge usersla manage karana thana */}
-        <Route path="/admin/users" element={<AdminUserPage />} />
-        
+        {/* Tickets and Other Services */}
         <Route path="/tickets" element={<TicketListPage />} />
+        <Route path="/tickets/dashboard" element={<DashboardPage />} />
         <Route path="/tickets/new" element={<CreateTicketPage />} />
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
-        <Route path="/resources" element={<ProtectedRoute roles={['ADMIN', 'USER']}><ResourcesPage /></ProtectedRoute>} />
+        
+        {/* Resources & Bookings */}
+        <Route path="/resources" element={<ResourcesPage />} />
         <Route path="/bookings/new" element={<CreateBookingPage />} />
-        <Route path="/bookings/my" element={<ProtectedRoute roles={['ADMIN', 'USER']}><MyBookingsPage /></ProtectedRoute>} />
+        <Route path="/bookings/my" element={<MyBookingsPage />} />
+
+        {/* Admin Specific Routes */}
+        <Route path="/admin/users" element={<ProtectedRoute roles={['ADMIN']}><AdminUserPage /></ProtectedRoute>} />
         <Route path="/admin/bookings" element={<ProtectedRoute roles={['ADMIN']}><AdminBookingsPage /></ProtectedRoute>} />
       </Route>
 
-<<<<<<< HEAD
-      {/* Default redirect - Meka thamai gedara main door eka */}
+      {/* 3. Default Redirects */}
       <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-=======
-        {/* Protected routes */}
-        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/tickets" element={<TicketListPage />} />
-          <Route path="/tickets/new" element={<CreateTicketPage />} />
-          <Route path="/tickets/:id" element={<TicketDetailPage />} />
-          <Route path="/resources" element={<ResourcesPage />} />
-        </Route>
-
-        {/* Default redirect */}
-        <Route
-          path="/"
-          element={<Navigate to={user ? "/dashboard" : "/login"} replace />}
-        />
-
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </>
->>>>>>> main
   )
 }
