@@ -7,9 +7,11 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailService {
 
     private final JavaMailSender mailSender;
@@ -23,7 +25,7 @@ public class EmailService {
     public void sendOtpEmail(String toEmail, String otp) {
         // Email feature off
         if (!isEnabled) {
-            System.out.println("Email service is disabled. OTP was: " + otp);
+            log.info("Email service is disabled. OTP was: {}", otp);
             return;
         }
 
@@ -41,10 +43,30 @@ public class EmailService {
 
         try {
             mailSender.send(message);
-            System.out.println("Email sent successfully to: " + toEmail);
+            log.info("Email sent successfully to: {}", toEmail);
         } catch (Exception e) {
             // Error handling - log the error
-            System.err.println("CRITICAL: Failed to send OTP email to " + toEmail + ". Error: " + e.getMessage());
+            log.error("CRITICAL: Failed to send OTP email to {}", toEmail, e);
+        }
+    }
+
+    public void sendSimpleEmail(String to, String subject, String body) {
+        if (!isEnabled) {
+            log.info("Email service is disabled. Message to {}: {}", to, body);
+            return;
+        }
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("SmartCampus Admin <" + fromEmail + ">");
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(body);
+
+        try {
+            mailSender.send(message);
+            log.info("Notification email sent successfully to: {}", to);
+        } catch (Exception e) {
+            log.error("Failed to send notification email to {}. Error: {}", to, e.getMessage());
         }
     }
 }

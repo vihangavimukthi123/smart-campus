@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,9 +23,7 @@ public class NotificationController {
     @GetMapping
     @Operation(summary = "Get paginated notifications for the current user")
     public ResponseEntity<Page<NotificationResponse>> getNotifications(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Pageable pageable = PageRequest.of(page, size);
+           @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
         return ResponseEntity.ok(notificationService.getMyNotifications(pageable));
     }
 
@@ -40,7 +39,7 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.markAsRead(id));
     }
 
-    @PatchMapping("/read-all")
+    @PatchMapping("/mark-read-all")
     @Operation(summary = "Mark all notifications as read")
     public ResponseEntity<Void> markAllAsRead() {
         notificationService.markAllAsRead();
