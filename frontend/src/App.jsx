@@ -51,9 +51,9 @@ export default function App() {
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
         
         {/* Resources & Bookings */}
-        <Route path="/resources" element={<ResourcesPage />} />
-        <Route path="/bookings/new" element={<CreateBookingPage />} />
-        <Route path="/bookings/my" element={<MyBookingsPage />} />
+        <Route path="/resources" element={<ProtectedRoute roles={['USER', 'ADMIN']}><ResourcesPage /></ProtectedRoute>} />
+        <Route path="/bookings/new" element={<ProtectedRoute roles={['USER', 'ADMIN']}><CreateBookingPage /></ProtectedRoute>} />
+        <Route path="/bookings/my" element={<ProtectedRoute roles={['USER', 'ADMIN', 'TECHNICIAN']}><MyBookingsPage /></ProtectedRoute>} />
 
         {/* Admin Specific Routes */}
         <Route path="/admin/users" element={<ProtectedRoute roles={['ADMIN']}><AdminUserPage /></ProtectedRoute>} />

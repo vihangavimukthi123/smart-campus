@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
-import { 
-  Users, Ticket, Clock, CheckCircle, 
-  ArrowRight, ShieldAlert, BarChart3 
+import {
+  Users, Ticket, Clock, CheckCircle,
+  ArrowRight, ShieldAlert, BarChart3
 } from 'lucide-react';
 
 export default function OverallDashboard() {
   const { user, isAdmin } = useAuth(); // User ge role eka gannawa
   const navigate = useNavigate();
-  
+
   const [ticketStats, setTicketStats] = useState({ total: 0, open: 0 });
   const [userStats, setUserStats] = useState({ total: 0 });
   const [loading, setLoading] = useState(true);
@@ -19,7 +19,7 @@ export default function OverallDashboard() {
     const loadData = async () => {
       try {
         const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
-        
+
         // 1. Tickets data (Hamaotama ona)
         const tRes = await axios.get('http://localhost:8080/api/tickets', { headers });
         const allTickets = tRes.data.content || [];
@@ -46,14 +46,14 @@ export default function OverallDashboard() {
 
   return (
     <div className="dashboard-container" style={{ padding: '2rem' }}>
-      
+
       <div className="mb-8">
         <h1 className="heading-1" style={{ color: 'white' }}>System Overview</h1>
         <p style={{ color: '#94a3b8' }}>Welcome back, {user?.name}. Here is what's happening.</p>
       </div>
 
       <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-        
+
         {/* --- ADMIN TA WITHARAK PENA USERS CARD --- */}
         {isAdmin && (
           <div className="stat-card" onClick={() => navigate('/admin/users')} style={{ cursor: 'pointer', borderLeft: '4px solid #6366f1' }}>
@@ -103,10 +103,6 @@ export default function OverallDashboard() {
           <BarChart3 size={20} /> Quick Actions
         </h3>
         <div className="flex gap-4">
-          <button className="btn btn-primary" onClick={() => navigate('/tickets/new')}>
-            Create New Ticket
-          </button>
-          
           {/* Admin nam thawa button ekak pennanawa */}
           {isAdmin && (
             <button className="btn btn-outline" onClick={() => navigate('/admin/users')}>
