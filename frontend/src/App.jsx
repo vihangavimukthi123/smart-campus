@@ -14,6 +14,7 @@ import MyBookingsPage from './pages/MyBookingsPage'
 import AdminBookingsPage from './pages/AdminBookingsPage'
 import OverallDashboard from './pages/OverallDashboard'
 import AdminUserPage from './pages/AdminUserPage'
+import AnalyticsDashboard from './pages/AnalyticsDashboard'
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -58,6 +59,7 @@ export default function App() {
         {/* Admin Specific Routes */}
         <Route path="/admin/users" element={<ProtectedRoute roles={['ADMIN']}><AdminUserPage /></ProtectedRoute>} />
         <Route path="/admin/bookings" element={<ProtectedRoute roles={['ADMIN']}><AdminBookingsPage /></ProtectedRoute>} />
+        <Route path="/admin/analytics" element={<ProtectedRoute roles={['ADMIN']}><AnalyticsDashboard /></ProtectedRoute>} />
       </Route>
 
       {/* 3. Default Redirects */}
