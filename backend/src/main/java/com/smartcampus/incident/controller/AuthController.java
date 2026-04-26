@@ -33,7 +33,7 @@ public class AuthController {
     @PostMapping("/verify-otp")
 public ResponseEntity<?> verifyOtp(@RequestBody java.util.Map<String, String> request) {
     try {
-        String email = request.get("email");
+        String email = request.get("ema il");
         String otp = request.get("otp");
 
         String message = authService.verifyOtp(request.get("email"), request.get("otp"));
