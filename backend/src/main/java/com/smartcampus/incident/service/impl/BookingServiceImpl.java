@@ -62,11 +62,12 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalArgumentException("Booking cannot be made in the past");
         }
 
-        // Validation 4: Conflict checking
+        // Validation 4: Conflict checking (excludeId = 0L means no existing booking to exclude)
         boolean hasConflict = bookingRepository.existsOverlappingBooking(
-                request.getResourceId(), 
-                request.getStartDateTime(), 
-                request.getEndDateTime()
+                request.getResourceId(),
+                request.getStartDateTime(),
+                request.getEndDateTime(),
+                0L
         );
 
         if (hasConflict) {
@@ -134,15 +135,16 @@ public class BookingServiceImpl implements BookingService {
         BookingStatus newStatus = BookingStatus.valueOf(request.getStatus().toUpperCase());
         
         if (newStatus == BookingStatus.APPROVED) {
-            // Requirement 6: Re-check for conflict during approval
+            // Re-check for conflict during approval, excluding this booking itself
             boolean hasConflict = bookingRepository.existsOverlappingBooking(
                     booking.getResource().getId(),
                     booking.getStartDateTime(),
-                    booking.getEndDateTime()
+                    booking.getEndDateTime(),
+                    booking.getId()   // exclude self so PENDING→APPROVED doesn't flag itself
             );
 
             if (hasConflict) {
-                throw new IllegalArgumentException("Booking conflict detected. Another booking already occupies this slot.");
+                throw new IllegalArgumentException("Booking conflict detected. Another APPROVED booking already occupies this slot.");
             }
             log.info("Booking #{} approved by admin", id);
         } else if (newStatus == BookingStatus.REJECTED) {
