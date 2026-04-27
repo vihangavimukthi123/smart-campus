@@ -17,8 +17,8 @@ const QrCodeModal = ({ isOpen, onClose, qrCodeImage, bookingId }) => {
   return createPortal(
     <div className="qr-modal-overlay" onClick={onClose}>
       <div className="qr-modal-content" onClick={(e) => e.stopPropagation()}>
-        <h2 className="qr-modal-title">Booking QR Code</h2>
-        <p className="qr-modal-text">Scan this QR code with your phone to verify your booking.</p>
+        <h2 className="qr-modal-title">Booking Information QR</h2>
+        <p className="qr-modal-text">Scan this QR code with your phone to view the details of this booking.</p>
         
         <div className="qr-image-container">
           <img 

@@ -229,7 +229,7 @@ export default function MyBookingsPage() {
                       onClick={() => openQrModal(booking)}
                     >
                       <QrCode size={14} />
-                      Scan QR
+                      Booking QR
                     </button>
                     <button
                       className="btn btn-danger btn-sm"

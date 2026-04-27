@@ -81,8 +81,8 @@ public class BookingController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/verify/{token}")
-    @Operation(summary = "Verify booking details via token (Public)")
+    @GetMapping("/public/{token}")
+    @Operation(summary = "Get booking details via token (Public)")
     public ResponseEntity<BookingResponse> getBookingByToken(@PathVariable String token) {
         return ResponseEntity.ok(bookingService.getBookingByToken(token));
     }

@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/qr-code.css';
 
-const BookingVerifyPage = () => {
+const BookingDetailsPublicPage = () => {
   const { token } = useParams();
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,7 +15,7 @@ const BookingVerifyPage = () => {
         setLoading(true);
         // Using window.location.origin to handle different environments if needed, 
         // but normally we use the base URL from config.
-        const response = await axios.get(`http://192.168.110.1:8081/api/bookings/verify/${token}`);
+        const response = await axios.get(`http://${window.location.hostname}:8081/api/bookings/public/${token}`);
         setBooking(response.data);
         setLoading(false);
       } catch (err) {
@@ -33,7 +33,7 @@ const BookingVerifyPage = () => {
       <div className="verify-container">
         <div className="verify-card">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-slate-600 font-medium">Verifying booking...</p>
+          <p className="mt-4 text-slate-600 font-medium">Loading booking details...</p>
         </div>
       </div>
     );
@@ -46,8 +46,8 @@ const BookingVerifyPage = () => {
           <div className="verify-success-icon" style={{ background: '#fee2e2', color: '#dc2626' }}>
             ✕
           </div>
-          <h1 className="verify-title" style={{ color: '#991b1b' }}>Verification Failed</h1>
-          <p className="text-red-600 font-semibold mb-6">{error || 'Booking not found'}</p>
+          <h1 className="verify-title" style={{ color: '#991b1b' }}>Booking Not Found</h1>
+          <p className="text-red-600 font-semibold mb-6">{error || 'The booking details could not be retrieved.'}</p>
           <p className="text-slate-500">The QR code might be invalid or the booking has been cancelled.</p>
         </div>
       </div>
@@ -65,14 +65,21 @@ const BookingVerifyPage = () => {
     });
   };
 
+  console.log('Rendering BookingDetailsPublicPage with token:', token);
+
   return (
     <div className="verify-container">
+      {/* Debug Header - Always Visible */}
+      <div style={{ position: 'fixed', top: 10, left: 10, fontSize: '10px', color: '#666', zIndex: 9999 }}>
+        SC-System v1.1 | {token ? 'Token Found' : 'No Token'}
+      </div>
+
       <div className="verify-card">
-        <div className="verify-success-icon">
-          ✓
+        <div className="verify-success-icon" style={{ background: 'var(--clr-primary-glow)', color: 'var(--clr-primary)' }}>
+          ℹ
         </div>
-        <h1 className="verify-title">Valid Booking</h1>
-        <p className="verify-subtitle">Smart Campus Verification System</p>
+        <h1 className="verify-title">Booking Details</h1>
+        <p className="verify-subtitle">Smart Campus System</p>
 
         <div className="verify-details">
           <div className="verify-item">
@@ -115,4 +122,4 @@ const BookingVerifyPage = () => {
   );
 };
 
-export default BookingVerifyPage;
+export default BookingDetailsPublicPage;
