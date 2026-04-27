@@ -74,6 +74,19 @@ const deriveBookingData = (bookings) => {
   const sortedDesc = list.sort((a, b) => new Date(getBookingStart(b) || 0) - new Date(getBookingStart(a) || 0))
   const sortedAsc = [...list].sort((a, b) => new Date(getBookingStart(a) || 0) - new Date(getBookingStart(b) || 0))
 
+  const current = sortedAsc.filter((booking) => {
+    const start = booking?.startDateTime || booking?.startTime
+    const end = booking?.endDateTime || booking?.endTime
+    const status = (booking?.status || '').toUpperCase()
+
+    if (!start || !end) return false
+    if (status !== 'APPROVED') return false
+
+    const startDate = new Date(start)
+    const endDate = new Date(end)
+    return startDate <= now && endDate > now
+  })
+
   const upcoming = sortedAsc.filter((booking) => {
     const start = getBookingStart(booking)
     const status = (booking?.status || '').toUpperCase()
@@ -111,6 +124,7 @@ const deriveBookingData = (bookings) => {
   })
 
   return {
+    current,
     upcoming,
     recent,
     summary,
@@ -131,6 +145,7 @@ export default function UserDashboardPage() {
     pendingBookings: 0,
     rejectedBookings: 0,
   })
+  const [currentBookings, setCurrentBookings] = useState([])
   const [upcomingBookings, setUpcomingBookings] = useState([])
   const [recentBookings, setRecentBookings] = useState([])
   const [activeTickets, setActiveTickets] = useState([])
@@ -162,6 +177,8 @@ export default function UserDashboardPage() {
 
       const myBookings = myBookingsRes.status === 'fulfilled' ? toArray(myBookingsRes.value) : []
       const derived = deriveBookingData(myBookings)
+
+      setCurrentBookings(derived.current)
 
       const fallbackTickets =
         myTicketsRes.status === 'fulfilled'
@@ -319,6 +336,40 @@ export default function UserDashboardPage() {
       </section>
 
       <section className="dashboard-grid">
+        <article className="card dashboard-section">
+          <div className="dashboard-section__title-row">
+            <h2 className="heading-3">Current Bookings</h2>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/bookings/my')}>
+              View all <ArrowRight size={14} />
+            </button>
+          </div>
+          {currentBookings.length === 0 ? (
+            <p className="text-muted">No bookings active right now.</p>
+          ) : (
+            <div className="dashboard-list">
+              {currentBookings.map((booking) => (
+                <div key={booking.id || `${getResourceName(booking)}-${getBookingDate(booking)}`} className="dashboard-list__item">
+                  <div>
+                    <p className="dashboard-list__title">{getResourceName(booking)}</p>
+                    <p className="text-sm text-muted">
+                      {getBookingDate(booking)
+                        ? new Date(getBookingDate(booking)).toLocaleDateString([], {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })
+                        : '-'}
+                      {' | '}
+                      {getBookingTime(booking)}
+                    </p>
+                  </div>
+                  <span className={statusClass(booking.status)}>{booking.status || 'UNKNOWN'}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </article>
+
         <article className="card dashboard-section">
           <div className="dashboard-section__title-row">
             <h2 className="heading-3">Upcoming Bookings</h2>
