@@ -13,6 +13,7 @@ import CreateBookingPage from './pages/CreateBookingPage'
 import MyBookingsPage from './pages/MyBookingsPage'
 import AdminBookingsPage from './pages/AdminBookingsPage'
 import OverallDashboard from './pages/OverallDashboard'
+import UserDashboardPage from './pages/UserDashboardPage'
 import AdminUserPage from './pages/AdminUserPage'
 import AnalyticsDashboard from './pages/AnalyticsDashboard'
 
@@ -43,7 +44,10 @@ export default function App() {
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         
         {/* Main Dashboard */}
-        <Route path="/dashboard" element={<OverallDashboard />} />
+        <Route
+          path="/dashboard"
+          element={user?.role === 'USER' ? <UserDashboardPage /> : <OverallDashboard />}
+        />
 
         {/* Tickets and Other Services */}
         <Route path="/tickets" element={<TicketListPage />} />
