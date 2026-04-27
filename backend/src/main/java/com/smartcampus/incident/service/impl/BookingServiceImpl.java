@@ -69,7 +69,8 @@ public class BookingServiceImpl implements BookingService {
                 request.getResourceId(), 
                 -1L, // No ID yet for new booking
                 request.getStartDateTime(), 
-                request.getEndDateTime()
+                request.getEndDateTime(),
+                0L  // no existing booking to exclude for new creations
         );
 
         if (hasConflict) {
@@ -171,12 +172,13 @@ public class BookingServiceImpl implements BookingService {
         }
 
         if (newStatus == BookingStatus.APPROVED) {
-            // Requirement 6: Re-check for conflict during approval
+            // Requirement 6: Re-check for conflict during approval (exclude this booking itself)
             boolean hasConflict = bookingRepository.existsOverlappingBooking(
                     booking.getResource().getId(),
                     id, // Exclude current booking
                     booking.getStartDateTime(),
-                    booking.getEndDateTime()
+                    booking.getEndDateTime(),
+                    booking.getId()
             );
 
             if (hasConflict) {

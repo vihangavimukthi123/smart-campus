@@ -101,10 +101,6 @@ export default function OverallDashboard() {
           <BarChart3 size={20} /> Quick Actions
         </h3>
         <div className="flex gap-4">
-          <button className="btn btn-primary" onClick={() => navigate('/tickets/new')}>
-            Create New Ticket
-          </button>
-          
           {/* Admin nam thawa button ekak pennanawa */}
           {isAdmin && (
             <button className="btn btn-outline" onClick={() => navigate('/admin/users')}>

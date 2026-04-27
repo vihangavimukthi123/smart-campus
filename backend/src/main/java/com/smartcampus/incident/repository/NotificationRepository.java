@@ -2,6 +2,10 @@ package com.smartcampus.incident.repository;
 
 import com.smartcampus.incident.entity.Notification;
 import com.smartcampus.incident.entity.User;
+
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,4 +24,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying
     @Query("UPDATE Notification n SET n.read = true WHERE n.recipient = :user AND n.read = false")
     int markAllAsReadForUser(@Param("user") User user);
+
+    Optional<Notification> findByIdAndRecipient(Long id, User recipient);
+
+    List<Notification> findByRecipientOrderByCreatedAtDesc(User recipient);
 }
