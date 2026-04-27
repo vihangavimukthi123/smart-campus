@@ -80,4 +80,10 @@ public class BookingController {
         bookingService.updateBookingStatus(id, request);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/public/{token}")
+    @Operation(summary = "Get booking details via token (Public)")
+    public ResponseEntity<BookingResponse> getBookingByToken(@PathVariable String token) {
+        return ResponseEntity.ok(bookingService.getBookingByToken(token));
+    }
 }

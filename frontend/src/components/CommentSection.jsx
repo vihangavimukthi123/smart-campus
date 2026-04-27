@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { formatDistanceToNow } from 'date-fns'
 import toast from 'react-hot-toast'
 import { Send, Pencil, Trash2, X, Check } from 'lucide-react'
+import ConfirmModal from './ConfirmModal'
 
 /**
  * CommentSection — full comment thread with add/edit/delete.
@@ -16,6 +17,8 @@ export default function CommentSection({ ticketId }) {
   const [posting,  setPosting]      = useState(false)
   const [editId,   setEditId]       = useState(null)
   const [editText, setEditText]     = useState('')
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [commentToDelete, setCommentToDelete] = useState(null)
   const bottomRef = useRef(null)
 
   const load = async () => {
@@ -58,11 +61,15 @@ export default function CommentSection({ ticketId }) {
     }
   }
 
-  const remove = async (id) => {
-    if (!window.confirm('Delete this comment?')) return
+  const remove = (id) => {
+    setCommentToDelete(id)
+    setShowConfirmModal(true)
+  }
+
+  const executeRemove = async () => {
     try {
-      await commentService.delete(ticketId, id)
-      setComments(prev => prev.filter(c => c.id !== id))
+      await commentService.delete(ticketId, commentToDelete)
+      setComments(prev => prev.filter(c => c.id !== commentToDelete))
       toast.success('Comment deleted')
     } catch {
       toast.error('Failed to delete comment')
@@ -178,6 +185,16 @@ export default function CommentSection({ ticketId }) {
           </button>
         </div>
       </form>
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={executeRemove}
+        title="Delete Comment"
+        message="Are you sure you want to delete this comment? This action cannot be undone."
+        confirmText="Delete"
+        type="danger"
+      />
 
       <style>{`
         .comment-section { margin-top: var(--space-8); }
