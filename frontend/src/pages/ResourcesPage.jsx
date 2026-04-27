@@ -142,6 +142,14 @@ export default function ResourcesPage() {
     loadResources()
   }, [isAdmin, showRetired])
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      loadResources()
+    }, 10000)
+
+    return () => window.clearInterval(intervalId)
+  }, [isAdmin, showRetired])
+
   const openCreateModal = () => {
     setEditingResource(null)
     setForm(emptyForm)
