@@ -44,8 +44,14 @@ export default function Sidebar() {
   const initials = (name = '') =>
     name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
-  // Methana thama role eka anuwa filter wenne
-  const navItems = NAV.filter(n => !n.roles || n.roles.includes(user?.role))
+  // Keep New Ticket off the admin sidebar only.
+  const navItems = NAV.filter((item) => {
+    if (user?.role === 'ADMIN' && item.to === '/tickets/new') {
+      return false
+    }
+
+    return !item.roles || item.roles.includes(user?.role)
+  })
 
   return (
     <aside className="sidebar">
