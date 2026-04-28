@@ -10,7 +10,9 @@ import {
 import {
   Users, Ticket, Clock, ArrowRight, BarChart3,
   Trophy, BarChart2, TrendingUp, RefreshCw, AlertCircle,
+  CheckCircle, ShieldAlert,
 } from 'lucide-react'
+
 
 // ── Colour palette for bar cells ────────────────────────────────────────────
 const BAR_COLORS = ['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff']
@@ -100,12 +102,18 @@ export default function OverallDashboard() {
     const load = async () => {
       setStatsLoading(true)
       try {
-        const tRes = await api.get('/tickets')
-        const tickets = tRes.data.content || []
-        setTicketStats({ total: tickets.length, open: tickets.filter(t => t.status === 'OPEN').length })
+        // 1. Tickets data (Hamaotama ona)
+        const tRes = await api.get('/tickets');
+        const allTickets = tRes.data.content || [];
+        setTicketStats({
+          total: allTickets.length,
+          open: allTickets.filter(t => t.status === 'OPEN').length
+        });
+
+        // 2. Users data (Admin nam vitharak gannawa)
         if (isAdmin) {
-          const uRes = await api.get('/admin/users')
-          setUserCount(uRes.data.length)
+          const uRes = await api.get('/admin/users');
+          setUserCount(uRes.data.length);
         }
       } catch (err) {
         console.error('Stats load failed', err)

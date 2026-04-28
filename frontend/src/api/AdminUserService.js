@@ -1,14 +1,8 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:8080/api/admin/users';
-
-const getHeaders = () => ({
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-});
+import api from './axiosInstance';
 
 export const adminUserService = {
-    getAllUsers: () => axios.get(API_URL, getHeaders()),
-    createUser: (userData) => axios.post(API_URL, userData, getHeaders()),
-    updateUser: (id, userData) => axios.put(`${API_URL}/${id}`, userData, getHeaders()),
-    deleteUser: (id) => axios.delete(`${API_URL}/${id}`, getHeaders()),
+    getAllUsers: () => api.get('/admin/users'),
+    createUser: (userData) => api.post('/admin/users', userData),
+    updateUser: (id, userData) => api.put(`/admin/users/${id}`, userData),
+    deleteUser: (id) => api.delete(`/admin/users/${id}`),
 };

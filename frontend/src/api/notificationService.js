@@ -11,5 +11,5 @@ export const notificationService = {
     api.patch(`/notifications/${id}/read`),
 
   markAllAsRead: () =>
-    api.patch('/notifications/read-all'),
+    api.patch('/notifications/mark-read-all'),
 }

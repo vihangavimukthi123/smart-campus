@@ -37,9 +37,9 @@ public class Notification {
     @Column(nullable = false, length = 50)
     private String type;
 
-    /** The ticket this notification relates to */
+    /** The entity and booking notification */
     @Column(nullable = false)
-    private Long ticketId;
+    private Long relatedId;
 
     @Column(name = "is_read", nullable = false)
     @Builder.Default
