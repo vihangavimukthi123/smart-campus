@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Pencil, Trash2, Eye } from 'lucide-react'
+import { Pencil, Trash2, Eye, RefreshCw } from 'lucide-react'
 import ScheduleModal from '../components/ScheduleModal'
 import { createResource, deleteResource, getResources, updateResource } from '../api/resourceService'
 import { useNavigate } from 'react-router-dom'
@@ -145,9 +145,19 @@ export default function ResourcesPage() {
   }, [isAdmin, showRetired])
 
   useEffect(() => {
+    // Silent background refresh every 60 seconds
     const intervalId = window.setInterval(() => {
-      loadResources()
-    }, 10000)
+      getResources(isAdmin && showRetired)
+        .then((response) => {
+          const resourcesData = Array.isArray(response)
+            ? response
+            : response.data || response.content || []
+          setResources(resourcesData.map(normalizeResource))
+        })
+        .catch(() => {
+          // Silently ignore errors during background refresh
+        })
+    }, 60000)
 
     return () => window.clearInterval(intervalId)
   }, [isAdmin, showRetired])
@@ -255,9 +265,22 @@ export default function ResourcesPage() {
 
   return (
     <div>
-      <header style={{ marginBottom: '1.25rem' }}>
-        <h1 className="heading-1 text-gradient">Resources Catalogue</h1>
-        <p className="text-muted">Facilities and assets for booking integration.</p>
+      <header style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 className="heading-1 text-gradient">Resources Catalogue</h1>
+          <p className="text-muted">Facilities and assets for booking integration.</p>
+        </div>
+        <button
+          className="btn btn-ghost"
+          type="button"
+          onClick={loadResources}
+          disabled={loading}
+          title="Refresh resources"
+          aria-label="Refresh resources"
+          style={{ minWidth: '2.6rem', padding: '0.5rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <RefreshCw size={18} style={{ animation: loading ? 'spin 0.8s linear infinite' : 'none' }} />
+        </button>
       </header>
 
       {isAdmin ? (
@@ -607,6 +630,13 @@ export default function ResourcesPage() {
       {scheduleResource && (
         <ScheduleModal resource={scheduleResource} onClose={() => setScheduleResource(null)} />
       )}
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   )
 }
