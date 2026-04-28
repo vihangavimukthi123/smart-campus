@@ -13,7 +13,6 @@ const NAV = [
   { to: '/tickets/new', icon: <PlusCircle size={18} />,    label: 'New Ticket', roles: ['USER'] },
   // Admin ta vitharak pena User Management link eka
   { to: '/admin/users', icon: <Users size={18} />,         label: 'User Management', roles: ['ADMIN'] },
- resource-management
   { to: '/resources', icon: <Building2 size={18} />,       label: 'Resources', roles: ['USER', 'ADMIN'] },
   { to: '/bookings/my', icon: <Calendar size={18} />,      label: 'My Bookings', roles: ['USER', 'ADMIN'] },
 

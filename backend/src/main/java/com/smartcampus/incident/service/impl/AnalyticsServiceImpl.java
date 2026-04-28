@@ -7,6 +7,7 @@ import com.smartcampus.incident.enums.BookingStatus;
 import com.smartcampus.incident.repository.BookingRepository;
 import com.smartcampus.incident.service.AnalyticsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +25,10 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     @Override
     public List<TopResourceDto> getTopResources() {
-        List<TopResourceDto> result = bookingRepository.findTopResources(BookingStatus.APPROVED, TOP_RESOURCES_LIMIT);
+        List<TopResourceDto> result = bookingRepository.findTopResources(
+                BookingStatus.APPROVED,
+                PageRequest.of(0, TOP_RESOURCES_LIMIT)
+        );
         return result.isEmpty() ? Collections.emptyList() : result;
     }
 
