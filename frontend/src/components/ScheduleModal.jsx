@@ -81,15 +81,9 @@ export default function ScheduleModal({ resource, onClose }) {
           ) : (
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '0.5rem' }}>
               {bookings.sort((a, b) => new Date(a.startDateTime || a.startTime || 0) - new Date(b.startDateTime || b.startTime || 0)).map((booking) => (
-                <li key={booking.id} className="card" style={{ padding: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{booking.purpose || booking.title || 'Booking'}</div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--clr-text-2)' }}>{formatTimeRange(booking)}</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{(booking.status || '').toUpperCase() === 'APPROVED' ? 'Booked' : (booking.status || 'Occupied')}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--clr-text-3)' }}>{booking.organizerName || booking.createdBy?.name || ''}</div>
-                  </div>
+                <li key={booking.id} className="card" style={{ padding: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--clr-text)' }}>{formatTimeRange(booking)}</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--clr-text-2)' }}>{(booking.status || '').toUpperCase() === 'APPROVED' ? 'Booked' : (booking.status || 'Occupied')}</div>
                 </li>
               ))}
             </ul>
