@@ -105,6 +105,15 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<BookingResponse> getBookingsForResource(Long resourceId, LocalDate date) {
+        // default to today when not provided
+        LocalDate queryDate = date == null ? LocalDate.now() : date;
+        var spec = BookingSpecification.withFilters(null, resourceId, null, queryDate);
+        return bookingRepository.findAll(spec).stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<BookingResponse> getAllBookings(String status, Long resourceId, Long userId, LocalDate date,
             Pageable pageable) {
         Specification<Booking> spec = BookingSpecification.withFilters(status, resourceId, userId, date);
