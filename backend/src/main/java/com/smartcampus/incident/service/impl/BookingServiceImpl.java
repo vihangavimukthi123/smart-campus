@@ -217,6 +217,11 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalArgumentException("Only APPROVED bookings can be cancelled. Current status: " + booking.getStatus());
         }
 
+        // Prevent cancelling past bookings
+        if (booking.getEndDateTime().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Cannot cancel a booking that has already finished");
+        }
+
         booking.setStatus(BookingStatus.CANCELLED);
         booking.setCancelledAt(LocalDateTime.now());
         if (request != null && request.getReason() != null) {

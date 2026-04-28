@@ -219,7 +219,12 @@ export default function AdminBookingsPage() {
                           </button>
                         )}
                         {(b.status === 'PENDING' || b.status === 'APPROVED') && (
-                          <button className="btn btn-danger btn-icon btn-sm" title="Reject" onClick={() => { setRejectId(b.id); setShowRejectModal(true); }}>
+                          <button 
+                            className="btn btn-danger btn-icon btn-sm" 
+                            title={b.status === 'APPROVED' && new Date(b.endDateTime) < new Date() ? "Cannot reject a past booking" : "Reject"} 
+                            onClick={() => { setRejectId(b.id); setShowRejectModal(true); }}
+                            disabled={b.status === 'APPROVED' && new Date(b.endDateTime) < new Date()}
+                          >
                             <XCircle size={16} />
                           </button>
                         )}
@@ -330,7 +335,11 @@ export default function AdminBookingsPage() {
                 </button>
               )}
               {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'APPROVED') && (
-                <button className="btn btn-danger btn-sm" onClick={() => { setRejectId(selectedBooking.id); setShowRejectModal(true); setShowViewModal(false); }}>
+                <button 
+                  className="btn btn-danger btn-sm" 
+                  onClick={() => { setRejectId(selectedBooking.id); setShowRejectModal(true); setShowViewModal(false); }}
+                  disabled={selectedBooking.status === 'APPROVED' && new Date(selectedBooking.endDateTime) < new Date()}
+                >
                   Reject Booking
                 </button>
               )}

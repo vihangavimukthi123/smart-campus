@@ -234,6 +234,7 @@ export default function MyBookingsPage() {
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() => initiateCancel(booking.id)}
+                      disabled={new Date(booking.endDateTime) < new Date()}
                     >
                       <Trash2 size={14} />
                       Cancel Booking
