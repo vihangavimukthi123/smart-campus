@@ -11,10 +11,18 @@ import java.util.List;
 
 public interface BookingService {
     BookingResponse createBooking(CreateBookingRequest request);
+
     List<BookingResponse> getMyBookings();
-    Page<BookingResponse> getAllBookings(String status, Long resourceId, Long userId, LocalDate date, Pageable pageable);
+
+    Page<BookingResponse> getAllBookings(String status, Long resourceId, Long userId, LocalDate date,
+            Pageable pageable);
+
+    List<BookingResponse> getBookingsForResource(Long resourceId, LocalDate date);
+
     BookingResponse getBookingById(Long id);
+
     void updateBookingStatus(Long id, BookingStatusRequest request);
+
     void cancelBooking(Long id, CancelBookingRequest request);
     BookingResponse getBookingByToken(String token);
 }

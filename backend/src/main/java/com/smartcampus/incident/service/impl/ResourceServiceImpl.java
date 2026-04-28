@@ -7,6 +7,7 @@ import com.smartcampus.incident.enums.ResourceStatus;
 import com.smartcampus.incident.exception.ResourceNotFoundException;
 import com.smartcampus.incident.repository.ResourceRepository;
 import com.smartcampus.incident.service.ResourceService;
+import com.smartcampus.incident.service.impl.ResourceStatusSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,16 +19,19 @@ import java.util.List;
 public class ResourceServiceImpl implements ResourceService {
 
     private final ResourceRepository resourceRepository;
+    private final ResourceStatusSyncService resourceStatusSyncService;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ResourceResponse> getAllResources() {
         return getAllResources(false);
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ResourceResponse> getAllResources(boolean includeRetired) {
+        resourceStatusSyncService.refreshAllResourceStatuses();
+
         return resourceRepository.findAll()
                 .stream()
                 .filter(resource -> !resource.isDeleted())
@@ -37,14 +41,16 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ResourceResponse> getAllResourcesIncludingRetired() {
         return getAllResources(true);
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public ResourceResponse getResourceById(Long id) {
+        resourceStatusSyncService.refreshAllResourceStatuses();
+
         Resource resource = resourceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Resource", id));
 

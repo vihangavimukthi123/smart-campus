@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, Eye, RefreshCw } from 'lucide-react'
+import ScheduleModal from '../components/ScheduleModal'
 import { createResource, deleteResource, getResources, updateResource } from '../api/resourceService'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
@@ -104,6 +105,7 @@ export default function ResourcesPage() {
   const [showRetired, setShowRetired] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [resourceToConfirm, setResourceToConfirm] = useState(null)
+  const [scheduleResource, setScheduleResource] = useState(null)
 
   const [form, setForm] = useState(emptyForm)
 
@@ -143,6 +145,24 @@ export default function ResourcesPage() {
 
   useEffect(() => {
     loadResources()
+  }, [isAdmin, showRetired])
+
+  useEffect(() => {
+    // Silent background refresh every 60 seconds
+    const intervalId = window.setInterval(() => {
+      getResources(isAdmin && showRetired)
+        .then((response) => {
+          const resourcesData = Array.isArray(response)
+            ? response
+            : response.data || response.content || []
+          setResources(resourcesData.map(normalizeResource))
+        })
+        .catch(() => {
+          // Silently ignore errors during background refresh
+        })
+    }, 60000)
+
+    return () => window.clearInterval(intervalId)
   }, [isAdmin, showRetired])
 
   const openCreateModal = () => {
@@ -248,9 +268,22 @@ export default function ResourcesPage() {
 
   return (
     <div>
-      <header style={{ marginBottom: '1.25rem' }}>
-        <h1 className="heading-1 text-gradient">Resources Catalogue</h1>
-        <p className="text-muted">Facilities and assets for booking integration.</p>
+      <header style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 className="heading-1 text-gradient">Resources Catalogue</h1>
+          <p className="text-muted">Facilities and assets for booking integration.</p>
+        </div>
+        <button
+          className="btn btn-ghost"
+          type="button"
+          onClick={loadResources}
+          disabled={loading}
+          title="Refresh resources"
+          aria-label="Refresh resources"
+          style={{ minWidth: '2.6rem', padding: '0.5rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <RefreshCw size={18} style={{ animation: loading ? 'spin 0.8s linear infinite' : 'none' }} />
+        </button>
       </header>
 
       {isAdmin ? (
@@ -486,6 +519,28 @@ export default function ResourcesPage() {
                       <button
                         className="btn"
                         type="button"
+                        onClick={() => setScheduleResource(resource)}
+                        aria-label={`View schedule ${resource.name}`}
+                        title="View schedule"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.35rem',
+                          minWidth: '2.6rem',
+                          padding: '0.5rem',
+                          background: 'rgba(99,102,241,0.08)',
+                          borderColor: 'rgba(99,102,241,0.18)',
+                          color: '#c7b3ff',
+                          boxShadow: 'none',
+                        }}
+                      >
+                        <Eye size={17} color="#c7b3ff" />
+                      </button>
+
+                      <button
+                        className="btn"
+                        type="button"
                         onClick={() => openEditModal(resource)}
                         aria-label={`Edit ${resource.name}`}
                         title="Edit resource"
@@ -546,14 +601,27 @@ export default function ResourcesPage() {
 
                 {!isAdmin && !isTechnician && (
                   <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
-                    <button
-                      className="btn btn-primary btn-sm"
-                      style={{ width: '100%' }}
-                      onClick={() => navigate(`/bookings/new?resourceId=${resource.id}`)}
-                      disabled={resource.status !== 'AVAILABLE' && resource.status !== 'ACTIVE'}
-                    >
-                      Book Now
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        style={{ flex: 1 }}
+                        onClick={() => navigate(`/bookings/new?resourceId=${resource.id}`)}
+                        disabled={resource.status !== 'AVAILABLE' && resource.status !== 'ACTIVE'}
+                      >
+                        Book Now
+                      </button>
+
+                      <button
+                        className="btn btn-ghost"
+                        type="button"
+                        onClick={() => setScheduleResource(resource)}
+                        title="View schedule"
+                        aria-label={`View schedule ${resource.name}`}
+                        style={{ minWidth: '2.6rem', padding: '0.5rem' }}
+                      >
+                        <Eye size={16} />
+                      </button>
+                    </div>
                   </div>
                 )}
               </article>
@@ -572,6 +640,16 @@ export default function ResourcesPage() {
         confirmText="Delete"
         type="danger"
       />
+      {scheduleResource && (
+        <ScheduleModal resource={scheduleResource} onClose={() => setScheduleResource(null)} />
+      )}
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   )
 }
