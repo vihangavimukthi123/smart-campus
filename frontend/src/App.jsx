@@ -13,7 +13,9 @@ import CreateBookingPage from './pages/CreateBookingPage'
 import MyBookingsPage from './pages/MyBookingsPage'
 import AdminBookingsPage from './pages/AdminBookingsPage'
 import OverallDashboard from './pages/OverallDashboard'
+import UserDashboardPage from './pages/UserDashboardPage'
 import AdminUserPage from './pages/AdminUserPage'
+import AnalyticsDashboard from './pages/AnalyticsDashboard'
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -42,7 +44,10 @@ export default function App() {
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         
         {/* Main Dashboard */}
-        <Route path="/dashboard" element={<OverallDashboard />} />
+        <Route
+          path="/dashboard"
+          element={user?.role === 'USER' ? <UserDashboardPage /> : <OverallDashboard />}
+        />
 
         {/* Tickets and Other Services */}
         <Route path="/tickets" element={<TicketListPage />} />
@@ -51,13 +56,14 @@ export default function App() {
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
         
         {/* Resources & Bookings */}
-        <Route path="/resources" element={<ResourcesPage />} />
-        <Route path="/bookings/new" element={<CreateBookingPage />} />
-        <Route path="/bookings/my" element={<MyBookingsPage />} />
+        <Route path="/resources" element={<ProtectedRoute roles={['USER', 'ADMIN']}><ResourcesPage /></ProtectedRoute>} />
+        <Route path="/bookings/new" element={<ProtectedRoute roles={['USER', 'ADMIN']}><CreateBookingPage /></ProtectedRoute>} />
+        <Route path="/bookings/my" element={<ProtectedRoute roles={['USER', 'ADMIN', 'TECHNICIAN']}><MyBookingsPage /></ProtectedRoute>} />
 
         {/* Admin Specific Routes */}
         <Route path="/admin/users" element={<ProtectedRoute roles={['ADMIN']}><AdminUserPage /></ProtectedRoute>} />
         <Route path="/admin/bookings" element={<ProtectedRoute roles={['ADMIN']}><AdminBookingsPage /></ProtectedRoute>} />
+        <Route path="/admin/analytics" element={<ProtectedRoute roles={['ADMIN']}><AnalyticsDashboard /></ProtectedRoute>} />
       </Route>
 
       {/* 3. Default Redirects */}

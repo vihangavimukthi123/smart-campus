@@ -43,3 +43,15 @@ export const updateBookingStatus = async (id, data) => {
   const response = await api.put(`/bookings/${id}/status`, data)
   return response.data
 }
+
+/**
+ * Fetch bookings for a specific resource and date.
+ * @param {string|number} resourceId
+ * @param {string} date - ISO date (yyyy-MM-dd) or Date object
+ */
+export const getBookingsForResource = async (resourceId, date) => {
+  const params = {}
+  if (date) params.date = typeof date === 'string' ? date : new Date(date).toISOString().slice(0, 10)
+  const response = await api.get(`/bookings/resource/${resourceId}`, { params })
+  return response.data
+}

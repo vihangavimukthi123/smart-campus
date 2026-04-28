@@ -13,8 +13,9 @@ const NAV = [
   { to: '/tickets/new', icon: <PlusCircle size={18} />,    label: 'New Ticket', roles: ['USER'] },
   // Admin ta vitharak pena User Management link eka
   { to: '/admin/users', icon: <Users size={18} />,         label: 'User Management', roles: ['ADMIN'] },
-  { to: '/resources', icon: <Building2 size={18} />,       label: 'Resources' },
-  { to: '/bookings/my', icon: <Calendar size={18} />,      label: 'My Bookings', roles: ['USER', 'TECHNICIAN'] },
+  { to: '/resources', icon: <Building2 size={18} />,       label: 'Resources', roles: ['USER', 'ADMIN'] },
+  { to: '/bookings/my', icon: <Calendar size={18} />,      label: 'My Bookings', roles: ['USER', 'ADMIN'] },
+
   { to: '/admin/bookings', icon: <ClipboardCheck size={18} />, label: 'Manage Bookings', roles: ['ADMIN'] },
 ]
 
@@ -36,8 +37,14 @@ export default function Sidebar() {
   const initials = (name = '') =>
     name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
-  // Methana thama role eka anuwa filter wenne
-  const navItems = NAV.filter(n => !n.roles || n.roles.includes(user?.role))
+  // Keep New Ticket off the admin sidebar only.
+  const navItems = NAV.filter((item) => {
+    if (user?.role === 'ADMIN' && item.to === '/tickets/new') {
+      return false
+    }
+
+    return !item.roles || item.roles.includes(user?.role)
+  })
 
   return (
     <aside className="sidebar">

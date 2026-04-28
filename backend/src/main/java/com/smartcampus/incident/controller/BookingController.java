@@ -53,11 +53,19 @@ public class BookingController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDir
-    ) {
+            @RequestParam(defaultValue = "DESC") String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("DESC") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
         return ResponseEntity.ok(bookingService.getAllBookings(status, resourceId, userId, date, pageable));
+    }
+
+    @GetMapping("/resource/{resourceId}")
+    @Operation(summary = "Get bookings for a specific resource (by day)")
+    public ResponseEntity<List<BookingResponse>> getBookingsForResource(
+            @PathVariable Long resourceId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        LocalDate queryDate = date == null ? LocalDate.now() : date;
+        return ResponseEntity.ok(bookingService.getBookingsForResource(resourceId, queryDate));
     }
 
     @GetMapping("/{id}")
@@ -68,7 +76,8 @@ public class BookingController {
 
     @PatchMapping("/{id}/cancel")
     @Operation(summary = "Cancel an approved booking")
-    public ResponseEntity<Void> cancelBooking(@PathVariable Long id, @RequestBody(required = false) CancelBookingRequest request) {
+    public ResponseEntity<Void> cancelBooking(@PathVariable Long id,
+            @RequestBody(required = false) CancelBookingRequest request) {
         bookingService.cancelBooking(id, request);
         return ResponseEntity.noContent().build();
     }
@@ -76,7 +85,8 @@ public class BookingController {
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Approve or Reject a booking (Admin only)")
-    public ResponseEntity<Void> updateBookingStatus(@PathVariable Long id, @Valid @RequestBody BookingStatusRequest request) {
+    public ResponseEntity<Void> updateBookingStatus(@PathVariable Long id,
+            @Valid @RequestBody BookingStatusRequest request) {
         bookingService.updateBookingStatus(id, request);
         return ResponseEntity.ok().build();
     }
