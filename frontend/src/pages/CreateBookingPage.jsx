@@ -27,6 +27,10 @@ export default function CreateBookingPage() {
   const [modal, setModal] = useState({ isOpen: false, message: '', type: 'error' })
   const [minDateTime, setMinDateTime] = useState('')
 
+  const selectedResource = resources.find(r => String(r.id) === String(form.resourceId))
+  const isEquipment = selectedResource?.type === 'EQUIPMENT'
+
+
   // Update minDateTime every minute to keep it current
   useEffect(() => {
     const updateMin = () => {
@@ -217,13 +221,13 @@ export default function CreateBookingPage() {
 
           <div className="form-group">
             <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Users size={16} /> Expected Attendees (Optional)
+              <Users size={16} /> {isEquipment ? 'Quantity' : 'Expected Attendees'} (Optional)
             </label>
             <input
               type="number"
               min="1"
               className="form-input"
-              placeholder="e.g. 5"
+              placeholder={isEquipment ? 'e.g. 2' : 'e.g. 5'}
               value={form.attendees}
               onChange={(e) => setForm({ ...form, attendees: e.target.value })}
             />

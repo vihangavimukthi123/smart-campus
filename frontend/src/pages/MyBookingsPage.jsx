@@ -192,7 +192,7 @@ export default function MyBookingsPage() {
                     </div>
                     <div className="flex-center" style={{ justifyContent: 'flex-start', gap: '0.5rem' }}>
                       <Users size={14} className="text-muted" />
-                      <span className="text-sm text-muted">{booking.attendees || 0} Attendees</span>
+                      <span className="text-sm text-muted">{booking.attendees || 0} {booking.resource.type === 'EQUIPMENT' ? 'Quantity' : 'Attendees'}</span>
                     </div>
                   </div>
                 </div>

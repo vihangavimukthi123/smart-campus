@@ -112,7 +112,7 @@ export default function EditBookingModal({ isOpen, onClose, onSave, booking }) {
 
           <div className="form-group">
             <label className="form-label flex" style={{ gap: '0.5rem', alignItems: 'center' }}>
-              <Users size={14} /> Expected Attendees 
+              <Users size={14} /> {booking?.resource?.type === 'EQUIPMENT' ? 'Quantity' : 'Expected Attendees'}
               {booking?.resource?.capacity && (
                 <span className="text-xs text-muted" style={{ fontWeight: 400, marginLeft: 'auto' }}>
                   Max Capacity: {booking.resource.capacity}

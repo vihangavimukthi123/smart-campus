@@ -377,7 +377,7 @@ export default function AdminBookingsPage() {
               {selectedBooking.attendees > 0 && (
                 <div className="detail-item flex" style={{ gap: '0.5rem', alignItems: 'center' }}>
                   <Users size={16} className="text-muted" />
-                  <span className="text-sm"><strong>{selectedBooking.attendees}</strong> Expected Attendees</span>
+                  <span className="text-sm"><strong>{selectedBooking.attendees}</strong> {selectedBooking.resource.type === 'EQUIPMENT' ? 'Quantity' : 'Expected Attendees'}</span>
                 </div>
               )}
 
