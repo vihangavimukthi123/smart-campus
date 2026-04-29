@@ -16,11 +16,13 @@ export function AuthProvider({ children }) {
       if (stored && token) {
         try {
           // Verify token with backend
+          console.log('[AuthContext] Verifying token with getMe()...')
           const { data } = await authService.getMe()
+          console.log('[AuthContext] getMe() succeeded:', data)
           // Update user data with latest from backend
           setUser(data)
         } catch (err) {
-          console.error('Session verification failed:', err)
+          console.error('[AuthContext] Session verification failed:', err)
           localStorage.removeItem('user')
           localStorage.removeItem('token')
           setUser(null)
@@ -32,6 +34,12 @@ export function AuthProvider({ children }) {
     }
 
     initAuth()
+
+    const handleUnauthorized = () => {
+      setUser(null);
+    }
+    window.addEventListener('auth_unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('auth_unauthorized', handleUnauthorized)
   }, [])
 
   const login = useCallback(async (email, password) => {
@@ -59,7 +67,7 @@ export function AuthProvider({ children }) {
   const isUser       = user?.role === 'USER'
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isAdmin, isTechnician, isUser }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, register, logout, isAdmin, isTechnician, isUser }}>
       {children}
     </AuthContext.Provider>
   )

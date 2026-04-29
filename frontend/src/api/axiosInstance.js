@@ -26,14 +26,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      console.error('[Axios] Caught 401 Unauthorized from:', error.config?.url);
       // Don't redirect if the error is from the login endpoint itself
       const isLoginRequest = error.config?.url?.includes('/auth/login');
       if (!isLoginRequest) {
+        console.warn('[Axios] Redirecting to /login and clearing session.');
         localStorage.removeItem('token')
         localStorage.removeItem('user')
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login'
-        }
+        // Dispatch a custom event instead of hard-reloading, so React can handle the redirect without clearing logs
+        window.dispatchEvent(new Event('auth_unauthorized'))
       }
     }
     return Promise.reject(error)
