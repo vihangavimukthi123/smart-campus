@@ -106,7 +106,7 @@ export default function RegisterPage() {
         <div className="auth-brand">
           <span className="auth-brand__logo">🏛️</span>
           <div>
-            <h1 className="auth-brand__title">SmartCampus</h1>
+            <h1 className="auth-brand__title">Matrix Core</h1>
             <p className="auth-brand__sub">Incident Hub</p>
           </div>
         </div>

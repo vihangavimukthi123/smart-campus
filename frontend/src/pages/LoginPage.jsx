@@ -58,7 +58,7 @@ export default function LoginPage() {
         <div className="auth-brand">
           <span className="auth-brand__logo">🏛️</span>
           <div>
-            <h1 className="auth-brand__title text-gradient">SmartCampus</h1>
+            <h1 className="auth-brand__title text-gradient">Matrix Core</h1>
             <p className="auth-brand__sub">Incident Hub</p>
           </div>
         </div>

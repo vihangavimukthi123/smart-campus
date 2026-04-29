@@ -248,7 +248,7 @@ export default function OverallDashboard() {
               accentColor="#a78bfa"
             />
           </>
-        )}}
+        )}
       </div>
 
       {/* ═══════════════════════════════════════════

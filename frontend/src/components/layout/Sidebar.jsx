@@ -52,7 +52,7 @@ export default function Sidebar() {
       <div className="sidebar__brand">
         <div className="sidebar__logo">🏛️</div>
         <div>
-          <div className="sidebar__brand-name">SmartCampus</div>
+          <div className="sidebar__brand-name">Matrix Core</div>
           <div className="sidebar__brand-sub">Incident Hub</div>
         </div>
       </div>
