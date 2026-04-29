@@ -1,0 +1,709 @@
+{
+  "info": {
+    "name": "Smart Campus — Incident Ticketing API",
+    "_postman_id": "smartcampus-incident-api-v1",
+    "description": "Complete API collection for the Smart Campus Incident Ticketing & Resource Booking system.\n\n**Base URL:** `http://localhost:8081/api`\n\n**Auth:** After calling `/auth/login`, the JWT token is automatically saved and applied to all subsequent requests via a collection-level pre-request script.\n\n**Swagger UI:** http://localhost:8081/api/swagger-ui.html",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": ["// Token is auto-set after a successful login response. No manual setup needed."]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@campus.edu\",\n  \"password\": \"Password@123\",\n  \"phone\": \"+94771234567\",\n  \"department\": \"IT\",\n  \"role\": \"USER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user account. Role can be USER, TECHNICIAN, or ADMIN."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.token) {",
+                  "        pm.collectionVariables.set('token', json.token);",
+                  "        console.log('Token saved:', json.token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@campus.edu\",\n  \"password\": \"Password@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Authenticate and receive a JWT token. The token is automatically saved to the collection variable `token`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.token) {",
+                  "        pm.collectionVariables.set('token', json.token);",
+                  "        console.log('✅ JWT Token saved successfully!');",
+                  "    } else {",
+                  "        console.warn('⚠️  No token in response body');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@campus.edu\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-otp"]
+            },
+            "description": "Verify email OTP after registration."
+          }
+        },
+        {
+          "name": "Resend OTP",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@campus.edu\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/resend-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "resend-otp"]
+            },
+            "description": "Resend OTP to the given email address."
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Users",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            },
+            "description": "Get the current authenticated user's profile."
+          }
+        },
+        {
+          "name": "List All Technicians (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/users/technicians",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "technicians"]
+            },
+            "description": "List all active technicians with their assigned ticket counts. ADMIN only."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎫 Tickets",
+      "item": [
+        {
+          "name": "Create Ticket",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"AC not working in Lab 3\",\n  \"description\": \"The air conditioning unit in Lab 3 (Building A) has been making loud noises and no longer cooling. This is affecting students during exam sessions.\",\n  \"category\": \"MAINTENANCE\",\n  \"priority\": \"HIGH\",\n  \"location\": \"Building A, Lab 3\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets"]
+            },
+            "description": "Create a new incident ticket. Priority: LOW, MEDIUM, HIGH, CRITICAL."
+          }
+        },
+        {
+          "name": "List Tickets",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tickets?page=0&size=10&sortBy=createdAt&direction=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets"],
+              "query": [
+                { "key": "status", "value": "OPEN", "disabled": true },
+                { "key": "priority", "value": "HIGH", "disabled": true },
+                { "key": "category", "value": "MAINTENANCE", "disabled": true },
+                { "key": "search", "value": "AC", "disabled": true },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "direction", "value": "desc" }
+              ]
+            },
+            "description": "List tickets with optional filters. Regular users see only their own; ADMIN/TECHNICIAN see all."
+          }
+        },
+        {
+          "name": "Get Ticket by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tickets/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "1"]
+            },
+            "description": "Get full details of ticket with ID = 1. Replace `1` with the actual ticket ID."
+          }
+        },
+        {
+          "name": "Update Ticket Status (Admin/Tech)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_PROGRESS\",\n  \"comment\": \"Technician has been dispatched to the location.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "1", "status"]
+            },
+            "description": "Update ticket status. Values: OPEN, IN_PROGRESS, RESOLVED, CLOSED, CANCELLED."
+          }
+        },
+        {
+          "name": "Assign Technician (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"technicianId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/1/assign",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "1", "assign"]
+            },
+            "description": "Assign a technician to a ticket. ADMIN only."
+          }
+        },
+        {
+          "name": "Upload Attachments (multipart)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": [],
+                  "description": "Select up to 3 image files (JPEG/PNG/GIF/WebP, max 10MB each)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/1/attachments",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "1", "attachments"]
+            },
+            "description": "Upload up to 3 image attachments for a ticket."
+          }
+        },
+        {
+          "name": "Download Attachment",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tickets/1/attachments/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "1", "attachments", "1"]
+            },
+            "description": "Download/view a specific attachment. Replace ticketId and attachmentId."
+          }
+        },
+        {
+          "name": "Get Ticket SLA",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tickets/1/sla",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "1", "sla"]
+            },
+            "description": "Get SLA timing details for a specific ticket."
+          }
+        },
+        {
+          "name": "Get SLA Stats (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tickets/stats/sla",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "stats", "sla"]
+            },
+            "description": "Get overall SLA performance statistics. ADMIN only."
+          }
+        },
+        {
+          "name": "Delete Ticket (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/tickets/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "1"]
+            },
+            "description": "Permanently delete a ticket. ADMIN only."
+          }
+        }
+      ]
+    },
+    {
+      "name": "💬 Comments",
+      "item": [
+        {
+          "name": "Add Comment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"We have confirmed the issue and will start repairs tomorrow morning.\",\n  \"internal\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/1/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "1", "comments"]
+            },
+            "description": "Add a comment to ticket #1. Set `internal: true` for technician-only notes."
+          }
+        },
+        {
+          "name": "Get Comments for Ticket",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tickets/1/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "1", "comments"]
+            },
+            "description": "Get all comments for ticket #1."
+          }
+        },
+        {
+          "name": "Edit Comment",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Updated: Repairs are now complete. The AC unit has been replaced.\",\n  \"internal\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/1/comments/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "1", "comments", "1"]
+            },
+            "description": "Edit comment #1 on ticket #1. Only the comment owner can edit."
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/tickets/1/comments/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "1", "comments", "1"]
+            },
+            "description": "Delete comment #1 on ticket #1. Owner or ADMIN only."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Bookings",
+      "item": [
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": 1,\n  \"date\": \"2026-05-10\",\n  \"startTime\": \"09:00\",\n  \"endTime\": \"11:00\",\n  \"purpose\": \"Final year project presentation\",\n  \"attendees\": 25\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings"]
+            },
+            "description": "Create a new resource booking request."
+          }
+        },
+        {
+          "name": "My Bookings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/bookings/my",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "my"]
+            },
+            "description": "Get all bookings belonging to the current authenticated user."
+          }
+        },
+        {
+          "name": "Get All Bookings (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/bookings?page=0&size=10&sortBy=createdAt&sortDir=DESC",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings"],
+              "query": [
+                { "key": "status", "value": "PENDING", "disabled": true },
+                { "key": "resourceId", "value": "1", "disabled": true },
+                { "key": "userId", "value": "1", "disabled": true },
+                { "key": "date", "value": "2026-05-10", "disabled": true },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "sortDir", "value": "DESC" }
+              ]
+            },
+            "description": "Get all booking requests with optional filters. ADMIN only."
+          }
+        },
+        {
+          "name": "Get Booking by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/bookings/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "1"]
+            },
+            "description": "Get full details of a specific booking."
+          }
+        },
+        {
+          "name": "Approve / Reject Booking (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\",\n  \"adminNote\": \"Approved. Room will be set up by 8:45 AM.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "1", "status"]
+            },
+            "description": "Approve or reject a booking. Status: APPROVED or REJECTED. ADMIN only."
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Schedule conflict — the event has been postponed.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/1/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "1", "cancel"]
+            },
+            "description": "Cancel an approved or pending booking."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏫 Resources",
+      "item": [
+        {
+          "name": "List All Resources",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/resources?includeRetired=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["resources"],
+              "query": [
+                { "key": "includeRetired", "value": "false" }
+              ]
+            },
+            "description": "Public endpoint — no auth required. List all bookable campus resources."
+          }
+        },
+        {
+          "name": "Get Resource by ID",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/resources/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["resources", "1"]
+            },
+            "description": "Get details of a specific resource."
+          }
+        },
+        {
+          "name": "Create Resource",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lecture Hall A\",\n  \"description\": \"A/C hall with projector and 120-seat capacity\",\n  \"location\": \"Main Building, Ground Floor\",\n  \"capacity\": 120,\n  \"type\": \"HALL\",\n  \"amenities\": [\"Projector\", \"Whiteboard\", \"AC\", \"Wifi\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/resources",
+              "host": ["{{baseUrl}}"],
+              "path": ["resources"]
+            },
+            "description": "Create a new bookable resource."
+          }
+        },
+        {
+          "name": "Update Resource",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lecture Hall A (Renovated)\",\n  \"description\": \"Newly renovated hall with upgraded AV system\",\n  \"location\": \"Main Building, Ground Floor\",\n  \"capacity\": 150,\n  \"type\": \"HALL\",\n  \"amenities\": [\"4K Projector\", \"Whiteboard\", \"AC\", \"Wifi\", \"Sound System\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/resources/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["resources", "1"]
+            },
+            "description": "Update a resource's details."
+          }
+        },
+        {
+          "name": "Delete Resource",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/resources/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["resources", "1"]
+            },
+            "description": "Delete (or retire) a resource by ID."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔔 Notifications",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/notifications?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            },
+            "description": "Get paginated notifications for the current user."
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/notifications/unread-count",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "unread-count"]
+            },
+            "description": "Get the number of unread notifications for the current user."
+          }
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/notifications/1/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "1", "read"]
+            },
+            "description": "Mark a specific notification as read. Replace `1` with the notification ID."
+          }
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/notifications/read-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "read-all"]
+            },
+            "description": "Mark all notifications as read for the current user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛡️ Admin — User Management",
+      "item": [
+        {
+          "name": "List All Users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users"]
+            },
+            "description": "Get a list of all users. ADMIN only."
+          }
+        },
+        {
+          "name": "Create User (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Tech\",\n  \"email\": \"jane.tech@campus.edu\",\n  \"password\": \"Technician@123\",\n  \"phone\": \"+94770000001\",\n  \"department\": \"Facilities\",\n  \"role\": \"TECHNICIAN\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users"]
+            },
+            "description": "Admin creates a user (automatically verified). Role: USER, TECHNICIAN, or ADMIN."
+          }
+        },
+        {
+          "name": "Update User (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Technician\",\n  \"email\": \"jane.tech@campus.edu\",\n  \"password\": \"\",\n  \"phone\": \"+94770000002\",\n  \"department\": \"Electrical\",\n  \"role\": \"TECHNICIAN\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "2"]
+            },
+            "description": "Update user details. Leave `password` empty to keep the existing password. ADMIN only."
+          }
+        },
+        {
+          "name": "Delete User (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "2"]
+            },
+            "description": "Permanently delete a user account. ADMIN only."
+          }
+        }
+      ]
+    }
+  ]
+}
