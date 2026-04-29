@@ -66,6 +66,10 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    //add profiile picture url
+    @Column(length = 500)
+    private String profilePictureUrl;
+
     //notification sound management
     @Column(nullable = false)
     private boolean soundNotify = true; // sound enable/disable
