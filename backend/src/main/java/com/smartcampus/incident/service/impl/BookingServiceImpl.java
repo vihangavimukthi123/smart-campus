@@ -188,7 +188,6 @@ public class BookingServiceImpl implements BookingService {
             // Re-check for conflict during approval, excluding this booking itself
             boolean hasConflict = bookingRepository.existsOverlappingBooking(
                     booking.getResource().getId(),
-                    id, // Exclude current booking
                     booking.getStartDateTime(),
                     booking.getEndDateTime(),
                     booking.getId() // exclude self so PENDING→APPROVED doesn't flag itself
