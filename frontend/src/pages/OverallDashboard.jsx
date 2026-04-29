@@ -10,7 +10,7 @@ import {
 import {
   Users, Ticket, Clock, ArrowRight, BarChart3,
   Trophy, BarChart2, TrendingUp, RefreshCw, AlertCircle,
-  CheckCircle, ShieldAlert,
+  CheckCircle, ShieldAlert, XCircle,
 } from 'lucide-react'
 
 
@@ -155,6 +155,7 @@ export default function OverallDashboard() {
   })
 
   const totalApproved = analytics?.topResources?.reduce((s, r) => s + r.totalBookings, 0) ?? 0
+  const totalRejected = analytics?.rejectedBookingsCount ?? 0
   const peakEntry     = analytics?.peakHours?.reduce((best, h) => (!best || h.bookingCount > best.bookingCount ? h : best), null)
   const topResource   = analytics?.topResources?.[0]
 
@@ -229,6 +230,12 @@ export default function OverallDashboard() {
               accentColor="#10b981"
             />
             <StatCard
+              icon={<XCircle size={24} />}
+              label="Rejected Bookings"
+              value={totalRejected}
+              accentColor="#ef4444"
+            />
+            <StatCard
               icon={<TrendingUp size={24} />}
               label="Top Booked Resource"
               value={topResource?.resourceName ?? 'N/A'}
@@ -241,7 +248,7 @@ export default function OverallDashboard() {
               accentColor="#a78bfa"
             />
           </>
-        )}
+        )}}
       </div>
 
       {/* ═══════════════════════════════════════════

@@ -27,8 +27,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     public List<TopResourceDto> getTopResources() {
         List<TopResourceDto> result = bookingRepository.findTopResources(
                 BookingStatus.APPROVED,
-                PageRequest.of(0, TOP_RESOURCES_LIMIT)
-        );
+                PageRequest.of(0, TOP_RESOURCES_LIMIT));
         return result.isEmpty() ? Collections.emptyList() : result;
     }
 
@@ -42,5 +41,10 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     public List<ResourceUsageDto> getResourceUsage() {
         List<ResourceUsageDto> result = bookingRepository.findResourceUsage();
         return result.isEmpty() ? Collections.emptyList() : result;
+    }
+
+    @Override
+    public long getRejectedBookingsCount() {
+        return bookingRepository.countByStatus(BookingStatus.REJECTED);
     }
 }

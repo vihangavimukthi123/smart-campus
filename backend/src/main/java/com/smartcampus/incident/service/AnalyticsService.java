@@ -16,4 +16,7 @@ public interface AnalyticsService {
 
     /** All resources with their total booking count. */
     List<ResourceUsageDto> getResourceUsage();
+
+    /** Total count of rejected bookings. */
+    long getRejectedBookingsCount();
 }
