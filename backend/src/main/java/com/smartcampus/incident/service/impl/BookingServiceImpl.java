@@ -15,6 +15,7 @@ import com.smartcampus.incident.repository.BookingRepository;
 import com.smartcampus.incident.repository.ResourceRepository;
 import com.smartcampus.incident.repository.specification.BookingSpecification;
 import com.smartcampus.incident.service.BookingService;
+import com.smartcampus.incident.service.QrCodeService;
 import com.smartcampus.incident.service.impl.ResourceStatusSyncService;
 import com.smartcampus.incident.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class BookingServiceImpl implements BookingService {
     private final ResourceRepository resourceRepository;
     private final ResourceStatusSyncService resourceStatusSyncService;
     private final SecurityUtils securityUtils;
+    private final QrCodeService qrCodeService;
 
     @Override
     @Transactional
@@ -95,10 +97,24 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<BookingResponse> getMyBookings() {
         User currentUser = securityUtils.getCurrentUser();
-        return bookingRepository.findByUserId(currentUser.getUserId()).stream()
+        List<Booking> bookings = bookingRepository.findByUserId(currentUser.getUserId());
+        
+        // Ensure approved bookings have verification tokens
+        boolean updated = false;
+        for (Booking booking : bookings) {
+            if (booking.getStatus() == BookingStatus.APPROVED && booking.getVerificationToken() == null) {
+                booking.setVerificationToken(qrCodeService.generateVerificationToken(booking.getId()));
+                updated = true;
+            }
+        }
+        if (updated) {
+            bookingRepository.saveAll(bookings);
+        }
+
+        return bookings.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -142,17 +158,37 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
 
-        if (booking.getStatus() != BookingStatus.PENDING) {
-            throw new IllegalArgumentException(
-                    "Only PENDING bookings can be updated. Current status: " + booking.getStatus());
-        }
-
+        BookingStatus currentStatus = booking.getStatus();
         BookingStatus newStatus = BookingStatus.valueOf(request.getStatus().toUpperCase());
+
+        // Only allow transitions:
+        // PENDING -> APPROVED or REJECTED
+        // APPROVED -> REJECTED
+        // REJECTED -> APPROVED
+        if (currentStatus == BookingStatus.PENDING) {
+            if (newStatus != BookingStatus.APPROVED && newStatus != BookingStatus.REJECTED) {
+                throw new IllegalArgumentException("Invalid status transition from PENDING: " + newStatus);
+            }
+        } else if (currentStatus == BookingStatus.APPROVED) {
+            if (newStatus != BookingStatus.REJECTED) {
+                throw new IllegalArgumentException("Only REJECTED status is allowed for already APPROVED bookings.");
+            }
+        } else if (currentStatus == BookingStatus.REJECTED) {
+            if (newStatus != BookingStatus.APPROVED) {
+                throw new IllegalArgumentException("Only APPROVED status is allowed for already REJECTED bookings.");
+            }
+            // Clear rejection reason if moving to APPROVED
+            booking.setRejectionReason(null);
+            log.info("Booking #{} changed from REJECTED to APPROVED by admin", id);
+        } else {
+            throw new IllegalArgumentException("Cannot update status for bookings that are " + currentStatus);
+        }
 
         if (newStatus == BookingStatus.APPROVED) {
             // Re-check for conflict during approval, excluding this booking itself
             boolean hasConflict = bookingRepository.existsOverlappingBooking(
                     booking.getResource().getId(),
+                    id, // Exclude current booking
                     booking.getStartDateTime(),
                     booking.getEndDateTime(),
                     booking.getId() // exclude self so PENDING→APPROVED doesn't flag itself
@@ -162,6 +198,11 @@ public class BookingServiceImpl implements BookingService {
                 throw new IllegalArgumentException(
                         "Booking conflict detected. Another APPROVED booking already occupies this slot.");
             }
+
+            // Generate verification token if not already present
+            if (booking.getVerificationToken() == null) {
+                booking.setVerificationToken(qrCodeService.generateVerificationToken(id));
+            }
             log.info("Booking #{} approved by admin", id);
         } else if (newStatus == BookingStatus.REJECTED) {
             if (request.getReason() == null || request.getReason().trim().isEmpty()) {
@@ -169,8 +210,6 @@ public class BookingServiceImpl implements BookingService {
             }
             booking.setRejectionReason(request.getReason());
             log.info("Booking #{} rejected by admin. Reason: {}", id, request.getReason());
-        } else {
-            throw new IllegalArgumentException("Invalid status transition for admin update.");
         }
 
         booking.setStatus(newStatus);
@@ -208,6 +247,14 @@ public class BookingServiceImpl implements BookingService {
                 booking.getCancellationReason());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public BookingResponse getBookingByToken(String token) {
+        Booking booking = bookingRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking with token: " + token, 0L));
+        return toResponse(booking);
+    }
+
     private BookingResponse toResponse(Booking booking) {
         return BookingResponse.builder()
                 .id(booking.getId())
@@ -231,6 +278,10 @@ public class BookingServiceImpl implements BookingService {
                 .cancelledAt(booking.getCancelledAt())
                 .cancellationReason(booking.getCancellationReason())
                 .createdAt(booking.getCreatedAt())
+                .verificationToken(booking.getVerificationToken())
+                .qrCodeImage(booking.getStatus() == BookingStatus.APPROVED && booking.getVerificationToken() != null 
+                        ? qrCodeService.generateQrCodeImage(booking.getVerificationToken()) 
+                        : null)
                 .build();
     }
 }

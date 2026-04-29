@@ -26,6 +26,8 @@ public class BookingResponse {
     private LocalDateTime cancelledAt;
     private String cancellationReason;
     private LocalDateTime createdAt;
+    private String verificationToken;
+    private String qrCodeImage;
 
     @Data
     @Builder

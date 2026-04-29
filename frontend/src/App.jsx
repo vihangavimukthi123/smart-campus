@@ -15,6 +15,7 @@ import AdminBookingsPage from './pages/AdminBookingsPage'
 import OverallDashboard from './pages/OverallDashboard'
 import UserDashboardPage from './pages/UserDashboardPage'
 import AdminUserPage from './pages/AdminUserPage'
+import BookingDetailsPublicPage from './pages/BookingDetailsPublicPage'
 import AnalyticsDashboard from './pages/AnalyticsDashboard'
 
 export default function App() {
@@ -38,6 +39,10 @@ export default function App() {
       <Route
         path="/register"
         element={!user ? <RegisterPage /> : <Navigate to="/dashboard" replace />}
+      />
+      <Route
+        path="/booking-details/:token"
+        element={<BookingDetailsPublicPage />}
       />
 
       {/* 2. Protected routes - Login wechcha aya layout ekath ekka meka athule inne */}

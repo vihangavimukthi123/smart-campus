@@ -5,6 +5,7 @@ import ScheduleModal from '../components/ScheduleModal'
 import { createResource, deleteResource, getResources, updateResource } from '../api/resourceService'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import ConfirmModal from '../components/ConfirmModal'
 
 const emptyForm = {
   name: '',
@@ -94,7 +95,7 @@ const getStatusCardStyle = (status) => {
 
 export default function ResourcesPage() {
   const navigate = useNavigate()
-  const { isAdmin } = useAuth()
+  const { isAdmin, isTechnician } = useAuth()
   const [resources, setResources] = useState([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -102,6 +103,8 @@ export default function ResourcesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingResource, setEditingResource] = useState(null)
   const [showRetired, setShowRetired] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [resourceToConfirm, setResourceToConfirm] = useState(null)
   const [scheduleResource, setScheduleResource] = useState(null)
 
   const [form, setForm] = useState(emptyForm)
@@ -235,17 +238,17 @@ export default function ResourcesPage() {
     }
   }
 
-  const handleDelete = async (resource) => {
+  const handleDelete = (resource) => {
     if (!isAdmin) {
       toast.error('Only admins can manage resources')
       return
     }
+    setResourceToConfirm(resource)
+    setShowConfirmModal(true)
+  }
 
-    const confirmed = window.confirm(`Delete resource "${resource.name}"?`)
-    if (!confirmed) {
-      return
-    }
-
+  const executeDelete = async () => {
+    const resource = resourceToConfirm
     setDeletingId(resource.id)
     try {
       await deleteResource(resource.id)
@@ -596,7 +599,7 @@ export default function ResourcesPage() {
                   </p>
                 </div>
 
-                {!isAdmin && (
+                {!isAdmin && !isTechnician && (
                   <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button
@@ -627,6 +630,16 @@ export default function ResourcesPage() {
           </div>
         )}
       </section>
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={executeDelete}
+        title="Delete Resource"
+        message={`Are you sure you want to delete "${resourceToConfirm?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        type="danger"
+      />
       {scheduleResource && (
         <ScheduleModal resource={scheduleResource} onClose={() => setScheduleResource(null)} />
       )}

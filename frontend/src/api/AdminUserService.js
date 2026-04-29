@@ -1,8 +1,10 @@
 import api from './axiosInstance';
 
+const API_URL = '/admin/users';
+
 export const adminUserService = {
-    getAllUsers: () => api.get('/admin/users'),
-    createUser: (userData) => api.post('/admin/users', userData),
-    updateUser: (id, userData) => api.put(`/admin/users/${id}`, userData),
-    deleteUser: (id) => api.delete(`/admin/users/${id}`),
+    getAllUsers: () => api.get(API_URL),
+    createUser: (userData) => api.post(API_URL, userData),
+    updateUser: (id, userData) => api.put(`${API_URL}/${id}`, userData),
+    deleteUser: (id) => api.delete(`${API_URL}/${id}`),
 };
