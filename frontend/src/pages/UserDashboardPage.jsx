@@ -404,7 +404,7 @@ export default function UserDashboardPage() {
           )}
         </article>
 
-        <article className="card dashboard-section">
+        {/* <article className="card dashboard-section">
           <div className="dashboard-section__title-row">
             <h2 className="heading-3">Recent Bookings</h2>
           </div>
@@ -433,7 +433,7 @@ export default function UserDashboardPage() {
               ))}
             </div>
           )}
-        </article>
+        </article> */}
 
         <article className="card dashboard-section">
           <div className="dashboard-section__title-row">
