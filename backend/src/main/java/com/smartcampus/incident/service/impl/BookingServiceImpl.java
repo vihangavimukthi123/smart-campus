@@ -63,6 +63,13 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalArgumentException("End time must be later than start time");
         }
 
+        // Validation 3: Attendees cannot exceed resource capacity
+        if (request.getAttendees() != null && request.getAttendees() > resource.getCapacity()) {
+            throw new IllegalArgumentException(
+                    String.format("Expected attendees (%d) exceeds resource capacity (%d)", 
+                    request.getAttendees(), resource.getCapacity()));
+        }
+
         // Validation 3: Start time must not be in the past
         if (request.getStartDateTime().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Booking cannot be made in the past");
@@ -322,6 +329,15 @@ public class BookingServiceImpl implements BookingService {
                 request.getEndDateTime().isEqual(request.getStartDateTime())) {
             log.error("Invalid time range: {} to {}", request.getStartDateTime(), request.getEndDateTime());
             throw new IllegalArgumentException("End time must be later than start time");
+        }
+
+        // 4.5. Capacity check
+        if (request.getAttendees() != null && request.getAttendees() > booking.getResource().getCapacity()) {
+            log.error("Attendees (%d) exceeds capacity (%d) for resource #%d", 
+                request.getAttendees(), booking.getResource().getCapacity(), booking.getResource().getId());
+            throw new IllegalArgumentException(
+                    String.format("Expected attendees (%d) exceeds resource capacity (%d)", 
+                    request.getAttendees(), booking.getResource().getCapacity()));
         }
 
         // 5. Conflict checking (if time changed)
