@@ -107,6 +107,12 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Google Authentication -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+        
         <!-- QR Code Generation -->
         <dependency>
             <groupId>com.google.zxing</groupId>
