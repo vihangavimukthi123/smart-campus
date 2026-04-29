@@ -15,4 +15,6 @@ public class BookingStatusRequest {
     private String status; // APPROVED, REJECTED
     
     private String reason;
+
+    private Long conflictingBookingId;
 }

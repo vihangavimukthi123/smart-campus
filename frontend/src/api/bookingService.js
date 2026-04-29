@@ -44,6 +44,11 @@ export const updateBookingStatus = async (id, data) => {
   return response.data
 }
 
+export const getConflictingBookings = async (id) => {
+  const response = await api.get(`/bookings/${id}/conflicts`)
+  return response.data
+}
+
 /**
  * Fetch bookings for a specific resource and date.
  * @param {string|number} resourceId

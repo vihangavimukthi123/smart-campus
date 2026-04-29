@@ -198,6 +198,21 @@ public class BookingServiceImpl implements BookingService {
                         "Booking conflict detected. Another APPROVED booking already occupies this slot.");
             }
 
+            // Conflict Resolution Logic (Swap)
+            if (request.getConflictingBookingId() != null) {
+                Booking conflictingBooking = bookingRepository.findById(request.getConflictingBookingId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Conflicting Booking", request.getConflictingBookingId()));
+                
+                // If we are approving a REJECTED booking and want to reject a PENDING one
+                // OR vice versa (though normal flow usually just approves pending)
+                if (conflictingBooking.getStatus() == BookingStatus.PENDING) {
+                    conflictingBooking.setStatus(BookingStatus.REJECTED);
+                    conflictingBooking.setRejectionReason(request.getReason() != null ? request.getReason() : "Conflict resolution: Another booking was approved for this slot.");
+                    bookingRepository.save(conflictingBooking);
+                    log.info("Conflicting booking #{} automatically REJECTED due to approval of #{}", conflictingBooking.getId(), id);
+                }
+            }
+
             // Generate verification token if not already present
             if (booking.getVerificationToken() == null) {
                 booking.setVerificationToken(qrCodeService.generateVerificationToken(id));
@@ -214,6 +229,24 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(newStatus);
         bookingRepository.save(booking);
         resourceStatusSyncService.refreshResourceStatus(booking.getResource().getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getConflictingBookings(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
+        
+        List<Booking> conflicts = bookingRepository.findConflictingBookings(
+                booking.getResource().getId(),
+                booking.getStartDateTime(),
+                booking.getEndDateTime(),
+                id
+        );
+
+        return conflicts.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override

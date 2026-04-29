@@ -91,6 +91,13 @@ public class BookingController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/{id}/conflicts")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get conflicting bookings (Pending/Rejected) for a booking slot")
+    public ResponseEntity<List<BookingResponse>> getConflictingBookings(@PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.getConflictingBookings(id));
+    }
+
     @GetMapping("/public/{token}")
     @Operation(summary = "Get booking details via token (Public)")
     public ResponseEntity<BookingResponse> getBookingByToken(@PathVariable String token) {

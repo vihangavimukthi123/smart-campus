@@ -106,8 +106,133 @@ export default function NotificationBell() {
 
       {/* CSS Styles (ඔයාගේ ස්ටයිල් ටිකම මෙතන තියෙන්න දෙන්න) */}
       <style>{`
-        /* ... ඔයා ලියපු CSS ටික මෙතනට දාන්න ... */
-        .notif-item--unread { background: rgba(79, 70, 229, 0.08); border-left: 3px solid var(--clr-primary); }
+        .notif-bell { position: relative; display: flex; align-items: center; }
+        
+        .notif-trigger {
+          background: transparent;
+          border: none;
+          outline: none;
+          cursor: pointer;
+          color: var(--clr-text);
+          padding: 8px;
+          border-radius: var(--radius-md);
+          transition: var(--transition);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+        
+        .notif-trigger:hover {
+          background: var(--clr-surface-2);
+          color: var(--clr-primary);
+        }
+
+        .notif-count {
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          background: var(--clr-error);
+          color: white;
+          font-size: 0.65rem;
+          font-weight: 700;
+          min-width: 16px;
+          height: 16px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 4px;
+          border: 2px solid var(--clr-bg-2);
+        }
+
+        .notif-dropdown {
+          position: absolute;
+          top: calc(100% + 12px);
+          right: 0;
+          width: 320px;
+          background: var(--clr-surface);
+          border: 1px solid var(--clr-border);
+          border-radius: var(--radius-lg);
+          box-shadow: var(--shadow-lg);
+          z-index: 1000;
+          overflow: hidden;
+          animation: fadeIn 0.2s ease-out;
+        }
+
+        .notif-header {
+          padding: var(--space-4);
+          border-bottom: 1px solid var(--clr-border);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background: var(--clr-surface-2);
+        }
+
+        .notif-list {
+          max-height: 400px;
+          overflow-y: auto;
+        }
+
+        .notif-empty {
+          padding: var(--space-8) var(--space-4);
+          text-align: center;
+          color: var(--clr-text-3);
+        }
+
+        .notif-item {
+          padding: var(--space-4);
+          display: flex;
+          gap: var(--space-3);
+          cursor: pointer;
+          transition: var(--transition);
+          border-bottom: 1px solid var(--clr-border);
+          position: relative;
+        }
+
+        .notif-item:hover {
+          background: var(--clr-surface-2);
+        }
+
+        .notif-item--unread {
+          background: rgba(79, 70, 229, 0.05);
+        }
+        
+        html.light-theme .notif-item--unread {
+          background: rgba(79, 70, 229, 0.03);
+        }
+
+        .notif-icon {
+          font-size: 1.25rem;
+          flex-shrink: 0;
+        }
+
+        .notif-body {
+          flex: 1;
+        }
+
+        .notif-msg {
+          font-size: 0.875rem;
+          color: var(--clr-text);
+          margin-bottom: 4px;
+          line-height: 1.4;
+        }
+
+        .notif-time {
+          font-size: 0.75rem;
+          color: var(--clr-text-3);
+        }
+
+        .notif-dot {
+          width: 8px;
+          height: 8px;
+          background: var(--clr-primary);
+          border-radius: 50%;
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+        }
       `}</style>
     </div>
   )

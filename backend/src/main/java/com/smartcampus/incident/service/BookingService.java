@@ -25,4 +25,5 @@ public interface BookingService {
 
     void cancelBooking(Long id, CancelBookingRequest request);
     BookingResponse getBookingByToken(String token);
+    List<BookingResponse> getConflictingBookings(Long id);
 }
