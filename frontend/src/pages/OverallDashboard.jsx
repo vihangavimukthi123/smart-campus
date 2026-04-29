@@ -8,7 +8,7 @@ import {
   ResponsiveContainer, LineChart, Line, Cell,
 } from 'recharts'
 import {
-  Users, Ticket, Clock, ArrowRight, BarChart3,
+  Users, Ticket, Clock, ArrowRight,
   Trophy, BarChart2, TrendingUp, RefreshCw, AlertCircle,
   CheckCircle, ShieldAlert, XCircle,
 } from 'lucide-react'
@@ -377,27 +377,6 @@ export default function OverallDashboard() {
           </div>
         </>
       )}
-
-      {/* ═══════════════════════════════════════════
-          SECTION 3 — QUICK ACTIONS
-          ═══════════════════════════════════════════ */}
-      <section className="card">
-        <h3 className="heading-3" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <BarChart3 size={18} /> Quick Actions
-        </h3>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button className="btn btn-secondary" onClick={() => navigate('/tickets')}>View Tickets</button>
-          {isAdmin && (
-            <>
-              <button className="btn btn-secondary" onClick={() => navigate('/admin/users')}>User Management</button>
-              <button className="btn btn-secondary" onClick={() => navigate('/admin/bookings')}>Manage Bookings</button>
-            </>
-          )}
-          {!isAdmin && (
-            <button className="btn btn-secondary" onClick={() => navigate('/tickets/new')}>New Ticket</button>
-          )}
-        </div>
-      </section>
 
       {/* Shimmer animation */}
       <style>{`

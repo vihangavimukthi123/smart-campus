@@ -20,7 +20,6 @@ import {
   AlertCircle,
   ArrowRight,
   Plus,
-  ListChecks,
   Wrench,
   Bell,
   Building2,
@@ -728,25 +727,6 @@ export default function UserDashboardPage() {
           </div>
         </article>
 
-        <article className="card dashboard-section quick-actions-panel">
-          <div className="dashboard-section__title-row">
-            <h2 className="heading-3">
-              <ListChecks size={18} /> Quick Actions
-            </h2>
-          </div>
-
-          <div className="quick-actions quick-actions--panel">
-            <button className="btn btn-primary" onClick={() => navigate('/bookings/new')}>
-              <Plus size={16} /> Book Resource
-            </button>
-            <button className="btn btn-secondary" onClick={() => navigate('/bookings/my')}>
-              <ListChecks size={16} /> View My Bookings
-            </button>
-            <button className="btn btn-secondary" onClick={() => navigate('/tickets/new')}>
-              <Wrench size={16} /> Report Issue
-            </button>
-          </div>
-        </article>
       </section>
 
       <style>{`
@@ -841,11 +821,6 @@ export default function UserDashboardPage() {
 
         .dashboard-section {
           min-height: 280px;
-        }
-
-        .quick-actions-panel {
-          min-height: auto;
-          grid-column: 1 / -1;
         }
 
         .dashboard-section__title-row {
@@ -1116,16 +1091,6 @@ export default function UserDashboardPage() {
           height: 0.55rem;
           border-radius: 999px;
           display: inline-block;
-        }
-
-        .quick-actions {
-          display: flex;
-          gap: 0.5rem;
-          flex-wrap: wrap;
-        }
-
-        .quick-actions--panel .btn {
-          min-width: 160px;
         }
 
         @media (max-width: 1080px) {
