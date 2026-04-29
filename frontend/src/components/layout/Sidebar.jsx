@@ -78,7 +78,13 @@ export default function Sidebar() {
 
       {/* User profile / Footer Section */}
       <div className="sidebar__footer">
-        <div className="sidebar__user">
+        <div 
+          className="sidebar__user" 
+          onClick={() => navigate('/profile')}
+          style={{ cursor: 'pointer', transition: '0.2s', padding: '0.25rem', borderRadius: '8px' }}
+          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        >
           <div className="avatar">{initials(user?.name)}</div>
           <div className="sidebar__user-info">
             <span className="sidebar__user-name">{user?.name}</span>
