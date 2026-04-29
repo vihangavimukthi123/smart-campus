@@ -19,32 +19,19 @@ import java.util.List;
 public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpecificationExecutor<Booking> {
 
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.resource.id = :resourceId " +
-           "AND b.id <> :bookingId " +
            "AND b.status NOT IN ('REJECTED', 'CANCELLED') " +
            "AND b.id <> :excludeId " +
            "AND (b.startDateTime < :end AND b.endDateTime > :start)")
     boolean existsOverlappingBooking(@Param("resourceId") Long resourceId, 
-                                     @Param("bookingId") Long bookingId,
                                      @Param("start") LocalDateTime start, 
-                                     @Param("end") LocalDateTime end);
+                                     @Param("end") LocalDateTime end,
+                                     @Param("excludeId") Long excludeId);
 
-    @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.user.id = :userId")
+    @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.user.userId = :userId")
     List<Booking> findByUserId(@Param("userId") Long userId);
 
     @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.verificationToken = :token")
     java.util.Optional<Booking> findByVerificationToken(@Param("token") String token);
-@Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.resource.id = :resourceId " +
-       "AND b.status NOT IN ('REJECTED', 'CANCELLED') " +
-       "AND b.id <> :excludeId " +
-       "AND (b.startDateTime < :end AND b.endDateTime > :start)")
-boolean existsOverlappingBooking(@Param("resourceId") Long resourceId,
-                                 @Param("start") LocalDateTime start,
-                                 @Param("end") LocalDateTime end,
-                                 @Param("excludeId") Long excludeId);
-
-        @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.user.id = :userId")
-        List<Booking> findByUserId(@Param("userId") Long userId);
-
         @Query("SELECT DISTINCT b.resource.id FROM Booking b WHERE b.status = :status " +
                         "AND b.startDateTime <= :now AND b.endDateTime > :now")
         List<Long> findActiveResourceIds(@Param("status") BookingStatus status,
