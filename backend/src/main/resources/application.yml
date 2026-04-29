@@ -42,9 +42,18 @@ spring:
     # Set to true to enable actual email delivery
     enabled: true
 
-  #add google authentication details here
+#add google authentication details here
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 
+            client-secret: 
+              # - profile
+              # - email
 
-  
+
 # Application-specific settings
 app:
   jwt:
