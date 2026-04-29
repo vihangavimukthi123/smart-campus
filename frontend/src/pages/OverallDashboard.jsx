@@ -83,7 +83,7 @@ const SectionHeader = ({ icon, title, badge }) => (
 // Main Dashboard
 // ═══════════════════════════════════════════════════════════════════════════
 export default function OverallDashboard() {
-  const { user, isAdmin } = useAuth()
+  const { user, isAdmin, isTechnician } = useAuth()
   const navigate = useNavigate()
 
   // ── General stats ─────────────────────────────────────────────────────
@@ -386,7 +386,7 @@ export default function OverallDashboard() {
               <button className="btn btn-secondary" onClick={() => navigate('/admin/bookings')}>Manage Bookings</button>
             </>
           )}
-          {!isAdmin && (
+          {!isAdmin && !isTechnician && (
             <button className="btn btn-secondary" onClick={() => navigate('/tickets/new')}>New Ticket</button>
           )}
         </div>
