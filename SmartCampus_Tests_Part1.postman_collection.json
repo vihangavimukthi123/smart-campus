@@ -1,0 +1,231 @@
+{
+  "info": {
+    "name": "SmartCampus Tests - Part 1: Auth & Users",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key":"baseUrl","value":"http://localhost:8081/api"},
+    {"key":"token","value":""},
+    {"key":"adminToken","value":""},
+    {"key":"techToken","value":""},
+    {"key":"userId","value":""},
+    {"key":"ticketId","value":""},
+    {"key":"bookingId","value":""},
+    {"key":"commentId","value":""},
+    {"key":"resourceId","value":""}
+  ],
+  "item": [
+    {
+      "name": "AUTH",
+      "item": [
+        {
+          "name": "T01 - Register valid user",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "const j = pm.response.json();",
+            "pm.test('Has accessToken', () => pm.expect(j.accessToken).to.be.a('string').and.not.empty);",
+            "pm.test('Has userId', () => pm.expect(j.userId).to.be.a('number'));",
+            "pm.test('Role is USER', () => pm.expect(j.role).to.eql('USER'));",
+            "pm.collectionVariables.set('token', j.accessToken);",
+            "pm.collectionVariables.set('userId', j.userId);"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"name\":\"Test User\",\"email\":\"testuser_{{$timestamp}}@campus.edu\",\"password\":\"Test@1234\",\"phone\":\"0712345678\",\"department\":\"IT\",\"role\":\"USER\"}"},
+            "url":{"raw":"{{baseUrl}}/auth/register","host":["{{baseUrl}}"],"path":["auth","register"]}
+          }
+        },
+        {
+          "name": "T02 - Register missing name (expect 400)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 400', () => pm.response.to.have.status(400));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"email\":\"bad@campus.edu\",\"password\":\"Test@1234\",\"phone\":\"0712345678\"}"},
+            "url":{"raw":"{{baseUrl}}/auth/register","host":["{{baseUrl}}"],"path":["auth","register"]}
+          }
+        },
+        {
+          "name": "T03 - Register weak password (expect 400)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 400', () => pm.response.to.have.status(400));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"name\":\"Bad\",\"email\":\"bad2@campus.edu\",\"password\":\"weak\",\"phone\":\"0712345678\"}"},
+            "url":{"raw":"{{baseUrl}}/auth/register","host":["{{baseUrl}}"],"path":["auth","register"]}
+          }
+        },
+        {
+          "name": "T04 - Login as ADMIN (seeded)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Has accessToken', () => pm.expect(j.accessToken).to.be.a('string').and.not.empty);",
+            "pm.test('Role is ADMIN', () => pm.expect(j.role).to.eql('ADMIN'));",
+            "pm.test('tokenType is Bearer', () => pm.expect(j.tokenType).to.eql('Bearer'));",
+            "pm.collectionVariables.set('adminToken', j.accessToken);"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"email\":\"admin@smartcampus.edu\",\"password\":\"Admin@12345\"}"},
+            "url":{"raw":"{{baseUrl}}/auth/login","host":["{{baseUrl}}"],"path":["auth","login"]}
+          }
+        },
+        {
+          "name": "T05 - Login as TECHNICIAN (seeded)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Role is TECHNICIAN', () => pm.expect(j.role).to.eql('TECHNICIAN'));",
+            "pm.collectionVariables.set('techToken', j.accessToken);"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"email\":\"tech@smartcampus.edu\",\"password\":\"Tech@12345\"}"},
+            "url":{"raw":"{{baseUrl}}/auth/login","host":["{{baseUrl}}"],"path":["auth","login"]}
+          }
+        },
+        {
+          "name": "T06 - Login as USER (seeded)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Role is USER', () => pm.expect(j.role).to.eql('USER'));",
+            "pm.collectionVariables.set('token', j.accessToken);"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"email\":\"user@smartcampus.edu\",\"password\":\"User@12345\"}"},
+            "url":{"raw":"{{baseUrl}}/auth/login","host":["{{baseUrl}}"],"path":["auth","login"]}
+          }
+        },
+        {
+          "name": "T07 - Login wrong password (expect 401)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 401', () => pm.response.to.have.status(401));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"email\":\"admin@smartcampus.edu\",\"password\":\"wrongpass\"}"},
+            "url":{"raw":"{{baseUrl}}/auth/login","host":["{{baseUrl}}"],"path":["auth","login"]}
+          }
+        },
+        {
+          "name": "T08 - Access protected route without token (expect 401)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 401', () => pm.response.to.have.status(401));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"noauth"},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/users/me","host":["{{baseUrl}}"],"path":["users","me"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "USERS",
+      "item": [
+        {
+          "name": "T09 - Get my profile (USER)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Has id', () => pm.expect(j.id).to.be.a('number'));",
+            "pm.test('Has name', () => pm.expect(j.name).to.be.a('string').and.not.empty);",
+            "pm.test('Has email', () => pm.expect(j.email).to.be.a('string'));",
+            "pm.test('Has role', () => pm.expect(['USER','ADMIN','TECHNICIAN']).to.include(j.role));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/users/me","host":["{{baseUrl}}"],"path":["users","me"]}
+          }
+        },
+        {
+          "name": "T10 - List technicians (ADMIN)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Response is array', () => pm.expect(j).to.be.an('array'));",
+            "if(j.length > 0) {",
+            "  pm.test('Each has id,name,email', () => {",
+            "    j.forEach(t => {",
+            "      pm.expect(t.id).to.be.a('number');",
+            "      pm.expect(t.name).to.be.a('string');",
+            "      pm.expect(t.email).to.be.a('string');",
+            "    });",
+            "  });",
+            "}"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/users/technicians","host":["{{baseUrl}}"],"path":["users","technicians"]}
+          }
+        },
+        {
+          "name": "T11 - List technicians as USER (expect 403)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 403 or 200', () => pm.expect([200,403]).to.include(pm.response.code));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/users/technicians","host":["{{baseUrl}}"],"path":["users","technicians"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "ADMIN - USER MANAGEMENT",
+      "item": [
+        {
+          "name": "T12 - Admin list all users",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/admin/users","host":["{{baseUrl}}"],"path":["admin","users"]}
+          }
+        },
+        {
+          "name": "T13 - Admin create technician user",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"name\":\"New Tech\",\"email\":\"newtech_{{$timestamp}}@campus.edu\",\"password\":\"Tech@1234\",\"phone\":\"0712345678\",\"department\":\"Electrical\",\"role\":\"TECHNICIAN\"}"},
+            "url":{"raw":"{{baseUrl}}/admin/users","host":["{{baseUrl}}"],"path":["admin","users"]}
+          }
+        },
+        {
+          "name": "T14 - Non-admin cannot access admin users (expect 403)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 403', () => pm.response.to.have.status(403));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/admin/users","host":["{{baseUrl}}"],"path":["admin","users"]}
+          }
+        }
+      ]
+    }
+  ]
+}

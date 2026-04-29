@@ -1,5 +1,6 @@
 package com.smartcampus.incident.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smartcampus.incident.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,7 +26,6 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long userId;
 
     @Column(nullable = false, length = 100)
@@ -34,6 +34,7 @@ public class User {
     @Column(nullable = false, unique = true, length = 150)
     private String email;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
@@ -64,12 +65,21 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    //notification sound management
+    @Column(nullable = false)
+    private boolean soundNotify = true; // sound enable/disable
+
+    @Column(nullable = false)
+    private boolean emailNotify = true;  //enable/ disable user notifications
+
     // Tickets created by this user
+    @JsonIgnore
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Ticket> createdTickets = new ArrayList<>();
 
     // Tickets assigned to this technician
+    @JsonIgnore
     @OneToMany(mappedBy = "assignedTo", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Ticket> assignedTickets = new ArrayList<>();

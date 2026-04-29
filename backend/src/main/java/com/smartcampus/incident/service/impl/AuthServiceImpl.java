@@ -58,6 +58,8 @@ public class AuthServiceImpl implements AuthService {
             .active(true)        // Account active
             .verified(false)   // Not verified
             .otp(otp)            // save OTP
+            .soundNotify(true) //sound notifications enabled by default
+            .emailNotify(true) // email notifications enabled by default
             .otpExpiry(LocalDateTime.now().plusMinutes(5)) // Winadi 5kin expire wenawa
             .build();
 
