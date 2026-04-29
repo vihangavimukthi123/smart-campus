@@ -1,0 +1,331 @@
+{
+  "info": {
+    "name": "SmartCampus Tests - Part 2: Tickets & Comments",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key":"baseUrl","value":"http://localhost:8081/api"},
+    {"key":"token","value":"PASTE_USER_TOKEN_HERE"},
+    {"key":"adminToken","value":"PASTE_ADMIN_TOKEN_HERE"},
+    {"key":"techToken","value":"PASTE_TECH_TOKEN_HERE"},
+    {"key":"ticketId","value":""},
+    {"key":"commentId","value":""}
+  ],
+  "item": [
+    {
+      "name": "TICKETS",
+      "item": [
+        {
+          "name": "T15 - Create ticket (USER)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "const j = pm.response.json();",
+            "pm.test('Has id', () => pm.expect(j.id).to.be.a('number'));",
+            "pm.test('Has title', () => pm.expect(j.title).to.be.a('string'));",
+            "pm.test('Status is OPEN', () => pm.expect(j.status).to.eql('OPEN'));",
+            "pm.test('Priority is HIGH', () => pm.expect(j.priority).to.eql('HIGH'));",
+            "pm.test('Has createdBy', () => pm.expect(j.createdBy).to.be.an('object'));",
+            "pm.collectionVariables.set('ticketId', j.id);"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"title\":\"Projector not working in Room 201\",\"description\":\"The projector in Room 201 has been malfunctioning since this morning and is affecting lectures.\",\"category\":\"MAINTENANCE\",\"location\":\"Building B, Room 201\",\"priority\":\"HIGH\"}"},
+            "url":{"raw":"{{baseUrl}}/tickets","host":["{{baseUrl}}"],"path":["tickets"]}
+          }
+        },
+        {
+          "name": "T16 - Create ticket missing title (expect 400)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 400', () => pm.response.to.have.status(400));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"description\":\"Short desc.\",\"category\":\"MAINTENANCE\",\"location\":\"Room 1\",\"priority\":\"LOW\"}"},
+            "url":{"raw":"{{baseUrl}}/tickets","host":["{{baseUrl}}"],"path":["tickets"]}
+          }
+        },
+        {
+          "name": "T17 - Create ticket with short description (expect 400)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 400', () => pm.response.to.have.status(400));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"title\":\"Valid Title Here\",\"description\":\"Too short\",\"category\":\"MAINTENANCE\",\"location\":\"Room 1\",\"priority\":\"LOW\"}"},
+            "url":{"raw":"{{baseUrl}}/tickets","host":["{{baseUrl}}"],"path":["tickets"]}
+          }
+        },
+        {
+          "name": "T18 - List tickets (USER sees own)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Has content array', () => pm.expect(j.content).to.be.an('array'));",
+            "pm.test('Has totalElements', () => pm.expect(j.totalElements).to.be.a('number'));",
+            "pm.test('Has pageable info', () => pm.expect(j.number).to.eql(0));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/tickets?page=0&size=10&sortBy=createdAt&direction=desc","host":["{{baseUrl}}"],"path":["tickets"],"query":[{"key":"page","value":"0"},{"key":"size","value":"10"},{"key":"sortBy","value":"createdAt"},{"key":"direction","value":"desc"}]}
+          }
+        },
+        {
+          "name": "T19 - List tickets filter by status=OPEN",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('All results are OPEN', () => {",
+            "  j.content.forEach(t => pm.expect(t.status).to.eql('OPEN'));",
+            "});"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/tickets?status=OPEN&page=0&size=20","host":["{{baseUrl}}"],"path":["tickets"],"query":[{"key":"status","value":"OPEN"},{"key":"page","value":"0"},{"key":"size","value":"20"}]}
+          }
+        },
+        {
+          "name": "T20 - List tickets filter by priority=HIGH",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('All results are HIGH priority', () => {",
+            "  j.content.forEach(t => pm.expect(t.priority).to.eql('HIGH'));",
+            "});"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/tickets?priority=HIGH&page=0&size=20","host":["{{baseUrl}}"],"path":["tickets"],"query":[{"key":"priority","value":"HIGH"},{"key":"page","value":"0"},{"key":"size","value":"20"}]}
+          }
+        },
+        {
+          "name": "T21 - Get ticket by ID",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('ID matches', () => pm.expect(j.id).to.eql(parseInt(pm.collectionVariables.get('ticketId'))));",
+            "pm.test('Has title', () => pm.expect(j.title).to.be.a('string'));",
+            "pm.test('Has status', () => pm.expect(['OPEN','IN_PROGRESS','RESOLVED','CLOSED','REJECTED']).to.include(j.status));",
+            "pm.test('Has createdAt', () => pm.expect(j.createdAt).to.be.a('string'));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/tickets/{{ticketId}}","host":["{{baseUrl}}"],"path":["tickets","{{ticketId}}"]}
+          }
+        },
+        {
+          "name": "T22 - Get ticket by invalid ID (expect 404)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 404', () => pm.response.to.have.status(404));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/tickets/999999","host":["{{baseUrl}}"],"path":["tickets","999999"]}
+          }
+        },
+        {
+          "name": "T23 - Assign technician (ADMIN)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('AssignedTo is set', () => pm.expect(j.assignedTo).to.be.an('object'));",
+            "pm.test('AssignedTo has name', () => pm.expect(j.assignedTo.name).to.be.a('string'));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"PUT",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"technicianId\":2}"},
+            "url":{"raw":"{{baseUrl}}/tickets/{{ticketId}}/assign","host":["{{baseUrl}}"],"path":["tickets","{{ticketId}}","assign"]}
+          }
+        },
+        {
+          "name": "T24 - Update status to IN_PROGRESS (ADMIN)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Status is IN_PROGRESS', () => pm.expect(j.status).to.eql('IN_PROGRESS'));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"PATCH",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"newStatus\":\"IN_PROGRESS\"}"},
+            "url":{"raw":"{{baseUrl}}/tickets/{{ticketId}}/status","host":["{{baseUrl}}"],"path":["tickets","{{ticketId}}","status"]}
+          }
+        },
+        {
+          "name": "T25 - Update status to RESOLVED with notes (ADMIN)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Status is RESOLVED', () => pm.expect(j.status).to.eql('RESOLVED'));",
+            "pm.test('Has resolvedAt SLA timestamp', () => pm.expect(j.resolvedAt).to.not.be.null);"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"PATCH",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"newStatus\":\"RESOLVED\",\"resolutionNotes\":\"Projector replaced and tested successfully.\"}"},
+            "url":{"raw":"{{baseUrl}}/tickets/{{ticketId}}/status","host":["{{baseUrl}}"],"path":["tickets","{{ticketId}}","status"]}
+          }
+        },
+        {
+          "name": "T26 - Get SLA stats (ADMIN)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Has totalTickets', () => pm.expect(j).to.have.property('totalTickets'));",
+            "pm.test('Has slaBreached', () => pm.expect(j).to.have.property('slaBreached'));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/tickets/stats/sla","host":["{{baseUrl}}"],"path":["tickets","stats","sla"]}
+          }
+        },
+        {
+          "name": "T27 - Create second ticket for REJECT test",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.collectionVariables.set('ticketId2', pm.response.json().id);"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"title\":\"Tap water leaking in washroom\",\"description\":\"The tap in the ground floor washroom has been continuously leaking water since last week causing damage.\",\"category\":\"PLUMBING\",\"location\":\"Main Building, Ground Floor Washroom\",\"priority\":\"MEDIUM\"}"},
+            "url":{"raw":"{{baseUrl}}/tickets","host":["{{baseUrl}}"],"path":["tickets"]}
+          }
+        },
+        {
+          "name": "T28 - Reject ticket with reason (ADMIN)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Status is REJECTED', () => pm.expect(j.status).to.eql('REJECTED'));",
+            "pm.test('Has rejectionReason', () => pm.expect(j.rejectionReason).to.be.a('string').and.not.empty);"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"PATCH",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"newStatus\":\"REJECTED\",\"rejectionReason\":\"This is a duplicate ticket. Please refer to ticket #1.\"}"},
+            "url":{"raw":"{{baseUrl}}/tickets/{{ticketId2}}/status","host":["{{baseUrl}}"],"path":["tickets","{{ticketId2}}","status"]}
+          }
+        },
+        {
+          "name": "T29 - Delete ticket (ADMIN)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 204', () => pm.response.to.have.status(204));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"DELETE",
+            "url":{"raw":"{{baseUrl}}/tickets/{{ticketId2}}","host":["{{baseUrl}}"],"path":["tickets","{{ticketId2}}"]}
+          }
+        },
+        {
+          "name": "T30 - Delete non-existent ticket (expect 404)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 404', () => pm.response.to.have.status(404));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"DELETE",
+            "url":{"raw":"{{baseUrl}}/tickets/999999","host":["{{baseUrl}}"],"path":["tickets","999999"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "COMMENTS",
+      "item": [
+        {
+          "name": "T31 - Add comment to ticket",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "const j = pm.response.json();",
+            "pm.test('Has id', () => pm.expect(j.id).to.be.a('number'));",
+            "pm.test('Has content', () => pm.expect(j.content).to.be.a('string'));",
+            "pm.test('Has ticketId', () => pm.expect(j.ticketId).to.be.a('number'));",
+            "pm.test('Has author', () => pm.expect(j.author).to.be.an('object'));",
+            "pm.test('Has createdAt', () => pm.expect(j.createdAt).to.be.a('string'));",
+            "pm.collectionVariables.set('commentId', j.id);"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"content\":\"I can confirm this issue is still happening as of today morning.\"}"},
+            "url":{"raw":"{{baseUrl}}/tickets/{{ticketId}}/comments","host":["{{baseUrl}}"],"path":["tickets","{{ticketId}}","comments"]}
+          }
+        },
+        {
+          "name": "T32 - Add empty comment (expect 400)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 400', () => pm.response.to.have.status(400));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"content\":\"\"}"},
+            "url":{"raw":"{{baseUrl}}/tickets/{{ticketId}}/comments","host":["{{baseUrl}}"],"path":["tickets","{{ticketId}}","comments"]}
+          }
+        },
+        {
+          "name": "T33 - Get comments for ticket",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Is array', () => pm.expect(j).to.be.an('array'));",
+            "pm.test('At least 1 comment', () => pm.expect(j.length).to.be.gte(1));",
+            "pm.test('First comment has content', () => pm.expect(j[0].content).to.be.a('string'));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/tickets/{{ticketId}}/comments","host":["{{baseUrl}}"],"path":["tickets","{{ticketId}}","comments"]}
+          }
+        },
+        {
+          "name": "T34 - Edit comment (owner)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Content updated', () => pm.expect(j.content).to.include('UPDATED'));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"PUT",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"content\":\"UPDATED: Issue confirmed still happening as of today morning.\"}"},
+            "url":{"raw":"{{baseUrl}}/tickets/{{ticketId}}/comments/{{commentId}}","host":["{{baseUrl}}"],"path":["tickets","{{ticketId}}","comments","{{commentId}}"]}
+          }
+        },
+        {
+          "name": "T35 - Delete comment (owner)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 204', () => pm.response.to.have.status(204));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"DELETE",
+            "url":{"raw":"{{baseUrl}}/tickets/{{ticketId}}/comments/{{commentId}}","host":["{{baseUrl}}"],"path":["tickets","{{ticketId}}","comments","{{commentId}}"]}
+          }
+        }
+      ]
+    }
+  ]
+}

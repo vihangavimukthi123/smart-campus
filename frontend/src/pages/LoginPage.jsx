@@ -56,9 +56,9 @@ export default function LoginPage() {
 
       <div className="auth-card">
         <div className="auth-brand">
-          <span className="auth-brand__logo">🏛️</span>
+          <img src="/matrix-logo.png" alt="Matrix Corp Logo" className="auth-brand__logo" />
           <div>
-            <h1 className="auth-brand__title text-gradient">Matrix Core</h1>
+            <h1 className="auth-brand__title text-gradient">Matrix Corp</h1>
             <p className="auth-brand__sub">Incident Hub</p>
           </div>
         </div>
@@ -122,13 +122,38 @@ export default function LoginPage() {
           </button>
         </form>
 
+        <div style={{ margin: '20px 0', display: 'flex', alignItems: 'center' }}>
+          <div style={{ flex: 1, height: '1px', background: '#ddd' }}></div>
+          <span style={{ margin: '0 10px', color: '#888', fontSize: '14px' }}>OR</span>
+          <div style={{ flex: 1, height: '1px', background: '#ddd' }}></div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => window.location.href = 'http://localhost:8080/api/oauth2/authorization/google'}
+          className="btn" 
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            backgroundColor: '#fff',
+            color: '#444',
+            border: '1px solid #ddd'
+          }}
+        >
+          <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G" width="18"/>
+          Sign in with Google
+        </button>
+
         <p className="auth-footer">
           Don't have an account?{' '}
           <Link to="/register" className="auth-link">Create one</Link>
         </p>
       </div>
       
-      {/* Oyaage <style> tag eka methana thiyenna ona */}
+      
     </div>
   )
 }

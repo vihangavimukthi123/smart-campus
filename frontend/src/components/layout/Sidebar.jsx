@@ -13,9 +13,8 @@ const NAV = [
   { to: '/tickets/new', icon: <PlusCircle size={18} />,    label: 'New Ticket', roles: ['USER'] },
   // Admin ta vitharak pena User Management link eka
   { to: '/admin/users', icon: <Users size={18} />,         label: 'User Management', roles: ['ADMIN'] },
-  { to: '/resources', icon: <Building2 size={18} />,       label: 'Resources', roles: ['USER', 'ADMIN'] },
-  { to: '/bookings/my', icon: <Calendar size={18} />,      label: 'My Bookings', roles: ['USER', 'ADMIN'] },
-
+  { to: '/resources', icon: <Building2 size={18} />,       label: 'Resources' },
+  { to: '/bookings/my', icon: <Calendar size={18} />,      label: 'My Bookings', roles: ['USER'] },
   { to: '/admin/bookings', icon: <ClipboardCheck size={18} />, label: 'Manage Bookings', roles: ['ADMIN'] },
 ]
 
@@ -50,9 +49,9 @@ export default function Sidebar() {
     <aside className="sidebar">
       {/* Brand Section */}
       <div className="sidebar__brand">
-        <div className="sidebar__logo">🏛️</div>
+        <img src="/matrix-logo.png" alt="Matrix Corp Logo" className="sidebar__logo" />
         <div>
-          <div className="sidebar__brand-name">Matrix Core</div>
+          <div className="sidebar__brand-name">Matrix Corp</div>
           <div className="sidebar__brand-sub">Incident Hub</div>
         </div>
       </div>
@@ -112,7 +111,7 @@ export default function Sidebar() {
           border-bottom: 1px solid var(--clr-border);
           margin-bottom: var(--space-4);
         }
-        .sidebar__logo { font-size: 1.75rem; }
+        .sidebar__logo { width: 32px; height: 32px; object-fit: contain; border-radius: var(--radius-sm); }
         .sidebar__brand-name {
           font-family: 'Space Grotesk', sans-serif;
           font-weight: 700; font-size: 1rem;

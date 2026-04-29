@@ -1,7 +1,9 @@
 package com.smartcampus.incident.config;
 
 import com.smartcampus.incident.security.JwtAuthenticationFilter;
+import com.smartcampus.incident.security.CustomOAuth2UserService;
 import com.smartcampus.incident.security.CustomUserDetailsService;
+import com.smartcampus.incident.security.OAuth2LoginSuccessHandler;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -40,6 +42,8 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomUserDetailsService userDetailsService;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Value("${app.cors.allowed-origins}")
     private String[] allowedOrigins;
@@ -49,7 +53,7 @@ public class SecurityConfig {
         http
             .cors(Customizer.withDefaults())
             .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authException) ->
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
@@ -59,8 +63,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Always allow browser CORS preflight checks
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // Allow internal Spring Boot error dispatching
+                .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.FORWARD, jakarta.servlet.DispatcherType.ERROR).permitAll()
                 // Public
+                .requestMatchers("/error").permitAll()
+                .requestMatchers("/api/auth/**",  "/api/oauth2/**", "/login/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/bookings/public/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
                 .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -71,6 +80,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/resources/**").permitAll()
                 // Require authentication for everything else
                 .anyRequest().authenticated()
+            )
+
+            .oauth2Login(oauth2 -> oauth2
+                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                .successHandler(oAuth2LoginSuccessHandler)
+                .failureUrl("http://localhost:5173/login?error=true") // if unsuccessful login, redirect to login page with error message
             )
             .exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .authenticationProvider(authenticationProvider())

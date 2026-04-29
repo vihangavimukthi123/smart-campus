@@ -10,7 +10,7 @@ import {
 import {
   Users, Ticket, Clock, ArrowRight,
   Trophy, BarChart2, TrendingUp, RefreshCw, AlertCircle,
-  CheckCircle, ShieldAlert, XCircle,
+  CheckCircle, ShieldAlert, XCircle, Settings,
 } from 'lucide-react'
 
 
@@ -83,7 +83,7 @@ const SectionHeader = ({ icon, title, badge }) => (
 // Main Dashboard
 // ═══════════════════════════════════════════════════════════════════════════
 export default function OverallDashboard() {
-  const { user, isAdmin } = useAuth()
+  const { user, isAdmin, isTechnician } = useAuth()
   const navigate = useNavigate()
 
   // ── General stats ─────────────────────────────────────────────────────

@@ -63,6 +63,9 @@ public class Booking {
     @Column(columnDefinition = "TEXT")
     private String cancellationReason;
 
+    @Column(unique = true, length = 64)
+    private String verificationToken;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

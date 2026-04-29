@@ -4,6 +4,10 @@ import {
   Search, UserPlus, Edit, Trash2, X, 
   ShieldCheck, Wrench, Users, Filter 
 } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
+
+// API Configuration
+const API_URL = '/admin/users';
 
 export default function AdminUserPage() {
     const [users, setUsers] = useState([]);
@@ -11,6 +15,8 @@ export default function AdminUserPage() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [userToDelete, setUserToDelete] = useState(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -20,8 +26,8 @@ export default function AdminUserPage() {
     const loadUsers = async () => {
         try {
             setLoading(true);
-            const { data } = await api.get('/admin/users');
-            setUsers(Array.isArray(data) ? data : data.content || []);
+            const { data } = await api.get(API_URL);
+            setUsers(data);
         } catch (err) {
             console.error("Failed to load users", err);
         } finally {
@@ -46,9 +52,9 @@ export default function AdminUserPage() {
         e.preventDefault();
         try {
             if (selectedUser) {
-                await api.put(`/admin/users/${selectedUser.userId}`, formData);
+                await api.put(`${API_URL}/${selectedUser.userId}`, formData);
             } else {
-                await api.post('/admin/users', formData);
+                await api.post(API_URL, formData);
             }
             setIsModalOpen(false);
             loadUsers();
@@ -57,14 +63,17 @@ export default function AdminUserPage() {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this user?")) {
-            try {
-                await api.delete(`/admin/users/${id}`);
-                loadUsers();
-            } catch (err) {
-                alert("Delete failed");
-            }
+    const handleDelete = (id) => {
+        setUserToDelete(id);
+        setShowConfirmModal(true);
+    };
+
+    const executeDelete = async () => {
+        try {
+            await api.delete(`${API_URL}/${userToDelete}`);
+            loadUsers();
+        } catch (err) {
+            alert("Delete failed");
         }
     };
 
@@ -205,85 +214,100 @@ export default function AdminUserPage() {
                 </div>
             )}
 
+            <ConfirmModal
+                isOpen={showConfirmModal}
+                onClose={() => setShowConfirmModal(false)}
+                onConfirm={executeDelete}
+                title="Delete User"
+                message="Are you sure you want to delete this user? This action cannot be undone and will remove all associated data."
+                confirmText="Delete"
+                type="danger"
+            />
+
             <style>{`
-                .admin-page-container { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+                .admin-page-container { padding: 2rem; max-width: 1200px; margin: 0 auto; min-height: 100vh; }
                 .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-                .admin-title { font-size: 1.8rem; font-weight: 700; color: #fff; }
-                .admin-subtitle { color: #94a3b8; font-size: 0.9rem; }
+                .admin-title { font-size: 1.8rem; font-weight: 700; color: var(--clr-text); }
+                .admin-subtitle { color: var(--clr-text-2); font-size: 0.9rem; }
                 
                 .add-user-btn { 
-                    background: #6366f1; color: white; border: none; padding: 0.7rem 1.2rem; 
+                    background: var(--clr-primary); color: var(--clr-bg); border: none; padding: 0.7rem 1.2rem; 
                     border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;
-                    transition: 0.3s; font-weight: 500;
+                    transition: 0.3s; font-weight: 600;
                 }
-                .add-user-btn:hover { background: #4f46e5; transform: translateY(-2px); }
+                .add-user-btn:hover { opacity: 0.9; transform: translateY(-2px); }
 
-                .admin-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+                .admin-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
                 .mini-stat-card { 
-                    background: #1e293b; border: 1px solid #334155; padding: 1.2rem; 
+                    background: var(--clr-surface); border: 1px solid var(--clr-border); padding: 1.2rem; 
                     border-radius: 12px; display: flex; align-items: center; gap: 1rem;
+                    transition: var(--transition);
                 }
-                .mini-stat-card h4 { font-size: 1.5rem; margin: 0; color: #fff; }
-                .mini-stat-card p { font-size: 0.8rem; margin: 0; color: #94a3b8; }
+                .mini-stat-card:hover { border-color: var(--clr-border-hover); transform: translateY(-2px); }
+                .mini-stat-card h4 { font-size: 1.5rem; margin: 0; color: var(--clr-text); }
+                .mini-stat-card p { font-size: 0.8rem; margin: 0; color: var(--clr-text-3); }
                 .icon-blue { color: #6366f1; } .icon-green { color: #10b981; } .icon-red { color: #ef4444; }
 
                 .search-filter-card { 
-                    background: #1e293b; border: 1px solid #334155; padding: 1rem; 
+                    background: var(--clr-surface); border: 1px solid var(--clr-border); padding: 1rem; 
                     border-radius: 12px; display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem;
                 }
                 .search-filter-card input { 
-                    background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 1rem;
+                    background: transparent; border: none; color: var(--clr-text); width: 100%; outline: none; font-size: 1rem;
                 }
-                .search-icon { color: #64748b; }
+                .search-icon { color: var(--clr-text-3); }
 
-                .shadow-card { background: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
+                .shadow-card { background: var(--clr-surface); border-radius: 12px; border: 1px solid var(--clr-border); overflow: hidden; }
                 .admin-data-table { width: 100%; border-collapse: collapse; text-align: left; }
-                .admin-data-table th { background: #0f172a; padding: 1rem; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; }
-                .admin-data-table td { padding: 1rem; border-bottom: 1px solid #334155; color: #e2e8f0; font-size: 0.9rem; }
+                .admin-data-table th { background: var(--clr-bg-2); padding: 1rem; font-size: 0.85rem; color: var(--clr-text-3); text-transform: uppercase; border-bottom: 1px solid var(--clr-border); }
+                .admin-data-table td { padding: 1rem; border-bottom: 1px solid var(--clr-border); color: var(--clr-text); font-size: 0.9rem; }
                 
                 .user-info { display: flex; align-items: center; gap: 12px; }
                 .user-avatar { 
-                    width: 36px; height: 36px; background: #6366f1; border-radius: 50%; 
-                    display: flex; align-items: center; justify-content: center; font-weight: bold;
+                    width: 36px; height: 36px; background: var(--clr-surface-3); border: 1px solid var(--clr-border);
+                    border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;
+                    color: var(--clr-primary);
                 }
-                .user-name { font-weight: 600; }
-                .user-email { font-size: 0.8rem; color: #94a3b8; }
+                .user-name { font-weight: 600; color: var(--clr-text); }
+                .user-email { font-size: 0.8rem; color: var(--clr-text-3); }
 
-                .role-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
-                .role-admin { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444; }
-                .role-technician { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid #10b981; }
-                .role-user { background: rgba(14, 165, 233, 0.1); color: #0ea5e9; border: 1px solid #0ea5e9; }
+                .role-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; border: 1px solid transparent; }
+                .role-admin { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: #ef4444; }
+                .role-technician { background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: #10b981; }
+                .role-user { background: rgba(14, 165, 233, 0.1); color: #0ea5e9; border-color: #0ea5e9; }
 
                 .action-btns { display: flex; justify-content: flex-end; gap: 8px; }
                 .edit-btn, .delete-btn { 
-                    background: #334155; border: none; color: #94a3b8; padding: 6px; 
+                    background: var(--clr-surface-2); border: 1px solid var(--clr-border); color: var(--clr-text-3); padding: 6px; 
                     border-radius: 6px; cursor: pointer; transition: 0.2s;
                 }
-                .edit-btn:hover { color: #6366f1; background: #475569; }
-                .delete-btn:hover { color: #ef4444; background: #475569; }
+                .edit-btn:hover { color: var(--clr-primary); border-color: var(--clr-primary); }
+                .delete-btn:hover { color: #ef4444; border-color: #ef4444; }
 
                 /* Modal Styles */
                 .modal-overlay { 
                     position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-                    background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+                    background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
                     display: flex; justify-content: center; align-items: center; z-index: 1000;
                 }
-                .modal-card { background: #1e293b; width: 500px; border-radius: 16px; padding: 2rem; border: 1px solid #475569; }
+                .modal-card { background: var(--clr-surface); width: 500px; border-radius: 16px; padding: 2rem; border: 1px solid var(--clr-border); box-shadow: var(--shadow-lg); }
                 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-                .modal-header h3 { margin: 0; color: #fff; }
-                .modal-header button { background: none; border: none; color: #94a3b8; cursor: pointer; }
+                .modal-header h3 { margin: 0; color: var(--clr-text); }
+                .modal-header button { background: none; border: none; color: var(--clr-text-3); cursor: pointer; }
 
                 .modal-form { display: flex; flex-direction: column; gap: 1rem; }
-                .input-group label { display: block; color: #94a3b8; font-size: 0.8rem; margin-bottom: 5px; }
+                .input-group label { display: block; color: var(--clr-text-2); font-size: 0.8rem; margin-bottom: 5px; }
                 .input-group input, .input-group select { 
-                    width: 100%; background: #0f172a; border: 1px solid #334155; 
-                    padding: 0.7rem; border-radius: 8px; color: white; outline: none;
+                    width: 100%; background: var(--clr-bg-2); border: 1px solid var(--clr-border); 
+                    padding: 0.75rem; border-radius: 8px; color: var(--clr-text); outline: none; transition: 0.2s;
                 }
+                .input-group input:focus, .input-group select:focus { border-color: var(--clr-primary); }
                 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
                 .save-btn { 
-                    background: #6366f1; color: white; border: none; padding: 0.8rem; 
-                    border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 1rem;
+                    background: var(--clr-primary); color: var(--clr-bg); border: none; padding: 0.8rem; 
+                    border-radius: 8px; cursor: pointer; font-weight: 700; margin-top: 1rem; transition: 0.2s;
                 }
+                .save-btn:hover { opacity: 0.9; }
             `}</style>
         </div>
     );

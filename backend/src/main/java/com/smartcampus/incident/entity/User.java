@@ -66,12 +66,16 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    //notification sound management
+    // add profiile picture url
+    @Column(length = 500)
+    private String profilePictureUrl;
+
+    // notification sound management
     @Column(nullable = false)
     private boolean soundNotify = true; // sound enable/disable
 
     @Column(nullable = false)
-    private boolean emailNotify = true;  //enable/ disable user notifications
+    private boolean emailNotify = true; // enable/ disable user notifications
 
     // Tickets created by this user
     @JsonIgnore

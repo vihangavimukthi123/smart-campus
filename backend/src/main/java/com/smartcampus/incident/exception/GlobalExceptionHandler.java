@@ -109,6 +109,7 @@ public class GlobalExceptionHandler {
     // ── Illegal argument / Validation rule violation ──────────────────────────
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("Illegal argument exception: {}", ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage());
     }
 

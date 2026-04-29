@@ -1,4 +1,4 @@
-# 🏛️ Smart Campus — Incident Ticketing & Maintenance Module
+# 🏛️ Matrix Corp — Incident Ticketing & Maintenance Module
 
 A production-grade, full-stack incident management system built with **Spring Boot 3** and **React 18**.
 
