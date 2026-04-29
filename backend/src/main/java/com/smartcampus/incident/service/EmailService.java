@@ -31,11 +31,11 @@ public class EmailService {
 
         SimpleMailMessage message = new SimpleMailMessage();
         
-        message.setFrom("SmartCampus Admin <" + fromEmail + ">");
+        message.setFrom("Matrix Corp Admin <" + fromEmail + ">");
         message.setTo(toEmail);
-        message.setSubject("Account Verification Code - SmartCampus");
+        message.setSubject("Account Verification Code - Matrix Corp");
         
-        message.setText("Welcome to SmartCampus!\n\n" +
+        message.setText("Welcome to Matrix Corp!\n\n" +
                         "Your verification code is: " + otp + "\n\n" +
                         "Please use this code to complete your registration. " +
                         "This code will expire in 5 minutes.\n\n" +
@@ -57,7 +57,7 @@ public class EmailService {
         }
 
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("SmartCampus Admin <" + fromEmail + ">");
+        message.setFrom("Matrix Corp Admin <" + fromEmail + ">");
         message.setTo(to);
         message.setSubject(subject);
         message.setText(body);

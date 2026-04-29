@@ -1,0 +1,379 @@
+{
+  "info": {
+    "name": "SmartCampus Tests - Part 3: Resources, Bookings & Notifications",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key":"baseUrl","value":"http://localhost:8081/api"},
+    {"key":"token","value":"PASTE_USER_TOKEN_HERE"},
+    {"key":"adminToken","value":"PASTE_ADMIN_TOKEN_HERE"},
+    {"key":"resourceId","value":""},
+    {"key":"bookingId","value":""},
+    {"key":"notificationId","value":""}
+  ],
+  "item": [
+    {
+      "name": "RESOURCES",
+      "item": [
+        {
+          "name": "T36 - Create resource (no auth needed check - any auth)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Has id', () => pm.expect(j.id).to.be.a('number'));",
+            "pm.test('Has name', () => pm.expect(j.name).to.be.a('string'));",
+            "pm.test('Has type', () => pm.expect(j.type).to.be.a('string'));",
+            "pm.test('Has capacity', () => pm.expect(j.capacity).to.be.a('number'));",
+            "pm.collectionVariables.set('resourceId', j.id);"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"name\":\"Seminar Hall B\",\"type\":\"LECTURE_HALL\",\"capacity\":80,\"location\":\"Block C, Level 2\",\"status\":\"AVAILABLE\"}"},
+            "url":{"raw":"{{baseUrl}}/resources","host":["{{baseUrl}}"],"path":["resources"]}
+          }
+        },
+        {
+          "name": "T37 - Create resource missing required fields (expect 400)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 400', () => pm.response.to.have.status(400));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"name\":\"Bad Resource\"}"},
+            "url":{"raw":"{{baseUrl}}/resources","host":["{{baseUrl}}"],"path":["resources"]}
+          }
+        },
+        {
+          "name": "T38 - List all resources (public)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Is array', () => pm.expect(j).to.be.an('array'));",
+            "pm.test('At least one resource', () => pm.expect(j.length).to.be.gte(1));",
+            "pm.test('Each has id', () => j.forEach(r => pm.expect(r.id).to.be.a('number')));",
+            "pm.test('Each has name', () => j.forEach(r => pm.expect(r.name).to.be.a('string')));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"noauth"},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/resources?includeRetired=false","host":["{{baseUrl}}"],"path":["resources"],"query":[{"key":"includeRetired","value":"false"}]}
+          }
+        },
+        {
+          "name": "T39 - Get resource by ID (public)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('ID matches', () => pm.expect(j.id).to.eql(parseInt(pm.collectionVariables.get('resourceId'))));",
+            "pm.test('Has location', () => pm.expect(j.location).to.be.a('string'));",
+            "pm.test('Has capacity', () => pm.expect(j.capacity).to.be.a('number'));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"noauth"},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/resources/{{resourceId}}","host":["{{baseUrl}}"],"path":["resources","{{resourceId}}"]}
+          }
+        },
+        {
+          "name": "T40 - Get resource by invalid ID (expect 404)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 404', () => pm.response.to.have.status(404));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"noauth"},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/resources/999999","host":["{{baseUrl}}"],"path":["resources","999999"]}
+          }
+        },
+        {
+          "name": "T41 - Update resource",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Capacity updated to 100', () => pm.expect(j.capacity).to.eql(100));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"PUT",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"name\":\"Seminar Hall B (Updated)\",\"type\":\"LECTURE_HALL\",\"capacity\":100,\"location\":\"Block C, Level 2\",\"status\":\"AVAILABLE\"}"},
+            "url":{"raw":"{{baseUrl}}/resources/{{resourceId}}","host":["{{baseUrl}}"],"path":["resources","{{resourceId}}"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "BOOKINGS",
+      "item": [
+        {
+          "name": "T42 - Create booking (USER)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "const j = pm.response.json();",
+            "pm.test('Has id', () => pm.expect(j.id).to.be.a('number'));",
+            "pm.test('Status is PENDING', () => pm.expect(j.status).to.eql('PENDING'));",
+            "pm.test('Has resource', () => pm.expect(j.resource).to.be.an('object'));",
+            "pm.test('Has purpose', () => pm.expect(j.purpose).to.be.a('string'));",
+            "pm.test('Has startDateTime', () => pm.expect(j.startDateTime).to.be.a('string'));",
+            "pm.collectionVariables.set('bookingId', j.id);"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"resourceId\":{{resourceId}},\"startDateTime\":\"2027-06-15T09:00:00\",\"endDateTime\":\"2027-06-15T11:00:00\",\"purpose\":\"Annual departmental review meeting\",\"attendees\":30}"},
+            "url":{"raw":"{{baseUrl}}/bookings","host":["{{baseUrl}}"],"path":["bookings"]}
+          }
+        },
+        {
+          "name": "T43 - Create booking with past date (expect 400)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 400', () => pm.response.to.have.status(400));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"resourceId\":1,\"startDateTime\":\"2020-01-01T09:00:00\",\"endDateTime\":\"2020-01-01T11:00:00\",\"purpose\":\"Past event\",\"attendees\":10}"},
+            "url":{"raw":"{{baseUrl}}/bookings","host":["{{baseUrl}}"],"path":["bookings"]}
+          }
+        },
+        {
+          "name": "T44 - Create booking missing purpose (expect 400)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 400', () => pm.response.to.have.status(400));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"resourceId\":1,\"startDateTime\":\"2027-07-01T09:00:00\",\"endDateTime\":\"2027-07-01T11:00:00\"}"},
+            "url":{"raw":"{{baseUrl}}/bookings","host":["{{baseUrl}}"],"path":["bookings"]}
+          }
+        },
+        {
+          "name": "T45 - Get my bookings (USER)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Is array', () => pm.expect(j).to.be.an('array'));",
+            "pm.test('At least 1 booking', () => pm.expect(j.length).to.be.gte(1));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/bookings/my","host":["{{baseUrl}}"],"path":["bookings","my"]}
+          }
+        },
+        {
+          "name": "T46 - Get all bookings (ADMIN)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Has content array', () => pm.expect(j.content).to.be.an('array'));",
+            "pm.test('Has totalElements', () => pm.expect(j.totalElements).to.be.a('number'));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/bookings?page=0&size=10","host":["{{baseUrl}}"],"path":["bookings"],"query":[{"key":"page","value":"0"},{"key":"size","value":"10"}]}
+          }
+        },
+        {
+          "name": "T47 - Non-admin cannot get all bookings (expect 403)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 403', () => pm.response.to.have.status(403));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/bookings?page=0&size=10","host":["{{baseUrl}}"],"path":["bookings"],"query":[{"key":"page","value":"0"},{"key":"size","value":"10"}]}
+          }
+        },
+        {
+          "name": "T48 - Get booking by ID",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('ID matches', () => pm.expect(j.id).to.eql(parseInt(pm.collectionVariables.get('bookingId'))));",
+            "pm.test('Status is PENDING', () => pm.expect(j.status).to.eql('PENDING'));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/bookings/{{bookingId}}","host":["{{baseUrl}}"],"path":["bookings","{{bookingId}}"]}
+          }
+        },
+        {
+          "name": "T49 - Approve booking (ADMIN)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"PUT",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"status\":\"APPROVED\",\"reason\":\"Approved. Room setup confirmed.\"}"},
+            "url":{"raw":"{{baseUrl}}/bookings/{{bookingId}}/status","host":["{{baseUrl}}"],"path":["bookings","{{bookingId}}","status"]}
+          }
+        },
+        {
+          "name": "T50 - Verify booking is now APPROVED",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Status is APPROVED', () => pm.expect(j.status).to.eql('APPROVED'));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/bookings/{{bookingId}}","host":["{{baseUrl}}"],"path":["bookings","{{bookingId}}"]}
+          }
+        },
+        {
+          "name": "T51 - Cancel booking (USER)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 204', () => pm.response.to.have.status(204));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"PATCH",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"reason\":\"Event postponed to next month.\"}"},
+            "url":{"raw":"{{baseUrl}}/bookings/{{bookingId}}/cancel","host":["{{baseUrl}}"],"path":["bookings","{{bookingId}}","cancel"]}
+          }
+        },
+        {
+          "name": "T52 - Create booking then REJECT (ADMIN)",
+          "event": [{"listen":"test","script":{"exec":[
+            "if(pm.response.code === 201) {",
+            "  pm.collectionVariables.set('bookingId2', pm.response.json().id);",
+            "}",
+            "pm.test('Status 201', () => pm.response.to.have.status(201));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"POST",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"resourceId\":{{resourceId}},\"startDateTime\":\"2027-08-20T14:00:00\",\"endDateTime\":\"2027-08-20T16:00:00\",\"purpose\":\"Student club presentation event\",\"attendees\":50}"},
+            "url":{"raw":"{{baseUrl}}/bookings","host":["{{baseUrl}}"],"path":["bookings"]}
+          }
+        },
+        {
+          "name": "T53 - Reject that booking (ADMIN)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"PUT",
+            "header":[{"key":"Content-Type","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\"status\":\"REJECTED\",\"reason\":\"Room is already reserved for a university event.\"}"},
+            "url":{"raw":"{{baseUrl}}/bookings/{{bookingId2}}/status","host":["{{baseUrl}}"],"path":["bookings","{{bookingId2}}","status"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "NOTIFICATIONS",
+      "item": [
+        {
+          "name": "T54 - Get my notifications",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Has content array', () => pm.expect(j.content).to.be.an('array'));",
+            "pm.test('Has totalElements', () => pm.expect(j.totalElements).to.be.a('number'));",
+            "if(j.content.length > 0) {",
+            "  pm.collectionVariables.set('notificationId', j.content[0].id);",
+            "}"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/notifications?page=0&size=20","host":["{{baseUrl}}"],"path":["notifications"],"query":[{"key":"page","value":"0"},{"key":"size","value":"20"}]}
+          }
+        },
+        {
+          "name": "T55 - Get unread notification count",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const j = pm.response.json();",
+            "pm.test('Has count field', () => pm.expect(j).to.have.property('count'));",
+            "pm.test('Count is a number', () => pm.expect(j.count).to.be.a('number'));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/notifications/unread-count","host":["{{baseUrl}}"],"path":["notifications","unread-count"]}
+          }
+        },
+        {
+          "name": "T56 - Mark all notifications as read",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 204', () => pm.response.to.have.status(204));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"PATCH",
+            "url":{"raw":"{{baseUrl}}/notifications/read-all","host":["{{baseUrl}}"],"path":["notifications","read-all"]}
+          }
+        },
+        {
+          "name": "T57 - Unread count is 0 after mark-all-read",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Count is 0', () => pm.expect(pm.response.json().count).to.eql(0));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/notifications/unread-count","host":["{{baseUrl}}"],"path":["notifications","unread-count"]}
+          }
+        },
+        {
+          "name": "T58 - Mark single notification as read",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status is 200 or 404', () => pm.expect([200,404]).to.include(pm.response.code));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+            "method":"PATCH",
+            "url":{"raw":"{{baseUrl}}/notifications/{{notificationId}}/read","host":["{{baseUrl}}"],"path":["notifications","{{notificationId}}","read"]}
+          }
+        },
+        {
+          "name": "T59 - Unauthenticated access to notifications (expect 401)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 401', () => pm.response.to.have.status(401));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"noauth"},
+            "method":"GET",
+            "url":{"raw":"{{baseUrl}}/notifications","host":["{{baseUrl}}"],"path":["notifications"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "RESOURCE CLEANUP",
+      "item": [
+        {
+          "name": "T60 - Delete resource (ADMIN)",
+          "event": [{"listen":"test","script":{"exec":[
+            "pm.test('Status 200 or 204', () => pm.expect([200,204]).to.include(pm.response.code));"
+          ],"type":"text/javascript"}}],
+          "request": {
+            "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{adminToken}}","type":"string"}]},
+            "method":"DELETE",
+            "url":{"raw":"{{baseUrl}}/resources/{{resourceId}}","host":["{{baseUrl}}"],"path":["resources","{{resourceId}}"]}
+          }
+        }
+      ]
+    }
+  ]
+}
