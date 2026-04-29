@@ -17,6 +17,7 @@ import UserDashboardPage from './pages/UserDashboardPage'
 import AdminUserPage from './pages/AdminUserPage'
 import BookingDetailsPublicPage from './pages/BookingDetailsPublicPage'
 import AnalyticsDashboard from './pages/AnalyticsDashboard'
+import AuthSuccess from './pages/AuthSuccess'
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -45,7 +46,8 @@ export default function App() {
         element={<BookingDetailsPublicPage />}
       />
 
-      {/* 2. Protected routes - Login wechcha aya layout ekath ekka meka athule inne */}
+      <Route path="/auth/success" element={<AuthSuccess />} />
+
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         
         {/* Main Dashboard */}
