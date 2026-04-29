@@ -31,7 +31,7 @@ export default function CreateBookingPage() {
     [resources, form.resourceId]
   )
 
-  const requiresAttendees = selectedResource?.type !== 'EQUIPMENT'
+  const isEquipment = selectedResource?.type === 'EQUIPMENT'
 
   useEffect(() => {
     const fetchResources = async () => {
@@ -69,12 +69,26 @@ export default function CreateBookingPage() {
       return toast.error('Start time cannot be in the past')
     }
 
+    const attendeesValue = form.attendees ? Number(form.attendees) : null
+
+    if (isEquipment) {
+      if (!attendeesValue || attendeesValue < 1) {
+        return toast.error('Please enter the quantity you want to book')
+      }
+
+      if (selectedResource?.capacity != null && attendeesValue > Number(selectedResource.capacity)) {
+        return toast.error(`Requested quantity cannot exceed the available quantity (${selectedResource.capacity})`)
+      }
+    } else if (attendeesValue && selectedResource?.capacity != null && attendeesValue > Number(selectedResource.capacity)) {
+      return toast.error(`Expected attendees cannot exceed the resource quantity (${selectedResource.capacity})`)
+    }
+
     setSubmitting(true)
     try {
       const payload = {
         ...form,
         resourceId: Number(form.resourceId),
-        attendees: form.attendees ? Number(form.attendees) : null
+        attendees: attendeesValue
       }
       await createBooking(payload)
       setModal({
@@ -130,9 +144,9 @@ export default function CreateBookingPage() {
               ))}
             </select>
             {loadingResources && <p className="text-xs text-muted">Loading resources...</p>}
-            {selectedResource?.type === 'EQUIPMENT' && (
+            {isEquipment && (
               <p className="text-xs text-muted" style={{ marginTop: '0.35rem' }}>
-                Equipment bookings do not require an attendee count.
+                Equipment bookings use quantity instead of attendees.
               </p>
             )}
           </div>
@@ -181,15 +195,16 @@ export default function CreateBookingPage() {
 
           <div className="form-group">
             <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Users size={16} /> Expected Attendees (Optional)
+              <Users size={16} /> {isEquipment ? 'Requested Quantity' : 'Expected Attendees (Optional)'}
             </label>
             <input
               type="number"
               min="1"
               className="form-input"
-              placeholder="e.g. 5"
+              placeholder={isEquipment ? 'e.g. 2' : 'e.g. 5'}
               value={form.attendees}
               onChange={(e) => setForm({ ...form, attendees: e.target.value })}
+              required={isEquipment}
             />
           </div>
 
