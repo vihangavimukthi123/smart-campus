@@ -4,6 +4,7 @@ import com.smartcampus.incident.dto.booking.BookingResponse;
 import com.smartcampus.incident.dto.booking.CancelBookingRequest;
 import com.smartcampus.incident.dto.booking.CreateBookingRequest;
 import com.smartcampus.incident.dto.booking.BookingStatusRequest;
+import com.smartcampus.incident.dto.booking.UpdateBookingRequest;
 import com.smartcampus.incident.service.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -68,10 +69,24 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getBookingsForResource(resourceId, queryDate));
     }
 
+    @GetMapping("/check-conflicts/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get conflicting bookings (Pending/Rejected) for a booking slot")
+    public ResponseEntity<List<BookingResponse>> getConflictingBookings(@PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.getConflictingBookings(id));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get booking details by ID")
     public ResponseEntity<BookingResponse> getBookingById(@PathVariable Long id) {
         return ResponseEntity.ok(bookingService.getBookingById(id));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update a booking (Owner or Admin)")
+    public ResponseEntity<BookingResponse> updateBooking(@PathVariable Long id,
+            @Valid @RequestBody UpdateBookingRequest request) {
+        return ResponseEntity.ok(bookingService.updateBooking(id, request));
     }
 
     @PatchMapping("/{id}/cancel")
@@ -89,13 +104,6 @@ public class BookingController {
             @Valid @RequestBody BookingStatusRequest request) {
         bookingService.updateBookingStatus(id, request);
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/{id}/conflicts")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Get conflicting bookings (Pending/Rejected) for a booking slot")
-    public ResponseEntity<List<BookingResponse>> getConflictingBookings(@PathVariable Long id) {
-        return ResponseEntity.ok(bookingService.getConflictingBookings(id));
     }
 
     @GetMapping("/public/{token}")

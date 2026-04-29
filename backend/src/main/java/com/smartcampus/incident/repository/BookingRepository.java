@@ -19,7 +19,7 @@ import java.util.List;
 public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpecificationExecutor<Booking> {
 
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.resource.id = :resourceId " +
-           "AND b.status NOT IN (com.smartcampus.incident.enums.BookingStatus.REJECTED, com.smartcampus.incident.enums.BookingStatus.CANCELLED) " +
+           "AND b.status = com.smartcampus.incident.enums.BookingStatus.APPROVED " +
            "AND b.id <> :excludeId " +
            "AND (b.startDateTime < :end AND b.endDateTime > :start)")
     boolean existsOverlappingBooking(@Param("resourceId") Long resourceId, 
@@ -28,7 +28,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
                                      @Param("excludeId") Long excludeId);
 
     @Query("SELECT b FROM Booking b WHERE b.resource.id = :resourceId " +
-           "AND b.status IN (com.smartcampus.incident.enums.BookingStatus.PENDING, com.smartcampus.incident.enums.BookingStatus.REJECTED) " +
+           "AND b.status IN (com.smartcampus.incident.enums.BookingStatus.PENDING, com.smartcampus.incident.enums.BookingStatus.REJECTED, com.smartcampus.incident.enums.BookingStatus.APPROVED) " +
            "AND b.id <> :excludeId " +
            "AND (b.startDateTime < :end AND b.endDateTime > :start)")
     List<Booking> findConflictingBookings(@Param("resourceId") Long resourceId, 

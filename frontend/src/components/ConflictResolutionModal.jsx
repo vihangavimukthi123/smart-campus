@@ -6,22 +6,27 @@ export default function ConflictResolutionModal({
   onClose, 
   onConfirm, 
   pendingBooking, 
-  rejectedBooking 
+  rejectedBooking,
+  approvedBooking // New prop for Approved vs Rejected conflict
 }) {
-  const [selection, setSelection] = useState('PENDING') // 'PENDING' or 'REJECTED'
+  const [selection, setSelection] = useState(pendingBooking ? 'PENDING' : 'APPROVED') 
   const [rejectionReason, setRejectionReason] = useState('')
 
   if (!isOpen) return null
 
+  // Determine conflict type
+  const isApprovedConflict = !!approvedBooking;
+  const conflictingBooking = approvedBooking || pendingBooking;
+
   const handleConfirm = () => {
     if (selection === 'REJECTED' && !rejectionReason.trim()) {
-      return // Should show an error toast here, but for now just prevent
+      return 
     }
     onConfirm({
-      approveId: selection === 'PENDING' ? pendingBooking.id : rejectedBooking.id,
-      rejectId: selection === 'REJECTED' ? pendingBooking.id : null,
+      approveId: selection === 'REJECTED' ? rejectedBooking.id : conflictingBooking.id,
+      rejectId: selection === 'REJECTED' ? conflictingBooking.id : null,
       reason: selection === 'REJECTED' ? rejectionReason : null,
-      type: selection // To tell the caller which option was chosen
+      type: selection 
     })
   }
 
@@ -50,25 +55,31 @@ export default function ConflictResolutionModal({
             <AlertTriangle size={32} color="#f59e0b" />
           </div>
           <h2 className="heading-2" style={{ marginBottom: '0.5rem' }}>⚠️ Booking Conflict Detected</h2>
-          <p className="text-muted">Two bookings exist for the same resource, date, and time slot.</p>
+          <p className="text-muted" style={{ fontSize: '0.95rem', lineHeight: '1.4' }}>
+            {isApprovedConflict 
+              ? "There is already an approved booking for this resource. You are attempting to approve a previously rejected booking."
+              : "Two bookings exist for the same resource, date, and time slot."}
+          </p>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
           
-          {/* Option 1: Pending (Recommended) */}
+          {/* Option 1: Keep Existing (Recommended) */}
           <div 
-            onClick={() => setSelection('PENDING')}
+            onClick={() => setSelection(isApprovedConflict ? 'APPROVED' : 'PENDING')}
             style={{
               padding: '1.25rem', borderRadius: '12px', cursor: 'pointer',
-              border: `2px solid ${selection === 'PENDING' ? 'var(--clr-resolved)' : 'transparent'}`,
-              background: selection === 'PENDING' ? 'rgba(16, 185, 129, 0.05)' : 'var(--clr-surface-2)',
+              border: `2px solid ${selection !== 'REJECTED' ? 'var(--clr-resolved)' : 'transparent'}`,
+              background: selection !== 'REJECTED' ? 'rgba(16, 185, 129, 0.05)' : 'var(--clr-surface-2)',
               transition: 'all 0.2s ease', position: 'relative'
             }}
           >
             <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
               <div className="flex" style={{ gap: '0.5rem', alignItems: 'center' }}>
-                <CheckCircle size={18} color={selection === 'PENDING' ? 'var(--clr-resolved)' : 'var(--clr-text-3)'} />
-                <span style={{ fontWeight: 600, fontSize: '1rem' }}>Approve Pending Booking</span>
+                <CheckCircle size={18} color={selection !== 'REJECTED' ? 'var(--clr-resolved)' : 'var(--clr-text-3)'} />
+                <span style={{ fontWeight: 600, fontSize: '1rem' }}>
+                  {isApprovedConflict ? 'Keep Current Approved Booking' : 'Approve Pending Booking'}
+                </span>
               </div>
               <span style={{ 
                 fontSize: '0.7rem', background: 'rgba(16, 185, 129, 0.2)', 
@@ -80,18 +91,18 @@ export default function ConflictResolutionModal({
               <div style={{ flex: 1 }}>
                 <div className="flex" style={{ gap: '0.4rem', alignItems: 'center', fontSize: '0.85rem' }}>
                   <User size={14} className="text-muted" />
-                  <span>{pendingBooking.user.name}</span>
-                  <span className="text-xs text-muted">#{pendingBooking.id}</span>
+                  <span>{conflictingBooking.user.name}</span>
+                  <span className="text-xs text-muted">#{conflictingBooking.id}</span>
                 </div>
                 <div className="flex" style={{ gap: '0.4rem', alignItems: 'center', fontSize: '0.8rem', marginTop: '4px' }}>
                   <Clock size={14} className="text-muted" />
-                  <span className="text-muted">{formatTime(pendingBooking.startDateTime)} - {formatTime(pendingBooking.endDateTime)}</span>
+                  <span className="text-muted">{formatTime(conflictingBooking.startDateTime)} - {formatTime(conflictingBooking.endDateTime)}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Option 2: Previously Rejected */}
+          {/* Option 2: Approve Previously Rejected */}
           <div 
             onClick={() => setSelection('REJECTED')}
             style={{
@@ -103,7 +114,7 @@ export default function ConflictResolutionModal({
           >
             <div className="flex" style={{ gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem' }}>
               <RefreshCw size={18} color={selection === 'REJECTED' ? 'var(--clr-resolved)' : 'var(--clr-text-3)'} />
-              <span style={{ fontWeight: 600, fontSize: '1rem' }}>Approve Previously Rejected Booking</span>
+              <span style={{ fontWeight: 600, fontSize: '1rem' }}>Approve Previously Rejected Booking Instead</span>
             </div>
 
             <div className="flex" style={{ gap: '1rem', paddingLeft: '1.6rem' }}>
@@ -129,16 +140,18 @@ export default function ConflictResolutionModal({
                   <div className="flex" style={{ gap: '0.5rem', alignItems: 'flex-start' }}>
                     <AlertCircle size={14} color="#ef4444" style={{ marginTop: '2px' }} />
                     <p style={{ fontSize: '0.75rem', color: '#ef4444', margin: 0 }}>
-                      This will automatically reject the currently pending booking (#{pendingBooking.id}).
+                      This will automatically {isApprovedConflict ? 'cancel/reject' : 'reject'} the currently {isApprovedConflict ? 'approved' : 'pending'} booking (#{conflictingBooking.id}).
                     </p>
                   </div>
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Reason for rejecting the pending booking:</label>
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>
+                    Reason for overriding the {isApprovedConflict ? 'approved' : 'pending'} booking:
+                  </label>
                   <textarea 
                     className="form-textarea" 
                     rows="2" 
-                    placeholder="Enter rejection reason here..."
+                    placeholder="Enter reason here..."
                     value={rejectionReason}
                     onChange={(e) => setRejectionReason(e.target.value)}
                     style={{ fontSize: '0.85rem' }}

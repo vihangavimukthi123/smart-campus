@@ -34,6 +34,7 @@ export default function AdminBookingsPage() {
   const [showConflictModal, setShowConflictModal] = useState(false)
   const [pendingConflict, setPendingConflict] = useState(null)
   const [rejectedConflict, setRejectedConflict] = useState(null)
+  const [approvedConflict, setApprovedConflict] = useState(null)
 
   const fetchBookings = useCallback(async () => {
     setLoading(true)
@@ -73,10 +74,12 @@ export default function AdminBookingsPage() {
       // Look for a Pending/Rejected conflict combo
       const pending = conflicts.find(c => c.status === 'PENDING') || (currentBooking.status === 'PENDING' ? currentBooking : null)
       const rejected = conflicts.find(c => c.status === 'REJECTED') || (currentBooking.status === 'REJECTED' ? currentBooking : null)
+      const approved = conflicts.find(c => c.status === 'APPROVED') || (currentBooking.status === 'APPROVED' ? currentBooking : null)
 
-      if (pending && rejected) {
+      if ((pending && rejected) || (approved && rejected)) {
         setPendingConflict(pending)
         setRejectedConflict(rejected)
+        setApprovedConflict(approved)
         setShowConflictModal(true)
         return
       }
@@ -95,19 +98,25 @@ export default function AdminBookingsPage() {
     setSubmitting(true)
     try {
       // Logic from prompt:
-      // If admin selects Pending Booking: Approve pending, No changes to rejected
-      // If admin selects Rejected Booking: Update rejected -> APPROVED, Update pending -> REJECTED, Save reason
+      // If admin selects Pending/Approved Booking: No changes (just close or simple update)
+      // If admin selects Rejected Booking: Update rejected -> APPROVED, Update pending/approved -> REJECTED, Save reason
       
-      if (resolution.type === 'PENDING') {
-        await updateBookingStatus(resolution.approveId, { status: 'APPROVED' })
-        toast.success('Pending booking approved')
+      if (resolution.type === 'PENDING' || resolution.type === 'APPROVED') {
+        // If it's already approved, we don't need to do anything. 
+        // If it's pending, we approve it.
+        if (resolution.type === 'PENDING') {
+          await updateBookingStatus(resolution.approveId, { status: 'APPROVED' })
+          toast.success('Pending booking approved')
+        } else {
+          toast.success('Keeping current approved booking')
+        }
       } else {
         await updateBookingStatus(resolution.approveId, { 
           status: 'APPROVED', 
           conflictingBookingId: resolution.rejectId,
           reason: resolution.reason 
         })
-        toast.success('Rejected booking approved and pending booking rejected')
+        toast.success(approvedConflict ? 'Rejected booking approved and existing approved booking cancelled' : 'Rejected booking approved and pending booking rejected')
       }
       
       setShowConflictModal(false)
@@ -450,6 +459,7 @@ export default function AdminBookingsPage() {
           onConfirm={handleConflictResolution}
           pendingBooking={pendingConflict}
           rejectedBooking={rejectedConflict}
+          approvedBooking={approvedConflict}
         />
       )}
 

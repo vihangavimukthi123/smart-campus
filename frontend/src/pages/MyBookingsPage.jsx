@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { getMyBookings, cancelBooking } from '../api/bookingService'
+import { getMyBookings, cancelBooking, updateBooking } from '../api/bookingService'
 import toast from 'react-hot-toast'
-import { Calendar, Clock, MapPin, Users, AlertCircle, Trash2, Search, Filter, QrCode } from 'lucide-react'
+import { Calendar, Clock, MapPin, Users, AlertCircle, Trash2, Search, Filter, QrCode, Edit3 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import QrCodeModal from '../components/QrCodeModal'
+import EditBookingModal from '../components/EditBookingModal'
 
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState([])
@@ -15,6 +16,7 @@ export default function MyBookingsPage() {
   
   // QR Code Modal State
   const [showQrModal, setShowQrModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState(null)
 
   useEffect(() => {
@@ -56,6 +58,23 @@ export default function MyBookingsPage() {
   const openQrModal = (booking) => {
     setSelectedBooking(booking)
     setShowQrModal(true)
+  }
+
+  const openEditModal = (booking) => {
+    setSelectedBooking(booking)
+    setShowEditModal(true)
+  }
+
+  const handleUpdateBooking = async (id, data) => {
+    try {
+      await updateBooking(id, data)
+      toast.success('Booking updated successfully')
+      fetchBookings()
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to update booking'
+      toast.error(message)
+      throw error
+    }
   }
 
   const getStatusBadgeClass = (status) => {
@@ -215,33 +234,48 @@ export default function MyBookingsPage() {
                 )}
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
-                <div className="text-xs text-muted" style={{ textAlign: 'right' }}>
-                  Requested on<br />
-                  {formatDateTime(booking.createdAt)}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end', height: '100%' }}>
+                  <div className="text-xs text-muted" style={{ textAlign: 'right' }}>
+                    Requested on<br />
+                    {formatDateTime(booking.createdAt)}
+                  </div>
+                  
+                  <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
+                    {(booking.status === 'PENDING' || booking.status === 'APPROVED') && new Date(booking.startDateTime) > new Date() && (
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        style={{ width: '100%' }}
+                        onClick={() => openEditModal(booking)}
+                      >
+                        <Edit3 size={14} />
+                        Edit Booking
+                      </button>
+                    )}
+
+                    {booking.status === 'APPROVED' && (
+                      <button
+                        className="btn btn-primary btn-sm"
+                        style={{ background: '#10b981', borderColor: '#10b981', width: '100%' }}
+                        onClick={() => openQrModal(booking)}
+                      >
+                        <QrCode size={14} />
+                        Booking QR
+                      </button>
+                    )}
+
+                    {(booking.status === 'APPROVED' || (booking.status === 'PENDING' && new Date(booking.startDateTime) > new Date())) && (
+                      <button
+                        className="btn btn-danger btn-sm"
+                        style={{ width: '100%' }}
+                        onClick={() => initiateCancel(booking.id)}
+                        disabled={new Date(booking.endDateTime) < new Date()}
+                      >
+                        <Trash2 size={14} />
+                        Cancel Booking
+                      </button>
+                    )}
+                  </div>
                 </div>
-                
-                {booking.status === 'APPROVED' && (
-                  <>
-                    <button
-                      className="btn btn-primary btn-sm"
-                      style={{ marginTop: 'auto', background: '#10b981', borderColor: '#10b981' }}
-                      onClick={() => openQrModal(booking)}
-                    >
-                      <QrCode size={14} />
-                      Booking QR
-                    </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => initiateCancel(booking.id)}
-                      disabled={new Date(booking.endDateTime) < new Date()}
-                    >
-                      <Trash2 size={14} />
-                      Cancel Booking
-                    </button>
-                  </>
-                )}
-              </div>
             </article>
           ))}
         </div>
@@ -253,6 +287,14 @@ export default function MyBookingsPage() {
         onClose={() => setShowQrModal(false)} 
         qrCodeImage={selectedBooking?.qrCodeImage}
         bookingId={selectedBooking?.id}
+      />
+
+      {/* Edit Booking Modal */}
+      <EditBookingModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleUpdateBooking}
+        booking={selectedBooking}
       />
 
       {/* Cancellation Dialog Overlay */}

@@ -25,6 +25,11 @@ export const getBookingById = async (id) => {
   return res.data
 }
 
+export const updateBooking = async (id, payload) => {
+  const res = await api.put(`/bookings/${id}`, payload)
+  return res.data
+}
+
 /**
  * Cancels a specific booking.
  */
@@ -45,7 +50,7 @@ export const updateBookingStatus = async (id, data) => {
 }
 
 export const getConflictingBookings = async (id) => {
-  const response = await api.get(`/bookings/${id}/conflicts`)
+  const response = await api.get(`/bookings/check-conflicts/${id}`)
   return response.data
 }
 
