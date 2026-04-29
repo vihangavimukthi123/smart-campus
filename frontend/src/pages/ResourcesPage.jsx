@@ -39,6 +39,8 @@ const formatEnumLabel = (value) =>
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
 
+const getResourceMetricLabel = (type) => (type === 'EQUIPMENT' ? 'Quantity' : 'Capacity')
+
 const normalizeResourceStatus = (status) => {
   if (status === 'ACTIVE') return 'AVAILABLE'
   if (status === 'OUT_OF_SERVICE') return 'MAINTENANCE'
@@ -376,7 +378,7 @@ export default function ResourcesPage() {
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">Capacity</label>
+                  <label className="form-label">{getResourceMetricLabel(form.type)}</label>
                   <input
                     className="form-input"
                     type="number"
@@ -385,6 +387,11 @@ export default function ResourcesPage() {
                     onChange={(event) => setForm((prev) => ({ ...prev, capacity: event.target.value }))}
                     required
                   />
+                  {form.type === 'EQUIPMENT' && (
+                    <p className="text-xs text-muted" style={{ marginTop: '0.35rem', marginBottom: 0 }}>
+                      Equipment resources use quantity instead of capacity.
+                    </p>
+                  )}
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
@@ -592,7 +599,7 @@ export default function ResourcesPage() {
                     <strong style={{ color: 'var(--clr-text)' }}>Type:</strong> {formatEnumLabel(resource.type)}
                   </p>
                   <p className="text-sm" style={{ color: 'var(--clr-text-2)' }}>
-                    <strong style={{ color: 'var(--clr-text)' }}>Capacity:</strong> {resource.capacity}
+                    <strong style={{ color: 'var(--clr-text)' }}>{getResourceMetricLabel(resource.type)}:</strong> {resource.capacity}
                   </p>
                   <p className="text-sm" style={{ color: 'var(--clr-text-2)' }}>
                     <strong style={{ color: 'var(--clr-text)' }}>Location:</strong> {resource.location}

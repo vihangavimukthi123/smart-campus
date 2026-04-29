@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { getResources } from '../api/resourceService'
 import { createBooking } from '../api/bookingService'
@@ -25,6 +25,13 @@ export default function CreateBookingPage() {
   })
 
   const [modal, setModal] = useState({ isOpen: false, message: '', type: 'error' })
+
+  const selectedResource = useMemo(
+    () => resources.find((resource) => String(resource.id) === String(form.resourceId)),
+    [resources, form.resourceId]
+  )
+
+  const requiresAttendees = selectedResource?.type !== 'EQUIPMENT'
 
   useEffect(() => {
     const fetchResources = async () => {
@@ -123,6 +130,11 @@ export default function CreateBookingPage() {
               ))}
             </select>
             {loadingResources && <p className="text-xs text-muted">Loading resources...</p>}
+            {selectedResource?.type === 'EQUIPMENT' && (
+              <p className="text-xs text-muted" style={{ marginTop: '0.35rem' }}>
+                Equipment bookings do not require an attendee count.
+              </p>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
