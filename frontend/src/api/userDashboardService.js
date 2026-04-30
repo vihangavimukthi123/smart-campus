@@ -1,22 +1,26 @@
 import api from './axiosInstance'
 
 export const getUserDashboardSummary = async () => {
-  // Temporary: API not implemented yet. Return null to trigger frontend fallback derivation.
-  return null
+  const response = await api.get('/user/dashboard/summary')
+  return response.data
 }
 
 export const getUserUpcomingBookings = async () => {
-  return null
+  const response = await api.get('/user/dashboard/upcoming-bookings')
+  return response.data
 }
 
 export const getUserRecentBookings = async () => {
-  return null
+  const response = await api.get('/user/dashboard/recent-bookings')
+  return response.data
 }
 
 export const getUserActiveTickets = async () => {
-  return null
+  const response = await api.get('/user/dashboard/active-tickets')
+  return response.data
 }
 
 export const getUserUsageStats = async () => {
-  return null
+  const response = await api.get('/user/dashboard/usage-stats')
+  return response.data
 }

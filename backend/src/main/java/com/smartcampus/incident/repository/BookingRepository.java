@@ -4,6 +4,7 @@ import com.smartcampus.incident.dto.analytics.PeakHourDto;
 import com.smartcampus.incident.dto.analytics.ResourceUsageDto;
 import com.smartcampus.incident.dto.analytics.TopResourceDto;
 import com.smartcampus.incident.entity.Booking;
+import com.smartcampus.incident.entity.User;
 import com.smartcampus.incident.enums.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -28,7 +29,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
                                      @Param("excludeId") Long excludeId);
 
     @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.user.userId = :userId")
-    List<Booking> findByUserId(@Param("userId") Long userId);
+    List<Booking> findByUserId(@Param("userId") User user);
 
     @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.verificationToken = :token")
     java.util.Optional<Booking> findByVerificationToken(@Param("token") String token);

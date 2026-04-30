@@ -33,7 +33,7 @@ public class UserDashboardController {
     @GetMapping("/summary")
     public ResponseEntity<Map<String, Object>> getSummary() {
         User user = securityUtils.getCurrentUser();
-        List<Booking> userBookings = bookingRepository.findByUserId(user);
+        List<Booking> userBookings = bookingRepository.findById(user);
 
         long total = userBookings.size();
         long approved = userBookings.stream().filter(b -> b.getStatus() == BookingStatus.APPROVED).count();
