@@ -4,6 +4,7 @@ import com.smartcampus.incident.dto.analytics.PeakHourDto;
 import com.smartcampus.incident.dto.analytics.ResourceUsageDto;
 import com.smartcampus.incident.dto.analytics.TopResourceDto;
 import com.smartcampus.incident.entity.Booking;
+import com.smartcampus.incident.entity.User;
 import com.smartcampus.incident.enums.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;

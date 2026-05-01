@@ -33,7 +33,7 @@ public class UserDashboardController {
     @GetMapping("/summary")
     public ResponseEntity<Map<String, Object>> getSummary() {
         User user = securityUtils.getCurrentUser();
-        List<Booking> userBookings = bookingRepository.findByUser(user);
+        List<Booking> userBookings = bookingRepository.findByUserId(user.getUserId());
 
         long total = userBookings.size();
         long approved = userBookings.stream().filter(b -> b.getStatus() == BookingStatus.APPROVED).count();
@@ -53,7 +53,7 @@ public class UserDashboardController {
     public ResponseEntity<List<BookingResponse>> getUpcomingBookings() {
         User user = securityUtils.getCurrentUser();
         // Simply return all bookings for this user for now, or filter by date >= now
-        List<Booking> bookings = bookingRepository.findByUser(user);
+        List<Booking> bookings = bookingRepository.findByUserId(user.getUserId());
         List<BookingResponse> responses = bookings.stream()
                 .filter(b -> b.getStartDateTime().isAfter(LocalDateTime.now()))
                 .map(this::mapToBookingResponse)
@@ -64,7 +64,7 @@ public class UserDashboardController {
     @GetMapping("/recent-bookings")
     public ResponseEntity<List<BookingResponse>> getRecentBookings() {
         User user = securityUtils.getCurrentUser();
-        List<Booking> bookings = bookingRepository.findByUser(user);
+        List<Booking> bookings = bookingRepository.findByUserId(user.getUserId());
         // Sort by start date desc and take top 5
         List<BookingResponse> responses = bookings.stream()
                 .sorted(Comparator.comparing(Booking::getStartDateTime).reversed())
@@ -90,7 +90,7 @@ public class UserDashboardController {
     @GetMapping("/usage-stats")
     public ResponseEntity<Map<String, Object>> getUsageStats() {
         User user = securityUtils.getCurrentUser();
-        List<Booking> userBookings = bookingRepository.findByUser(user);
+        List<Booking> userBookings = bookingRepository.findByUserId(user.getUserId());
 
         LocalDateTime weekStart = LocalDateTime.now().with(java.time.DayOfWeek.MONDAY).withHour(0).withMinute(0);
         long thisWeek = userBookings.stream()

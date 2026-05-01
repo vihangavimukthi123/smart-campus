@@ -10,4 +10,6 @@ public interface AuthService {
 
     String verifyOtp(String email, String otp);
     String resendOtp(String email);
+
+    void changePassword(com.smartcampus.incident.entity.User currentUser, com.smartcampus.incident.dto.user.ChangePasswordRequest request);
 }

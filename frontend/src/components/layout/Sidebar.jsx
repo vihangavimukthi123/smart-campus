@@ -6,12 +6,11 @@ import {
   Building2, Calendar, ClipboardCheck
 } from 'lucide-react'
 
-// Navigation links configuration
+// Navigation links configuration (Profile eka methanin ain kala)
 const NAV = [
   { to: '/dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
   { to: '/tickets',   icon: <Ticket size={18} />,          label: 'Tickets' },
   { to: '/tickets/new', icon: <PlusCircle size={18} />,    label: 'New Ticket', roles: ['USER'] },
-  // Admin ta vitharak pena User Management link eka
   { to: '/admin/users', icon: <Users size={18} />,         label: 'User Management', roles: ['ADMIN'] },
   { to: '/resources', icon: <Building2 size={18} />,       label: 'Resources' },
   { to: '/bookings/my', icon: <Calendar size={18} />,      label: 'My Bookings', roles: ['USER'] },
@@ -36,12 +35,10 @@ export default function Sidebar() {
   const initials = (name = '') =>
     name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
-  // Keep New Ticket off the admin sidebar only.
   const navItems = NAV.filter((item) => {
     if (user?.role === 'ADMIN' && item.to === '/tickets/new') {
       return false
     }
-
     return !item.roles || item.roles.includes(user?.role)
   })
 
@@ -73,24 +70,36 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Spacer - Push footer to bottom */}
       <div style={{ flex: 1 }} />
 
-      {/* User profile / Footer Section */}
-      <div className="sidebar__footer">
-        <div className="sidebar__user">
-          <div className="avatar">{initials(user?.name)}</div>
-          <div className="sidebar__user-info">
-            <span className="sidebar__user-name">{user?.name}</span>
-            <span className="sidebar__user-role">
-              {ROLE_ICON[user?.role]}
-              {user?.role}
-            </span>
+      {/* Footer Section - Profile link eka methanata damma */}
+      <div className="sidebar__footer-container">
+        {/* My Profile Link (Logout ekata udin) */}
+        <NavLink 
+          to="/profile" 
+          className={({ isActive }) => 
+            `sidebar__link sidebar__profile-link ${isActive ? 'sidebar__link--active' : ''}`
+          }
+        >
+          <span className="sidebar__link-icon"><User size={18} /></span>
+          My Profile
+        </NavLink>
+
+        <div className="sidebar__footer">
+          <div className="sidebar__user">
+            <div className="avatar">{initials(user?.name)}</div>
+            <div className="sidebar__user-info">
+              <span className="sidebar__user-name">{user?.name}</span>
+              <span className="sidebar__user-role">
+                {ROLE_ICON[user?.role]}
+                {user?.role}
+              </span>
+            </div>
           </div>
+          <button className="btn btn-ghost btn-icon sidebar__logout" onClick={handleLogout} title="Log out">
+            <LogOut size={16} />
+          </button>
         </div>
-        <button className="btn btn-ghost btn-icon sidebar__logout" onClick={handleLogout} title="Log out">
-          <LogOut size={16} />
-        </button>
       </div>
 
       <style>{`
@@ -104,7 +113,6 @@ export default function Sidebar() {
           z-index: 100;
           padding: var(--space-6) 0;
         }
-
         .sidebar__brand {
           display: flex; align-items: center; gap: var(--space-3);
           padding: 0 var(--space-5) var(--space-6);
@@ -142,9 +150,17 @@ export default function Sidebar() {
         }
         .sidebar__link-icon { width: 20px; flex-shrink: 0; }
 
+        .sidebar__footer-container {
+          padding: 0 var(--space-3);
+        }
+
+        .sidebar__profile-link {
+          margin-bottom: var(--space-2);
+        }
+
         .sidebar__footer {
-          margin-top: var(--space-4);
-          padding: var(--space-4) var(--space-3) 0;
+          margin-top: var(--space-2);
+          padding: var(--space-4) var(--space-2) 0;
           border-top: 1px solid var(--clr-border);
           display: flex; align-items: center; gap: var(--space-2);
         }

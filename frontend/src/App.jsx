@@ -18,6 +18,7 @@ import AdminUserPage from './pages/AdminUserPage'
 import BookingDetailsPublicPage from './pages/BookingDetailsPublicPage'
 import AnalyticsDashboard from './pages/AnalyticsDashboard'
 import AuthSuccess from './pages/AuthSuccess'
+import Profile from './pages/Profile'
 
 export default function App() {
   const { user, loading } = useAuth()
@@ -71,11 +72,15 @@ export default function App() {
         <Route path="/admin/users" element={<ProtectedRoute roles={['ADMIN']}><AdminUserPage /></ProtectedRoute>} />
         <Route path="/admin/bookings" element={<ProtectedRoute roles={['ADMIN']}><AdminBookingsPage /></ProtectedRoute>} />
         <Route path="/admin/analytics" element={<ProtectedRoute roles={['ADMIN']}><AnalyticsDashboard /></ProtectedRoute>} />
+        
+        {/* Profile */}
+        <Route path="/profile" element={<Profile />} />
       </Route>
 
       {/* 3. Default Redirects */}
       <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
+
     </Routes>
   )
 }

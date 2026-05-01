@@ -9,4 +9,6 @@ export const authService = {
   resendOtp: (email) => api.post('/auth/resend-otp', { email }),
   
   getMe: () => api.get('/users/me'),
+  updateProfile: (data) => api.put('/users/me', data),
+  changePassword: (data) => api.put('/users/me/password', data),
 }

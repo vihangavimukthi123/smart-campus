@@ -24,6 +24,7 @@ public class UserController {
     private final UserRepository userRepository;
     private final TicketRepository ticketRepository;
     private final SecurityUtils securityUtils;
+    private final com.smartcampus.incident.service.AuthService authService;
 
     @GetMapping("/technicians")
     @Operation(summary = "List all active technicians (ADMIN only)")
@@ -56,6 +57,36 @@ public class UserController {
         profile.put("phone", user.getPhone());
         profile.put("department", user.getDepartment());
         profile.put("createdAt", user.getCreatedAt());
+        profile.put("soundNotify", user.isSoundNotify());
+        profile.put("emailNotify", user.isEmailNotify());
         return ResponseEntity.ok(profile);
+    }
+
+    @PutMapping("/me")
+    @Operation(summary = "Update current authenticated user profile")
+    public ResponseEntity<Map<String, Object>> updateMe(@RequestBody com.smartcampus.incident.dto.user.UpdateProfileRequest request) {
+        User user = securityUtils.getCurrentUser();
+        
+        // විස්තර වෙනස් කිරීම
+        user.setName(request.getName());
+        user.setPhone(request.getPhone());
+        user.setDepartment(request.getDepartment());
+        user.setProfilePictureUrl(request.getProfilePictureUrl());
+        user.setSoundNotify(request.getSoundNotify() != null ? request.getSoundNotify() : false);
+        user.setEmailNotify(request.getEmailNotify() != null ? request.getEmailNotify() : false);
+        
+        userRepository.save(user);
+        
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("message", "Profile updated successfully");
+        response.put("id", user.getUserId());
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/me/password")
+    @Operation(summary = "Change password")
+    public ResponseEntity<Map<String, String>> changePassword(@RequestBody com.smartcampus.incident.dto.user.ChangePasswordRequest request) {
+        authService.changePassword(securityUtils.getCurrentUser(), request);
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
     }
 }
