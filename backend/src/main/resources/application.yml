@@ -9,8 +9,8 @@ spring:
 
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/smartcampus_incidents?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:root}
+    username: {username:root}
+    password: {password:password}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -49,8 +49,7 @@ spring:
         registration:
           google:
             client-id: 740053735303-a4q4934k70lpd505u7ufejsmk01ntp26.apps.googleusercontent.com
-            client-secret: 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
-            scope:
+            client-secret: {GOOGLE_CLIENT_SECRET}
               - profile
               - email
 

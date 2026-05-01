@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api/axiosInstance';
 import { 
   Search, UserPlus, Edit, Trash2, X, 
-  ShieldCheck, Wrench, Users, Filter 
+  ShieldCheck, Wrench, Users, Filter, CheckCircle
 } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -22,6 +22,14 @@ export default function AdminUserPage() {
     const [formData, setFormData] = useState({
         name: '', email: '', password: '', role: 'USER', phone: '', department: ''
     });
+    const [errors, setErrors] = useState({});
+
+    const passwordRequirements = [
+        { label: "8+ characters", test: (pw) => pw.length >= 8 },
+        { label: "Uppercase letter", test: (pw) => /[A-Z]/.test(pw || '') },
+        { label: "Number", test: (pw) => /[0-9]/.test(pw || '') },
+        { label: "Special char (@$!%*?)", test: (pw) => /[@$!%*?&#]/.test(pw || '') },
+    ];
 
     const loadUsers = async () => {
         try {
@@ -38,6 +46,7 @@ export default function AdminUserPage() {
     useEffect(() => { loadUsers(); }, []);
 
     const handleOpenModal = (user = null) => {
+        setErrors({});
         if (user) {
             setSelectedUser(user);
             setFormData(user);
@@ -50,6 +59,25 @@ export default function AdminUserPage() {
 
     const handleSave = async (e) => {
         e.preventDefault();
+        
+        const newErrors = {};
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            newErrors.email = "Please enter a valid email address.";
+        }
+        
+        if (!selectedUser) {
+            const allMet = passwordRequirements.every((req) => req.test(formData.password));
+            if (!allMet) {
+                newErrors.password = "Please meet all password requirements.";
+            }
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
         try {
             if (selectedUser) {
                 await api.put(`${API_URL}/${selectedUser.userId}`, formData);
@@ -180,19 +208,36 @@ export default function AdminUserPage() {
                             </div>
                             <div className="input-group">
                                 <label>Email Address</label>
-                                <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
+                                <input type="email" className={errors.email ? 'input-error' : ''} value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
+                                {errors.email && <span className="error-text">{errors.email}</span>}
                             </div>
                             {!selectedUser && (
                                 <div className="input-group">
                                     <label>Password</label>
-                                    <input type="password" onChange={e => setFormData({...formData, password: e.target.value})} required />
+                                    <input type="password" className={errors.password ? 'input-error' : ''} onChange={e => setFormData({...formData, password: e.target.value})} required />
+                                    
+                                    <div className="pw-requirements">
+                                      {passwordRequirements.map((req, i) => {
+                                        const met = req.test(formData.password);
+                                        return (
+                                          <div key={i} className={`pw-req${met ? " pw-req--met" : ""}`}>
+                                            <div className="pw-req__dot">
+                                              {met && <CheckCircle size={9} color="white" />}
+                                            </div>
+                                            {req.label}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+
+                                    {errors.password && <span className="error-text">{errors.password}</span>}
                                 </div>
                             )}
                             <div className="form-row">
                                 <div className="input-group">
                                     <label>Role</label>
                                     <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
-                                        <option value="USER">STUDENT</option>
+                                        <option value="USER">USER</option>
                                         <option value="TECHNICIAN">TECHNICIAN</option>
                                         <option value="ADMIN">ADMIN</option>
                                     </select>
@@ -308,6 +353,17 @@ export default function AdminUserPage() {
                     border-radius: 8px; cursor: pointer; font-weight: 700; margin-top: 1rem; transition: 0.2s;
                 }
                 .save-btn:hover { opacity: 0.9; }
+                .input-error { border-color: #ef4444 !important; }
+                .error-text { color: #ef4444; font-size: 0.75rem; margin-top: 4px; display: block; }
+                
+                .pw-requirements { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+                .pw-req { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--clr-text-3); }
+                .pw-req--met { color: #10b981; }
+                .pw-req__dot { 
+                    width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--clr-text-3); 
+                    display: flex; align-items: center; justify-content: center; 
+                }
+                .pw-req--met .pw-req__dot { background: #10b981; border-color: #10b981; }
             `}</style>
         </div>
     );
