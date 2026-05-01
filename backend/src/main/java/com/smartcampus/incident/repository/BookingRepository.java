@@ -18,23 +18,26 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpecificationExecutor<Booking> {
 
-        @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.resource.id = :resourceId " +
-                        "AND b.status NOT IN ('REJECTED', 'CANCELLED') " +
-                        "AND b.id <> :excludeId " +
-                        "AND (b.startDateTime < :end AND b.endDateTime > :start)")
-        boolean existsOverlappingBooking(@Param("resourceId") Long resourceId,
-                        @Param("start") LocalDateTime start,
-                        @Param("end") LocalDateTime end,
-                        @Param("excludeId") Long excludeId);
+    @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.resource.id = :resourceId " +
+           "AND b.status = com.smartcampus.incident.enums.BookingStatus.APPROVED " +
+           "AND b.id <> :excludeId " +
+           "AND (b.startDateTime < :end AND b.endDateTime > :start)")
+    boolean existsOverlappingBooking(@Param("resourceId") Long resourceId, 
+                                     @Param("start") LocalDateTime start, 
+                                     @Param("end") LocalDateTime end,
+                                     @Param("excludeId") Long excludeId);
 
-        @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.user.userId = :userId")
-        List<Booking> findByUserId(@Param("userId") Long userId);
+    @Query("SELECT b FROM Booking b WHERE b.resource.id = :resourceId " +
+           "AND b.status IN (com.smartcampus.incident.enums.BookingStatus.PENDING, com.smartcampus.incident.enums.BookingStatus.REJECTED, com.smartcampus.incident.enums.BookingStatus.APPROVED) " +
+           "AND b.id <> :excludeId " +
+           "AND (b.startDateTime < :end AND b.endDateTime > :start)")
+    List<Booking> findConflictingBookings(@Param("resourceId") Long resourceId, 
+                                           @Param("start") LocalDateTime start, 
+                                           @Param("end") LocalDateTime end,
+                                           @Param("excludeId") Long excludeId);
 
-        @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.user = :user")
-        List<Booking> findByUser(@Param("user") com.smartcampus.incident.entity.User user);
-
-        @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.verificationToken = :token")
-        java.util.Optional<Booking> findByVerificationToken(@Param("token") String token);
+    @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.user.userId = :userId")
+    List<Booking> findByUserId(@Param("userId") Long userId);
 
         @Query("SELECT DISTINCT b.resource.id FROM Booking b WHERE b.status = :status " +
                         "AND b.startDateTime <= :now AND b.endDateTime > :now")

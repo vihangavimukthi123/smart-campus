@@ -4,6 +4,7 @@ import com.smartcampus.incident.dto.booking.BookingResponse;
 import com.smartcampus.incident.dto.booking.CancelBookingRequest;
 import com.smartcampus.incident.dto.booking.CreateBookingRequest;
 import com.smartcampus.incident.dto.booking.BookingStatusRequest;
+import com.smartcampus.incident.dto.booking.UpdateBookingRequest;
 import com.smartcampus.incident.entity.Booking;
 import com.smartcampus.incident.entity.Resource;
 import com.smartcampus.incident.entity.User;
@@ -60,6 +61,13 @@ public class BookingServiceImpl implements BookingService {
         if (request.getEndDateTime().isBefore(request.getStartDateTime()) ||
                 request.getEndDateTime().isEqual(request.getStartDateTime())) {
             throw new IllegalArgumentException("End time must be later than start time");
+        }
+
+        // Validation 3: Attendees cannot exceed resource capacity
+        if (request.getAttendees() != null && request.getAttendees() > resource.getCapacity()) {
+            throw new IllegalArgumentException(
+                    String.format("Expected attendees (%d) exceeds resource capacity (%d)", 
+                    request.getAttendees(), resource.getCapacity()));
         }
 
         // Validation 3: Start time must not be in the past
@@ -199,6 +207,21 @@ public class BookingServiceImpl implements BookingService {
         }
 
         if (newStatus == BookingStatus.APPROVED) {
+            // Conflict Resolution Logic (Swap)
+            if (request.getConflictingBookingId() != null) {
+                Booking conflictingBooking = bookingRepository.findById(request.getConflictingBookingId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Conflicting Booking", request.getConflictingBookingId()));
+                
+                // If we are approving a REJECTED booking and want to reject/cancel a PENDING or APPROVED one
+                if (conflictingBooking.getStatus() == BookingStatus.PENDING || conflictingBooking.getStatus() == BookingStatus.APPROVED) {
+                    BookingStatus oldStatus = conflictingBooking.getStatus();
+                    conflictingBooking.setStatus(BookingStatus.REJECTED);
+                    conflictingBooking.setRejectionReason(request.getReason() != null ? request.getReason() : "Conflict resolution: Another booking was approved for this slot.");
+                    bookingRepository.save(conflictingBooking);
+                    log.info("Conflicting booking #{} ({}) automatically REJECTED due to approval of #{}", conflictingBooking.getId(), oldStatus, id);
+                }
+            }
+
             // Re-check for conflict during approval, excluding this booking itself
             boolean hasConflict = bookingRepository.existsOverlappingBooking(
                     booking.getResource().getId(),
@@ -231,6 +254,24 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getConflictingBookings(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
+        
+        List<Booking> conflicts = bookingRepository.findConflictingBookings(
+                booking.getResource().getId(),
+                booking.getStartDateTime(),
+                booking.getEndDateTime(),
+                id
+        );
+
+        return conflicts.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public void cancelBooking(Long id, CancelBookingRequest request) {
         Booking booking = bookingRepository.findById(id)
@@ -248,6 +289,11 @@ public class BookingServiceImpl implements BookingService {
                     "Only APPROVED bookings can be cancelled. Current status: " + booking.getStatus());
         }
 
+        // Prevent cancelling past bookings
+        if (booking.getEndDateTime().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Cannot cancel a booking that has already finished");
+        }
+
         booking.setStatus(BookingStatus.CANCELLED);
         booking.setCancelledAt(LocalDateTime.now());
         if (request != null && request.getReason() != null) {
@@ -258,6 +304,92 @@ public class BookingServiceImpl implements BookingService {
         resourceStatusSyncService.refreshResourceStatus(booking.getResource().getId());
         log.info("Booking #{} cancelled by user {}. Reason: {}", id, currentUser.getEmail(),
                 booking.getCancellationReason());
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse updateBooking(Long id, UpdateBookingRequest request) {
+        log.info("Attempting to update booking #{} with data: {}", id, request);
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Booking #{} not found", id);
+                    return new ResourceNotFoundException("Booking", id);
+                });
+
+        User currentUser = securityUtils.getCurrentUser();
+        log.info("Current user: {}", currentUser.getEmail());
+        
+        // 1. Permission check: Only owner or Admin
+        if (!booking.getUser().getUserId().equals(currentUser.getUserId()) && !currentUser.getRole().name().equals("ADMIN")) {
+            log.error("User {} not authorized to edit booking #{} (owner: {})", 
+                currentUser.getEmail(), id, booking.getUser().getEmail());
+            throw new UnauthorizedException("You are not authorized to edit this booking");
+        }
+
+        // 2. Status check: Only PENDING or APPROVED
+        if (booking.getStatus() != BookingStatus.PENDING && booking.getStatus() != BookingStatus.APPROVED) {
+            log.error("Cannot edit booking #{} with status {}", id, booking.getStatus());
+            throw new IllegalArgumentException("Only PENDING or APPROVED bookings can be edited");
+        }
+
+        // 3. Time check: Only upcoming (not past)
+        if (booking.getStartDateTime().isBefore(LocalDateTime.now())) {
+            log.error("Cannot edit past booking #{} (start: {})", id, booking.getStartDateTime());
+            throw new IllegalArgumentException("Cannot edit a booking that has already started or passed");
+        }
+
+        // 4. End time validation
+        if (request.getEndDateTime().isBefore(request.getStartDateTime()) ||
+                request.getEndDateTime().isEqual(request.getStartDateTime())) {
+            log.error("Invalid time range: {} to {}", request.getStartDateTime(), request.getEndDateTime());
+            throw new IllegalArgumentException("End time must be later than start time");
+        }
+
+        // 4.5. Capacity check
+        if (request.getAttendees() != null && request.getAttendees() > booking.getResource().getCapacity()) {
+            log.error("Attendees (%d) exceeds capacity (%d) for resource #%d", 
+                request.getAttendees(), booking.getResource().getCapacity(), booking.getResource().getId());
+            throw new IllegalArgumentException(
+                    String.format("Expected attendees (%d) exceeds resource capacity (%d)", 
+                    request.getAttendees(), booking.getResource().getCapacity()));
+        }
+
+        // 5. Conflict checking (if time changed)
+        boolean timeChanged = !booking.getStartDateTime().isEqual(request.getStartDateTime()) || 
+                              !booking.getEndDateTime().isEqual(request.getEndDateTime());
+        
+        if (timeChanged) {
+            log.info("Time changed for booking #{}. Checking for conflicts...", id);
+            boolean hasConflict = bookingRepository.existsOverlappingBooking(
+                    booking.getResource().getId(),
+                    request.getStartDateTime(),
+                    request.getEndDateTime(),
+                    booking.getId());
+
+            if (hasConflict) {
+                log.error("Conflict detected for booking #{} new time slot", id);
+                throw new IllegalArgumentException("Resource is already booked for the new time slot");
+            }
+        }
+
+        // Update fields
+        booking.setStartDateTime(request.getStartDateTime());
+        booking.setEndDateTime(request.getEndDateTime());
+        booking.setPurpose(request.getPurpose());
+        booking.setAttendees(request.getAttendees());
+
+        // Re-approval logic: If not admin and time changed, move back to PENDING
+        if (!currentUser.getRole().name().equals("ADMIN") && timeChanged && booking.getStatus() == BookingStatus.APPROVED) {
+            log.info("Moving booking #{} back to PENDING for re-approval", id);
+            booking.setStatus(BookingStatus.PENDING);
+            booking.setVerificationToken(null); 
+        }
+
+        booking = bookingRepository.save(booking);
+        resourceStatusSyncService.refreshResourceStatus(booking.getResource().getId());
+        log.info("Booking #{} successfully updated by user {}", id, currentUser.getEmail());
+
+        return toResponse(booking);
     }
 
     @Override

@@ -25,6 +25,29 @@ export default function CreateBookingPage() {
   })
 
   const [modal, setModal] = useState({ isOpen: false, message: '', type: 'error' })
+  const [minDateTime, setMinDateTime] = useState('')
+
+  const selectedResource = resources.find(r => String(r.id) === String(form.resourceId))
+  const isEquipment = selectedResource?.type === 'EQUIPMENT'
+
+
+  // Update minDateTime every minute to keep it current
+  useEffect(() => {
+    const updateMin = () => {
+      const now = new Date()
+      // Adjust to local ISO string format: YYYY-MM-DDTHH:mm
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const hours = String(now.getHours()).padStart(2, '0')
+      const minutes = String(now.getMinutes()).padStart(2, '0')
+      setMinDateTime(`${year}-${month}-${day}T${hours}:${minutes}`)
+    }
+
+    updateMin()
+    const interval = setInterval(updateMin, 60000) // Update every minute
+    return () => clearInterval(interval)
+  }, [])
 
   const selectedResource = useMemo(
     () => resources.find((resource) => String(resource.id) === String(form.resourceId)),
@@ -65,8 +88,8 @@ export default function CreateBookingPage() {
       return toast.error('End time must be later than start time')
     }
 
-    if (start < new Date()) {
-      return toast.error('Start time cannot be in the past')
+    if (new Date(form.startDateTime) < new Date()) {
+      return toast.error('Cannot select past date or time')
     }
 
     const attendeesValue = form.attendees ? Number(form.attendees) : null
@@ -160,7 +183,22 @@ export default function CreateBookingPage() {
                 type="datetime-local"
                 className="form-input"
                 value={form.startDateTime}
-                onChange={(e) => setForm({ ...form, startDateTime: e.target.value })}
+                min={minDateTime}
+                onChange={(e) => {
+                  const val = e.target.value
+                  if (val && new Date(val) < new Date()) {
+                    toast.error('Cannot select past date or time')
+                    setForm({ ...form, startDateTime: '' })
+                    return
+                  }
+                  
+                  // If new start time is after current end time, clear end time to maintain validity
+                  if (form.endDateTime && val && new Date(val) >= new Date(form.endDateTime)) {
+                    setForm({ ...form, startDateTime: val, endDateTime: '' })
+                  } else {
+                    setForm({ ...form, startDateTime: val })
+                  }
+                }}
                 required
               />
             </div>
@@ -173,7 +211,21 @@ export default function CreateBookingPage() {
                 type="datetime-local"
                 className="form-input"
                 value={form.endDateTime}
-                onChange={(e) => setForm({ ...form, endDateTime: e.target.value })}
+                min={form.startDateTime || minDateTime}
+                onChange={(e) => {
+                  const val = e.target.value
+                  if (val && new Date(val) < new Date()) {
+                    toast.error('Cannot select past date or time')
+                    setForm({ ...form, endDateTime: '' })
+                    return
+                  }
+                  if (form.startDateTime && val && new Date(val) <= new Date(form.startDateTime)) {
+                    toast.error('End time must be later than start time')
+                    setForm({ ...form, endDateTime: '' })
+                    return
+                  }
+                  setForm({ ...form, endDateTime: val })
+                }}
                 required
               />
             </div>
@@ -195,7 +247,7 @@ export default function CreateBookingPage() {
 
           <div className="form-group">
             <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Users size={16} /> {isEquipment ? 'Requested Quantity' : 'Expected Attendees (Optional)'}
+              <Users size={16} /> {isEquipment ? 'Quantity' : 'Expected Attendees'} (Optional)
             </label>
             <input
               type="number"
