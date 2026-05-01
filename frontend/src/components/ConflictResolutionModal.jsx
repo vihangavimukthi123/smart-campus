@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { AlertTriangle, CheckCircle, RefreshCw, XCircle, User, Calendar, Clock, AlertCircle } from 'lucide-react'
 
 export default function ConflictResolutionModal({ 
@@ -34,17 +35,22 @@ export default function ConflictResolutionModal({
     return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
 
-  return (
+  return createPortal(
     <div className="modal-overlay" style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', 
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000,
+      position: 'fixed', 
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0,0,0,0.7)', 
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999,
       backdropFilter: 'blur(8px)', padding: '1rem'
-    }}>
+    }} onClick={onClose}>
       <div className="card-glass fade-in" style={{ 
         width: '100%', maxWidth: '550px', padding: '2rem', 
         border: '1px solid rgba(255, 255, 255, 0.1)',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
-      }}>
+      }} onClick={(e) => e.stopPropagation()}>
         
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ 
@@ -178,6 +184,8 @@ export default function ConflictResolutionModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
+

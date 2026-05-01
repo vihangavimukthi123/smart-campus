@@ -18,7 +18,6 @@ import java.util.List;
 @Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = "email"))
 @Getter
 @Setter
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -72,9 +71,11 @@ public class User {
 
     //notification sound management
     @Column(nullable = false)
+    @Builder.Default
     private boolean soundNotify = true; // sound enable/disable
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean emailNotify = true;  //enable/ disable user notifications
 
     // Tickets created by this user

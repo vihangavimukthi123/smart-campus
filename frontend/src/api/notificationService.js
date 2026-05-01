@@ -12,4 +12,7 @@ export const notificationService = {
 
   markAllAsRead: () =>
     api.patch('/notifications/mark-read-all'),
+
+  delete: (id) =>
+    api.delete(`/notifications/${id}`),
 }

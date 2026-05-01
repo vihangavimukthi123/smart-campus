@@ -81,7 +81,10 @@ export default function CreateBookingPage() {
       return toast.error('End time must be later than start time')
     }
 
-    if (new Date(form.startDateTime) < new Date()) {
+    const nowWithBuffer = new Date()
+    nowWithBuffer.setMinutes(nowWithBuffer.getMinutes() - 1)
+    
+    if (new Date(form.startDateTime) < nowWithBuffer) {
       return toast.error('Cannot select past date or time')
     }
 
