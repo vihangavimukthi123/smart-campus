@@ -28,7 +28,8 @@ public class QrCodeServiceImpl implements QrCodeService {
     @Override
     public String generateQrCodeImage(String token) {
         try {
-            String verificationUrl = String.format("%s/booking-details/%s", frontendUrl, token);
+            String baseUrl = (frontendUrl == null || frontendUrl.isEmpty()) ? "http://localhost:5173" : frontendUrl;
+            String verificationUrl = String.format("%s/booking-details/%s", baseUrl, token);
             QRCodeWriter qrCodeWriter = new QRCodeWriter();
             BitMatrix bitMatrix = qrCodeWriter.encode(verificationUrl, BarcodeFormat.QR_CODE, 400, 400);
 

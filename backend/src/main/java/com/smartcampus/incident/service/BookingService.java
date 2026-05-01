@@ -4,6 +4,7 @@ import com.smartcampus.incident.dto.booking.CancelBookingRequest;
 import com.smartcampus.incident.dto.booking.CreateBookingRequest;
 import com.smartcampus.incident.dto.booking.BookingStatusRequest;
 import com.smartcampus.incident.dto.booking.BookingResponse;
+import com.smartcampus.incident.dto.booking.UpdateBookingRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
@@ -24,5 +25,7 @@ public interface BookingService {
     void updateBookingStatus(Long id, BookingStatusRequest request);
 
     void cancelBooking(Long id, CancelBookingRequest request);
+    BookingResponse updateBooking(Long id, UpdateBookingRequest request);
     BookingResponse getBookingByToken(String token);
+    List<BookingResponse> getConflictingBookings(Long id);
 }
