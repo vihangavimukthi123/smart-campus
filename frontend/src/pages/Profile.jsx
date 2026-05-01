@@ -182,6 +182,32 @@ export default function Profile() {
                 />
               </div>
 
+              <div className="form-group" style={{ marginTop: '20px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    name="soundNotify"
+                    checked={formData.soundNotify}
+                    onChange={handleInputChange}
+                    style={{ width: '20px', height: '20px' }}
+                  />
+                  <span>Enable Sound Notifications</span>
+                </label>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '10px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    name="emailNotify"
+                    checked={formData.emailNotify}
+                    onChange={handleInputChange}
+                    style={{ width: '20px', height: '20px' }}
+                  />
+                  <span>Enable Email Notifications</span>
+                </label>
+              </div>
+
               <div className="form-actions" style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setIsEditing(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={loading}>
@@ -220,6 +246,17 @@ export default function Profile() {
                 <div className="profile__detail-info">
                   <label>Phone Number</label>
                   <p>{user?.phone || 'Not specified'}</p>
+                </div>
+              </div>
+
+              <div className="profile__detail-item">
+                <div className="profile__detail-icon"><BadgeCheck size={20} /></div>
+                <div className="profile__detail-info">
+                  <label>Notifications</label>
+                  <p>
+                    {user?.soundNotify ? '🔊 Sound On' : '🔇 Sound Off'} <br/>
+                    {user?.emailNotify ? '📧 Email On' : '🔕 Email Off'}
+                  </p>
                 </div>
               </div>
             </div>

@@ -9,6 +9,6 @@ public class UpdateProfileRequest {
     private String department;
     private String email;
     private String profilePictureUrl;
-    private boolean soundNotify;
-    private boolean emailNotify;
+    private Boolean soundNotify;
+    private Boolean emailNotify;
 }

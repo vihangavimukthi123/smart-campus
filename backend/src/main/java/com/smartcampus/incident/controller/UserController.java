@@ -57,6 +57,8 @@ public class UserController {
         profile.put("phone", user.getPhone());
         profile.put("department", user.getDepartment());
         profile.put("createdAt", user.getCreatedAt());
+        profile.put("soundNotify", user.isSoundNotify());
+        profile.put("emailNotify", user.isEmailNotify());
         return ResponseEntity.ok(profile);
     }
 
@@ -70,8 +72,8 @@ public class UserController {
         user.setPhone(request.getPhone());
         user.setDepartment(request.getDepartment());
         user.setProfilePictureUrl(request.getProfilePictureUrl());
-        user.setSoundNotify(request.isSoundNotify());
-        user.setEmailNotify(request.isEmailNotify());
+        user.setSoundNotify(request.getSoundNotify() != null ? request.getSoundNotify() : false);
+        user.setEmailNotify(request.getEmailNotify() != null ? request.getEmailNotify() : false);
         
         userRepository.save(user);
         

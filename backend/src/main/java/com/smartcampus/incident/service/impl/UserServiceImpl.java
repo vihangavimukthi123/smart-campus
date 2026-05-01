@@ -43,8 +43,8 @@ public class UserServiceImpl implements UserService {
         user.setPhone(request.getPhone());
         user.setDepartment(request.getDepartment());
         user.setProfilePictureUrl(request.getProfilePictureUrl());
-        user.setSoundNotify(request.isSoundNotify());
-        user.setEmailNotify(request.isEmailNotify());
+        user.setSoundNotify(request.getSoundNotify() != null ? request.getSoundNotify() : false);
+        user.setEmailNotify(request.getEmailNotify() != null ? request.getEmailNotify() : false);
 
         // 4. Database එකේ සේව් කරනවා
         userRepository.save(user);
