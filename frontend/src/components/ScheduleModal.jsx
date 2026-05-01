@@ -13,6 +13,11 @@ function formatTimeRange(booking) {
   return `${s} - ${e}`
 }
 
+function getBookingQuantity(booking) {
+  const quantity = Number(booking?.attendees)
+  return Number.isFinite(quantity) && quantity > 0 ? quantity : 1
+}
+
 export default function ScheduleModal({ resource, onClose }) {
   const [date, setDate] = useState(new Date())
   const [bookings, setBookings] = useState([])
@@ -46,6 +51,13 @@ export default function ScheduleModal({ resource, onClose }) {
   const prevDay = () => setDate((d) => { const n = new Date(d); n.setDate(n.getDate() - 1); return n })
   const nextDay = () => setDate((d) => { const n = new Date(d); n.setDate(n.getDate() + 1); return n })
   const goToday = () => setDate(new Date())
+  const isEquipment = (resource?.type || '').toUpperCase() === 'EQUIPMENT'
+  const totalQuantity = Number(resource.capacity || 0)
+  const bookedQuantity = bookings
+    .filter((booking) => (booking.status || '').toUpperCase() === 'APPROVED')
+    .reduce((sum, booking) => sum + getBookingQuantity(booking), 0)
+  const availableQuantity = Math.max(totalQuantity - bookedQuantity, 0)
+  const usagePercent = totalQuantity > 0 ? Math.min((bookedQuantity / totalQuantity) * 100, 100) : 0
 
   return (
     <div
@@ -73,6 +85,26 @@ export default function ScheduleModal({ resource, onClose }) {
         </div>
 
         <div>
+          {isEquipment && (
+            <div className="card" style={{ padding: '0.9rem 1rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.45rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--clr-text-3)' }}>Quantity overview</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--clr-text)' }}>
+                    {availableQuantity} available of {totalQuantity}
+                  </div>
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--clr-text-2)', textAlign: 'right' }}>
+                  <div>Booked: {bookedQuantity}</div>
+                  <div>Remaining: {availableQuantity}</div>
+                </div>
+              </div>
+              <div style={{ height: '8px', borderRadius: '999px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                <div style={{ width: `${usagePercent}%`, height: '100%', borderRadius: '999px', background: 'linear-gradient(90deg,#6366f1,#06b6d4)' }} />
+              </div>
+            </div>
+          )}
+
           {loading ? <p className="text-muted">Loading schedule...</p> : null}
           {error ? <p className="text-danger">{error}</p> : null}
 
@@ -82,7 +114,14 @@ export default function ScheduleModal({ resource, onClose }) {
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '0.5rem' }}>
               {bookings.sort((a, b) => new Date(a.startDateTime || a.startTime || 0) - new Date(b.startDateTime || b.startTime || 0)).map((booking) => (
                 <li key={booking.id} className="card" style={{ padding: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: '0.9rem', color: 'var(--clr-text)' }}>{formatTimeRange(booking)}</div>
+                  <div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--clr-text)' }}>{formatTimeRange(booking)}</div>
+                    {isEquipment && (
+                      <div style={{ fontSize: '0.8rem', color: 'var(--clr-text-3)', marginTop: '0.2rem' }}>
+                        Quantity: {getBookingQuantity(booking)}
+                      </div>
+                    )}
+                  </div>
                   <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--clr-text-2)' }}>{(booking.status || '').toUpperCase() === 'APPROVED' ? 'Booked' : (booking.status || 'Occupied')}</div>
                 </li>
               ))}

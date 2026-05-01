@@ -5,7 +5,7 @@ test.describe('Authentication Flow', () => {
     await page.goto('/');
     
     // Check for the application title
-    await expect(page).toHaveTitle(/Smart Campus/);
+    await expect(page).toHaveTitle(/Matrix Core/);
     
     // Check if the login form or main heading is present
     // Note: Since I don't know the exact UI yet, I'll look for common elements
