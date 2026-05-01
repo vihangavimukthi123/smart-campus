@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getAllBookings, updateBookingStatus } from '../api/bookingService'
 import toast from 'react-hot-toast'
 import { 
   CheckCircle, XCircle, Info, Search, Filter, Eye,
-  ChevronLeft, ChevronRight, Calendar, User, Building2, MapPin, Users, Clock
+  ChevronLeft, ChevronRight, Calendar, User, Building2, MapPin, Users, Clock, AlertTriangle
 } from 'lucide-react'
 import ConfirmModal from '../components/ConfirmModal'
+import ConflictResolutionModal from '../components/ConflictResolutionModal'
+import { getAllBookings, updateBookingStatus, getConflictingBookings } from '../api/bookingService'
 
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState([])
@@ -28,6 +29,12 @@ export default function AdminBookingsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [confirmId, setConfirmId] = useState(null)
+
+  // Conflict Resolution State
+  const [showConflictModal, setShowConflictModal] = useState(false)
+  const [pendingConflict, setPendingConflict] = useState(null)
+  const [rejectedConflict, setRejectedConflict] = useState(null)
+  const [approvedConflict, setApprovedConflict] = useState(null)
 
   const fetchBookings = useCallback(async () => {
     setLoading(true)
@@ -58,8 +65,67 @@ export default function AdminBookingsPage() {
   }, [fetchBookings])
 
   const handleApprove = async (id) => {
-    setConfirmId(id)
-    setShowConfirmModal(true)
+    try {
+      const conflicts = await getConflictingBookings(id)
+      
+      // Find current booking in the list or from the conflicts
+      const currentBooking = bookings.find(b => b.id === id) || selectedBooking
+      
+      // Look for a Pending/Rejected conflict combo
+      const pending = conflicts.find(c => c.status === 'PENDING') || (currentBooking.status === 'PENDING' ? currentBooking : null)
+      const rejected = conflicts.find(c => c.status === 'REJECTED') || (currentBooking.status === 'REJECTED' ? currentBooking : null)
+      const approved = conflicts.find(c => c.status === 'APPROVED') || (currentBooking.status === 'APPROVED' ? currentBooking : null)
+
+      if ((pending && rejected) || (approved && rejected)) {
+        setPendingConflict(pending)
+        setRejectedConflict(rejected)
+        setApprovedConflict(approved)
+        setShowConflictModal(true)
+        return
+      }
+
+      // No complex conflict, just show normal confirm modal
+      setConfirmId(id)
+      setShowConfirmModal(true)
+    } catch (error) {
+      console.error('Error checking conflicts:', error)
+      setConfirmId(id)
+      setShowConfirmModal(true)
+    }
+  }
+
+  const handleConflictResolution = async (resolution) => {
+    setSubmitting(true)
+    try {
+      // Logic from prompt:
+      // If admin selects Pending/Approved Booking: No changes (just close or simple update)
+      // If admin selects Rejected Booking: Update rejected -> APPROVED, Update pending/approved -> REJECTED, Save reason
+      
+      if (resolution.type === 'PENDING' || resolution.type === 'APPROVED') {
+        // If it's already approved, we don't need to do anything. 
+        // If it's pending, we approve it.
+        if (resolution.type === 'PENDING') {
+          await updateBookingStatus(resolution.approveId, { status: 'APPROVED' })
+          toast.success('Pending booking approved')
+        } else {
+          toast.success('Keeping current approved booking')
+        }
+      } else {
+        await updateBookingStatus(resolution.approveId, { 
+          status: 'APPROVED', 
+          conflictingBookingId: resolution.rejectId,
+          reason: resolution.reason 
+        })
+        toast.success(approvedConflict ? 'Rejected booking approved and existing approved booking cancelled' : 'Rejected booking approved and pending booking rejected')
+      }
+      
+      setShowConflictModal(false)
+      fetchBookings()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to resolve conflict')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const executeApprove = async () => {
@@ -213,13 +279,17 @@ export default function AdminBookingsPage() {
                           <Eye size={16} />
                         </button>
 
-                        {(b.status === 'PENDING' || b.status === 'REJECTED') && (
+                        {(b.status === 'PENDING' || b.status === 'REJECTED') && new Date(b.startDateTime) >= new Date() && (
                           <button className="btn btn-success btn-icon btn-sm" title="Approve" onClick={() => handleApprove(b.id)}>
                             <CheckCircle size={16} />
                           </button>
                         )}
-                        {(b.status === 'PENDING' || b.status === 'APPROVED') && (
-                          <button className="btn btn-danger btn-icon btn-sm" title="Reject" onClick={() => { setRejectId(b.id); setShowRejectModal(true); }}>
+                        {(b.status === 'PENDING' || b.status === 'APPROVED') && new Date(b.startDateTime) >= new Date() && (
+                          <button 
+                            className="btn btn-danger btn-icon btn-sm" 
+                            title="Reject" 
+                            onClick={() => { setRejectId(b.id); setShowRejectModal(true); }}
+                          >
                             <XCircle size={16} />
                           </button>
                         )}
@@ -307,7 +377,7 @@ export default function AdminBookingsPage() {
               {selectedBooking.attendees > 0 && (
                 <div className="detail-item flex" style={{ gap: '0.5rem', alignItems: 'center' }}>
                   <Users size={16} className="text-muted" />
-                  <span className="text-sm"><strong>{selectedBooking.attendees}</strong> Expected Attendees</span>
+                  <span className="text-sm"><strong>{selectedBooking.attendees}</strong> {selectedBooking.resource.type === 'EQUIPMENT' ? 'Quantity' : 'Expected Attendees'}</span>
                 </div>
               )}
 
@@ -324,13 +394,16 @@ export default function AdminBookingsPage() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: 'var(--space-8)' }}>
-              {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'REJECTED') && (
+              {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'REJECTED') && new Date(selectedBooking.startDateTime) >= new Date() && (
                 <button className="btn btn-success btn-sm" onClick={() => { handleApprove(selectedBooking.id); setShowViewModal(false); }}>
                   Approve Booking
                 </button>
               )}
-              {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'APPROVED') && (
-                <button className="btn btn-danger btn-sm" onClick={() => { setRejectId(selectedBooking.id); setShowRejectModal(true); setShowViewModal(false); }}>
+              {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'APPROVED') && new Date(selectedBooking.startDateTime) >= new Date() && (
+                <button 
+                  className="btn btn-danger btn-sm" 
+                  onClick={() => { setRejectId(selectedBooking.id); setShowRejectModal(true); setShowViewModal(false); }}
+                >
                   Reject Booking
                 </button>
               )}
@@ -369,7 +442,6 @@ export default function AdminBookingsPage() {
         </div>
       )}
 
-      {/* Confirmation Modal */}
       <ConfirmModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
@@ -379,6 +451,17 @@ export default function AdminBookingsPage() {
         confirmText="Approve"
         type="success"
       />
+
+      {showConflictModal && (
+        <ConflictResolutionModal 
+          isOpen={showConflictModal}
+          onClose={() => setShowConflictModal(false)}
+          onConfirm={handleConflictResolution}
+          pendingBooking={pendingConflict}
+          rejectedBooking={rejectedConflict}
+          approvedBooking={approvedConflict}
+        />
+      )}
 
       <style>{`
         .btn-success {
