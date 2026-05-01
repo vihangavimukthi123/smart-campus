@@ -38,7 +38,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
                                            @Param("excludeId") Long excludeId);
 
     @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.user.userId = :userId")
-    List<Booking> findByUserId(@Param("userId") User user);
+    List<Booking> findByUserId(@Param("userId") Long userId);
 
     @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.verificationToken = :token")
     java.util.Optional<Booking> findByVerificationToken(@Param("token") String token);

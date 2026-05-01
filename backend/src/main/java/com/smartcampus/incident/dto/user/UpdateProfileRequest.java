@@ -7,6 +7,7 @@ public class UpdateProfileRequest {
     private String name;
     private String phone;
     private String department;
+    private String email;
     private String profilePictureUrl;
     private boolean soundNotify;
     private boolean emailNotify;
