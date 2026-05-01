@@ -27,8 +27,6 @@ export default function CreateBookingPage() {
   const [modal, setModal] = useState({ isOpen: false, message: '', type: 'error' })
   const [minDateTime, setMinDateTime] = useState('')
 
-  const selectedResource = resources.find(r => String(r.id) === String(form.resourceId))
-  const isEquipment = selectedResource?.type === 'EQUIPMENT'
 
 
   // Update minDateTime every minute to keep it current
