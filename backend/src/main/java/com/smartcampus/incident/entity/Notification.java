@@ -38,8 +38,13 @@ public class Notification {
     private String type;
 
     /** The entity and booking notification */
-    @Column(nullable = false)
+    @Column(name = "related_id", nullable = false)
     private Long relatedId;
+
+    /** Dummy field to satisfy the old leftover NOT NULL ticket_id column in MySQL */
+    @Column(name = "ticket_id", nullable = false)
+    @Builder.Default
+    private Long oldTicketId = 0L;
 
     @Column(name = "is_read", nullable = false)
     @Builder.Default

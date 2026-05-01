@@ -8,9 +8,9 @@ spring:
     name: smart-campus-incident-service
 
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/smartcampus?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: root
-    password: "root_Pass2"
+    url: ${DB_URL:jdbc:mysql://localhost:3306/smartcampus_incidents?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: {username:root}
+    password: {password:password}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -49,8 +49,7 @@ spring:
         registration:
           google:
             client-id: 740053735303-a4q4934k70lpd505u7ufejsmk01ntp26.apps.googleusercontent.com
-            client-secret: ${GOOGLE_CLIENT_SECRET:your_client_secret_here}
-            scope:
+            client-secret: {GOOGLE_CLIENT_SECRET}
               - profile
               - email
 
