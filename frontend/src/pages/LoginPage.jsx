@@ -68,7 +68,7 @@ export default function LoginPage() {
 
         {error && <div className="auth-error">{error}</div>}
 
-        <form onSubmit={submit}>
+        <form onSubmit={submit} autoComplete="off">
           <div className="form-group">
             <label className="form-label">Email address</label>
             <input
@@ -79,6 +79,7 @@ export default function LoginPage() {
               onChange={e => set('email', e.target.value)}
               required
               autoFocus
+              autoComplete="off"
             />
           </div>
 
@@ -93,6 +94,7 @@ export default function LoginPage() {
                 onChange={e => set('password', e.target.value)}
                 required
                 style={{ paddingRight: '44px' }}
+                autoComplete="new-password"
               />
               <button
                 type="button"
