@@ -132,7 +132,7 @@ export default function LoginPage() {
 
         <button
           type="button"
-          onClick={() => window.location.href = 'http://localhost:8080/api/oauth2/authorization/google'}
+          onClick={() => window.location.href = 'http://localhost:8081/api/oauth2/authorization/google'}
           className="btn" 
           style={{
             width: '100%',

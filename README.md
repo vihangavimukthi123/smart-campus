@@ -55,8 +55,8 @@ cd backend
 mvn spring-boot:run
 ```
 
-Backend starts at: **http://localhost:8080/api**
-Swagger UI: **http://localhost:8080/api/swagger-ui.html**
+Backend starts at: **http://localhost:8081/api**
+Swagger UI: **http://localhost:8081/api/swagger-ui.html**
 
 ### 3️⃣ Start the Frontend
 

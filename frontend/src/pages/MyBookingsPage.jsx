@@ -242,38 +242,41 @@ export default function MyBookingsPage() {
                   </div>
                   
                   <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
-                    {(booking.status === 'PENDING' || booking.status === 'APPROVED') && new Date(booking.startDateTime) > new Date() && (
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        style={{ width: '100%' }}
-                        onClick={() => openEditModal(booking)}
-                      >
-                        <Edit3 size={14} />
-                        Edit Booking
-                      </button>
-                    )}
+                    {new Date(booking.endDateTime) >= new Date() && (
+                      <>
+                        {(booking.status === 'PENDING' || booking.status === 'APPROVED') && (
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            style={{ width: '100%' }}
+                            onClick={() => openEditModal(booking)}
+                          >
+                            <Edit3 size={14} />
+                            Edit Booking
+                          </button>
+                        )}
 
-                    {booking.status === 'APPROVED' && (
-                      <button
-                        className="btn btn-primary btn-sm"
-                        style={{ background: '#10b981', borderColor: '#10b981', width: '100%' }}
-                        onClick={() => openQrModal(booking)}
-                      >
-                        <QrCode size={14} />
-                        Booking QR
-                      </button>
-                    )}
+                        {booking.status === 'APPROVED' && (
+                          <button
+                            className="btn btn-primary btn-sm"
+                            style={{ background: '#10b981', borderColor: '#10b981', width: '100%' }}
+                            onClick={() => openQrModal(booking)}
+                          >
+                            <QrCode size={14} />
+                            Booking QR
+                          </button>
+                        )}
 
-                    {(booking.status === 'APPROVED' || (booking.status === 'PENDING' && new Date(booking.startDateTime) > new Date())) && (
-                      <button
-                        className="btn btn-danger btn-sm"
-                        style={{ width: '100%' }}
-                        onClick={() => initiateCancel(booking.id)}
-                        disabled={new Date(booking.endDateTime) < new Date()}
-                      >
-                        <Trash2 size={14} />
-                        Cancel Booking
-                      </button>
+                        {(booking.status === 'APPROVED' || booking.status === 'PENDING') && (
+                          <button
+                            className="btn btn-danger btn-sm"
+                            style={{ width: '100%' }}
+                            onClick={() => initiateCancel(booking.id)}
+                          >
+                            <Trash2 size={14} />
+                            Cancel Booking
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
