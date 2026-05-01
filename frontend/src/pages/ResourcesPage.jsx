@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Pencil, Trash2, Eye, RefreshCw } from 'lucide-react'
 import ScheduleModal from '../components/ScheduleModal'
+import { getBookingsForResource } from '../api/bookingService'
 import { createResource, deleteResource, getResources, updateResource } from '../api/resourceService'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
@@ -38,6 +39,13 @@ const formatEnumLabel = (value) =>
     .split('_')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
+
+const getResourceMetricLabel = (type) => (type === 'EQUIPMENT' ? 'Quantity' : 'Capacity')
+
+const getBookingQuantity = (booking) => {
+  const quantity = Number(booking?.attendees)
+  return Number.isFinite(quantity) && quantity > 0 ? quantity : 1
+}
 
 const normalizeResourceStatus = (status) => {
   if (status === 'ACTIVE') return 'AVAILABLE'
@@ -106,6 +114,7 @@ export default function ResourcesPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [resourceToConfirm, setResourceToConfirm] = useState(null)
   const [scheduleResource, setScheduleResource] = useState(null)
+  const [equipmentAvailability, setEquipmentAvailability] = useState({})
 
   const [form, setForm] = useState(emptyForm)
 
@@ -164,6 +173,48 @@ export default function ResourcesPage() {
 
     return () => window.clearInterval(intervalId)
   }, [isAdmin, showRetired])
+
+  useEffect(() => {
+    let mounted = true
+    const equipmentResources = resources.filter((resource) => resource.type === 'EQUIPMENT')
+
+    if (!equipmentResources.length) {
+      setEquipmentAvailability({})
+      return () => { mounted = false }
+    }
+
+    const loadEquipmentAvailability = async () => {
+      const today = new Date().toISOString().slice(0, 10)
+
+      try {
+        const entries = await Promise.all(
+          equipmentResources.map(async (resource) => {
+            const response = await getBookingsForResource(resource.id, today)
+            const bookingsData = Array.isArray(response) ? response : response.data || response.content || []
+            const bookedQuantity = bookingsData
+              .filter((booking) => (booking.status || '').toUpperCase() === 'APPROVED')
+              .reduce((sum, booking) => sum + getBookingQuantity(booking), 0)
+            const totalQuantity = Number(resource.capacity || 0)
+            const availableQuantity = Math.max(totalQuantity - bookedQuantity, 0)
+
+            return [resource.id, { bookedQuantity, availableQuantity, totalQuantity }]
+          })
+        )
+
+        if (mounted) {
+          setEquipmentAvailability(Object.fromEntries(entries))
+        }
+      } catch (error) {
+        if (mounted) {
+          setEquipmentAvailability({})
+        }
+      }
+    }
+
+    loadEquipmentAvailability()
+
+    return () => { mounted = false }
+  }, [resources, isAdmin, showRetired])
 
   const openCreateModal = () => {
     setEditingResource(null)
@@ -376,7 +427,7 @@ export default function ResourcesPage() {
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">Capacity</label>
+                  <label className="form-label">{getResourceMetricLabel(form.type)}</label>
                   <input
                     className="form-input"
                     type="number"
@@ -385,6 +436,11 @@ export default function ResourcesPage() {
                     onChange={(event) => setForm((prev) => ({ ...prev, capacity: event.target.value }))}
                     required
                   />
+                  {form.type === 'EQUIPMENT' && (
+                    <p className="text-xs text-muted" style={{ marginTop: '0.35rem', marginBottom: 0 }}>
+                      Equipment resources use quantity instead of capacity.
+                    </p>
+                  )}
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
@@ -492,6 +548,12 @@ export default function ResourcesPage() {
             {filteredResources.map((resource) => {
               const badgeClass = getStatusBadgeClass(resource.status)
               const statusCardStyle = getStatusCardStyle(resource.status)
+              const isEquipment = resource.type === 'EQUIPMENT'
+              const availability = equipmentAvailability[resource.id]
+              const totalQuantity = Number(resource.capacity || 0)
+              const bookedQuantity = availability?.bookedQuantity ?? 0
+              const availableQuantity = availability?.availableQuantity ?? totalQuantity
+              const usagePercent = totalQuantity > 0 ? Math.min((bookedQuantity / totalQuantity) * 100, 100) : 0
 
               return (
               <article
@@ -592,12 +654,24 @@ export default function ResourcesPage() {
                     <strong style={{ color: 'var(--clr-text)' }}>Type:</strong> {formatEnumLabel(resource.type)}
                   </p>
                   <p className="text-sm" style={{ color: 'var(--clr-text-2)' }}>
-                    <strong style={{ color: 'var(--clr-text)' }}>Capacity:</strong> {resource.capacity}
+                    <strong style={{ color: 'var(--clr-text)' }}>{getResourceMetricLabel(resource.type)}:</strong> {resource.capacity}
                   </p>
                   <p className="text-sm" style={{ color: 'var(--clr-text-2)' }}>
                     <strong style={{ color: 'var(--clr-text)' }}>Location:</strong> {resource.location}
                   </p>
                 </div>
+
+                {isEquipment && (
+                  <div style={{ marginTop: 'auto', display: 'grid', gap: '0.35rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--clr-text-2)' }}>
+                      <span>Booked today: {bookedQuantity}</span>
+                      <span>Available: {availableQuantity}</span>
+                    </div>
+                    <div style={{ height: '8px', borderRadius: '999px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                      <div style={{ width: `${usagePercent}%`, height: '100%', borderRadius: '999px', background: 'linear-gradient(90deg,#6366f1,#06b6d4)' }} />
+                    </div>
+                  </div>
+                )}
 
                 {!isAdmin && !isTechnician && (
                   <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>

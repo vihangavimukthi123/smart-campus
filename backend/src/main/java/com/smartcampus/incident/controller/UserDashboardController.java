@@ -115,7 +115,7 @@ public class UserDashboardController {
         return BookingResponse.builder()
                 .id(b.getId())
                 .resource(BookingResponse.ResourceSummary.builder()
-                        .id(b.getResource().getResourceId())
+                        .id(b.getResource().getId())
                         .name(b.getResource().getName())
                         .type(b.getResource().getType().name())
                         .location(b.getResource().getLocation())
