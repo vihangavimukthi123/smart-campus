@@ -205,6 +205,11 @@ public class BookingServiceImpl implements BookingService {
         BookingStatus currentStatus = booking.getStatus();
         BookingStatus newStatus = BookingStatus.valueOf(request.getStatus().toUpperCase());
 
+        // Prevent updating status for past bookings
+        if (booking.getEndDateTime().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Cannot update status for a booking that has already finished");
+        }
+
         // Only allow transitions:
         // PENDING -> APPROVED or REJECTED
         // APPROVED -> REJECTED

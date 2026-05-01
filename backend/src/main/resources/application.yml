@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8081
   servlet:
     context-path: /api
 
@@ -8,9 +8,9 @@ spring:
     name: smart-campus-incident-service
 
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/smartcampus_incidents?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:root}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/smartcampus?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: root
+    password: "root_Pass2"
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:

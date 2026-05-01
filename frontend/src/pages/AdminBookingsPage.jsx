@@ -280,19 +280,23 @@ export default function AdminBookingsPage() {
                           <Eye size={16} />
                         </button>
 
-                        {(b.status === 'PENDING' || b.status === 'REJECTED') && new Date(b.endDateTime) >= new Date() && (
-                          <button className="btn btn-success btn-icon btn-sm" title="Approve" onClick={() => handleApprove(b.id)}>
-                            <CheckCircle size={16} />
-                          </button>
-                        )}
-                        {(b.status === 'PENDING' || b.status === 'APPROVED') && (
-                          <button 
-                            className="btn btn-danger btn-icon btn-sm" 
-                            title="Reject" 
-                            onClick={() => { setRejectId(b.id); setShowRejectModal(true); }}
-                          >
-                            <XCircle size={16} />
-                          </button>
+                        {new Date(b.endDateTime) >= new Date() && (
+                          <>
+                            {(b.status === 'PENDING' || b.status === 'REJECTED') && (
+                              <button className="btn btn-success btn-icon btn-sm" title="Approve" onClick={() => handleApprove(b.id)}>
+                                <CheckCircle size={16} />
+                              </button>
+                            )}
+                            {(b.status === 'PENDING' || b.status === 'APPROVED') && (
+                              <button 
+                                className="btn btn-danger btn-icon btn-sm" 
+                                title="Reject" 
+                                onClick={() => { setRejectId(b.id); setShowRejectModal(true); }}
+                              >
+                                <XCircle size={16} />
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
@@ -411,18 +415,22 @@ export default function AdminBookingsPage() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: 'var(--space-8)' }}>
-              {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'REJECTED') && new Date(selectedBooking.endDateTime) >= new Date() && (
-                <button className="btn btn-success btn-sm" onClick={() => { handleApprove(selectedBooking.id); setShowViewModal(false); }}>
-                  Approve Booking
-                </button>
-              )}
-              {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'APPROVED') && (
-                <button 
-                  className="btn btn-danger btn-sm" 
-                  onClick={() => { setRejectId(selectedBooking.id); setShowRejectModal(true); setShowViewModal(false); }}
-                >
-                  Reject Booking
-                </button>
+              {new Date(selectedBooking.endDateTime) >= new Date() && (
+                <>
+                  {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'REJECTED') && (
+                    <button className="btn btn-success btn-sm" onClick={() => { handleApprove(selectedBooking.id); setShowViewModal(false); }}>
+                      Approve Booking
+                    </button>
+                  )}
+                  {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'APPROVED') && (
+                    <button 
+                      className="btn btn-danger btn-sm" 
+                      onClick={() => { setRejectId(selectedBooking.id); setShowRejectModal(true); setShowViewModal(false); }}
+                    >
+                      Reject Booking
+                    </button>
+                  )}
+                </>
               )}
               <button className="btn btn-secondary btn-sm" onClick={() => setShowViewModal(false)}>Close</button>
             </div>
