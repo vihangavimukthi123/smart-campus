@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { getResources } from '../api/resourceService'
 import { createBooking } from '../api/bookingService'
@@ -49,6 +49,13 @@ export default function CreateBookingPage() {
     return () => clearInterval(interval)
   }, [])
 
+  const selectedResource = useMemo(
+    () => resources.find((resource) => String(resource.id) === String(form.resourceId)),
+    [resources, form.resourceId]
+  )
+
+  const isEquipment = selectedResource?.type === 'EQUIPMENT'
+
   useEffect(() => {
     const fetchResources = async () => {
       try {
@@ -88,12 +95,26 @@ export default function CreateBookingPage() {
       return toast.error('Cannot select past date or time')
     }
 
+    const attendeesValue = form.attendees ? Number(form.attendees) : null
+
+    if (isEquipment) {
+      if (!attendeesValue || attendeesValue < 1) {
+        return toast.error('Please enter the quantity you want to book')
+      }
+
+      if (selectedResource?.capacity != null && attendeesValue > Number(selectedResource.capacity)) {
+        return toast.error(`Requested quantity cannot exceed the available quantity (${selectedResource.capacity})`)
+      }
+    } else if (attendeesValue && selectedResource?.capacity != null && attendeesValue > Number(selectedResource.capacity)) {
+      return toast.error(`Expected attendees cannot exceed the resource quantity (${selectedResource.capacity})`)
+    }
+
     setSubmitting(true)
     try {
       const payload = {
         ...form,
         resourceId: Number(form.resourceId),
-        attendees: form.attendees ? Number(form.attendees) : null
+        attendees: attendeesValue
       }
       await createBooking(payload)
       setModal({
@@ -149,6 +170,11 @@ export default function CreateBookingPage() {
               ))}
             </select>
             {loadingResources && <p className="text-xs text-muted">Loading resources...</p>}
+            {isEquipment && (
+              <p className="text-xs text-muted" style={{ marginTop: '0.35rem' }}>
+                Equipment bookings use quantity instead of attendees.
+              </p>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -233,6 +259,7 @@ export default function CreateBookingPage() {
               placeholder={isEquipment ? 'e.g. 2' : 'e.g. 5'}
               value={form.attendees}
               onChange={(e) => setForm({ ...form, attendees: e.target.value })}
+              required={isEquipment}
             />
           </div>
 

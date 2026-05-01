@@ -85,9 +85,9 @@ public class AnalyticsController {
     @GetMapping("/summary")
     public ResponseEntity<Map<String, Object>> getSummary() {
         return ResponseEntity.ok(Map.of(
-                "topResources",  analyticsService.getTopResources(),
-                "peakHours",     analyticsService.getPeakHours(),
-                "resourceUsage", analyticsService.getResourceUsage()
-        ));
+                "topResources", analyticsService.getTopResources(),
+                "peakHours", analyticsService.getPeakHours(),
+                "resourceUsage", analyticsService.getResourceUsage(),
+                "rejectedBookingsCount", analyticsService.getRejectedBookingsCount()));
     }
 }

@@ -80,6 +80,27 @@ public class BookingServiceImpl implements BookingService {
             if (request.getStartDateTime().isBefore(LocalDateTime.now().minusMinutes(1))) {
                 throw new IllegalArgumentException("Booking cannot be made in the past");
             }
+        if (resource.getType() == com.smartcampus.incident.enums.ResourceType.EQUIPMENT) {
+            if (request.getAttendees() == null || request.getAttendees() < 1) {
+                throw new IllegalArgumentException("Please enter the quantity you want to book");
+            }
+
+            if (request.getAttendees() > resource.getCapacity()) {
+                throw new IllegalArgumentException(
+                        "Requested quantity cannot exceed the available quantity (" + resource.getCapacity() + ")");
+            }
+        } else if (request.getAttendees() != null && request.getAttendees() > resource.getCapacity()) {
+            throw new IllegalArgumentException(
+                    "Expected attendees cannot exceed the resource quantity (" + resource.getCapacity() + ")");
+        }
+
+        // Validation 4: Conflict checking (excludeId = 0L means no existing booking to
+        // exclude)
+        boolean hasConflict = bookingRepository.existsOverlappingBooking(
+                request.getResourceId(),
+                request.getStartDateTime(),
+                request.getEndDateTime(),
+                0L);
 
             // Validation 4: Conflict checking (excludeId = 0L means no existing booking to
             // exclude)
@@ -131,7 +152,7 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingResponse> getMyBookings() {
         User currentUser = securityUtils.getCurrentUser();
         List<Booking> bookings = bookingRepository.findByUserId(currentUser.getUserId());
-        
+
         // Ensure approved bookings have verification tokens
         boolean updated = false;
         for (Booking booking : bookings) {
@@ -501,8 +522,8 @@ public class BookingServiceImpl implements BookingService {
                 .cancellationReason(booking.getCancellationReason())
                 .createdAt(booking.getCreatedAt())
                 .verificationToken(booking.getVerificationToken())
-                .qrCodeImage(booking.getStatus() == BookingStatus.APPROVED && booking.getVerificationToken() != null 
-                        ? qrCodeService.generateQrCodeImage(booking.getVerificationToken()) 
+                .qrCodeImage(booking.getStatus() == BookingStatus.APPROVED && booking.getVerificationToken() != null
+                        ? qrCodeService.generateQrCodeImage(booking.getVerificationToken())
                         : null)
                 .build();
     }
