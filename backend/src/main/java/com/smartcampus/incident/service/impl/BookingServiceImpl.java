@@ -94,13 +94,6 @@ public class BookingServiceImpl implements BookingService {
                     "Expected attendees cannot exceed the resource quantity (" + resource.getCapacity() + ")");
         }
 
-        // Validation 4: Conflict checking (excludeId = 0L means no existing booking to
-        // exclude)
-        boolean hasConflict = bookingRepository.existsOverlappingBooking(
-                request.getResourceId(),
-                request.getStartDateTime(),
-                request.getEndDateTime(),
-                0L);
 
             // Validation 4: Conflict checking (excludeId = 0L means no existing booking to
             // exclude)
