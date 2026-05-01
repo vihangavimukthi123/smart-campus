@@ -31,6 +31,7 @@ public class UserDashboardController {
     private final SecurityUtils securityUtils;
 
     @GetMapping("/summary")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> getSummary() {
         User user = securityUtils.getCurrentUser();
         List<Booking> userBookings = bookingRepository.findByUserId(user.getUserId());
@@ -50,6 +51,7 @@ public class UserDashboardController {
     }
 
     @GetMapping("/upcoming-bookings")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<BookingResponse>> getUpcomingBookings() {
         User user = securityUtils.getCurrentUser();
         // Simply return all bookings for this user for now, or filter by date >= now
@@ -62,6 +64,7 @@ public class UserDashboardController {
     }
 
     @GetMapping("/recent-bookings")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<BookingResponse>> getRecentBookings() {
         User user = securityUtils.getCurrentUser();
         List<Booking> bookings = bookingRepository.findByUserId(user.getUserId());
@@ -88,6 +91,7 @@ public class UserDashboardController {
     }
 
     @GetMapping("/usage-stats")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> getUsageStats() {
         User user = securityUtils.getCurrentUser();
         List<Booking> userBookings = bookingRepository.findByUserId(user.getUserId());
@@ -117,6 +121,7 @@ public class UserDashboardController {
                 .resource(BookingResponse.ResourceSummary.builder()
                         .id(b.getResource().getId())
                         .name(b.getResource().getName())
+
                         .type(b.getResource().getType().name())
                         .location(b.getResource().getLocation())
                         .build())

@@ -14,10 +14,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
@@ -48,41 +50,80 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void notifyNewTicket(Long ticketId, User admin, String ticketTitle) {
+
         String message = "New incident reported: " + ticketTitle;
         saveAndSend(admin, message, "NEW_TICKET", ticketId);
     }
 
-    
-    private void saveAndSend(User recipient, String message, String type, Long ticketId) {
-        // save to DB
-        Notification notification = Notification.builder()
-                .recipient(recipient)
-                .message(message)
-                .type(type)
-                .relatedId(ticketId) // relatedId ලෙස අපේ entity එකේ තිබිය යුතුයි
-                .read(false)
-                .build();
-        notificationRepository.save(notification);
+    @Override
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    public void notifyNewBooking(Long bookingId, User admin, String resourceName, String userName) {
+        String message = String.format("New booking request #%d for %s by %s", bookingId, resourceName, userName);
+        saveAndSend(admin, message, "NEW_BOOKING", bookingId);
+    }
 
-        // send email notifications if user has enabled email notifications
-        if (recipient.isEmailNotify()) {
-            emailService.sendSimpleEmail(recipient.getEmail(), "SmartCampus Update", message);
+    @Override
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    public void notifyBookingStatusUpdate(Long bookingId, User recipient, String status, String resourceName, String reason) {
+        String message;
+        if ("APPROVED".equalsIgnoreCase(status)) {
+            message = String.format("Your booking #%d for %s has been APPROVED.", bookingId, resourceName);
+        } else if ("REJECTED".equalsIgnoreCase(status)) {
+            message = String.format("Your booking #%d for %s has been REJECTED. Reason: %s", bookingId, resourceName, reason);
+        } else if ("CANCELLED".equalsIgnoreCase(status)) {
+            message = String.format("Booking #%d for %s has been CANCELLED.", bookingId, resourceName);
+        } else {
+            message = String.format("Your booking #%d for %s status updated to: %s", bookingId, resourceName, status);
+        }
+        saveAndSend(recipient, message, "BOOKING_STATUS", bookingId);
+    }
+
+    
+    private void saveAndSend(User recipient, String message, String type, Long relatedId) {
+        try {
+            // Fetch fresh user from DB to ensure it's managed in the current transaction
+            User managedRecipient = securityUtils.getUserByEmail(recipient.getEmail());
+            
+            // save to DB
+            Notification notification = Notification.builder()
+                    .recipient(managedRecipient)
+                    .message(message)
+                    .type(type)
+                    .relatedId(relatedId) // use the parameter name
+                    .read(false)
+                    .build();
+            notificationRepository.save(notification);
+            log.info("✅ Notification saved successfully: recipient={}, type={}, relatedId={}", 
+                     managedRecipient.getEmail(), type, relatedId);
+
+            // send email notifications if user has enabled email notifications
+            if (managedRecipient.isEmailNotify()) {
+                emailService.sendSimpleEmail(managedRecipient.getEmail(), "SmartCampus Update", message);
+            }
+        } catch (Exception e) {
+            log.error("❌ CRITICAL: Failed to save or send notification: {}", e.getMessage(), e);
+            // We don't rethrow here because notifications shouldn't crash the main flow
         }
     }
 
     @Override
     public Page<NotificationResponse> getMyNotifications(Pageable pageable) {
-        User currentUser = getCurrentUser();
-        return notificationRepository.findByRecipientOrderByCreatedAtDesc(currentUser, pageable)
-                .map(this::convertToResponse);
+        try {
+            User currentUser = securityUtils.getCurrentUser();
+            return notificationRepository.findByRecipientOrderByCreatedAtDesc(currentUser, pageable)
+                    .map(this::convertToResponse);
+        } catch (Exception e) {
+            log.error("❌ ERROR fetching notifications: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     @Override
     @Transactional
     public NotificationResponse markAsRead(Long notificationId) {
-        User currentUser = getCurrentUser();
+        User currentUser = securityUtils.getCurrentUser();
         Notification notification = notificationRepository.findByIdAndRecipient(notificationId, currentUser)
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
         
@@ -92,19 +133,32 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public long getUnreadCount() {
-        return notificationRepository.countByRecipientAndReadFalse(getCurrentUser());
+        try {
+            User currentUser = securityUtils.getCurrentUser();
+            return notificationRepository.countByRecipientAndReadFalse(currentUser);
+        } catch (Exception e) {
+            log.error("❌ ERROR fetching unread count: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     @Override
     @Transactional
     public void markAllAsRead() {
-        notificationRepository.markAllAsReadForUser(getCurrentUser());
+        notificationRepository.markAllAsReadForUser(securityUtils.getCurrentUser());
     }
 
-    // Helper method to get current logged in user
-    private User getCurrentUser() {
-        return securityUtils.getCurrentUser();
+    @Override
+    @Transactional
+    public void deleteNotification(Long notificationId) {
+        User currentUser = securityUtils.getCurrentUser();
+        Notification notification = notificationRepository.findByIdAndRecipient(notificationId, currentUser)
+                .orElseThrow(() -> new RuntimeException("Notification not found or access denied"));
+        
+        notificationRepository.delete(notification);
+        log.info("Notification #{} deleted by user {}", notificationId, currentUser.getEmail());
     }
+
 
     private NotificationResponse convertToResponse(Notification n) {
         return NotificationResponse.builder()

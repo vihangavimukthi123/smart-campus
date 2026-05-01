@@ -18,7 +18,6 @@ import java.util.List;
 @Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = "email"))
 @Getter
 @Setter
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -26,7 +25,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
+    @Column(name = "id")
     private Long userId;
 
     @Column(nullable = false, length = 100)
@@ -66,15 +65,17 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    //add profiile picture url
+    // add profiile picture url
     @Column(length = 500)
     private String profilePictureUrl;
 
-    //notification sound management
+    // notification sound management
     @Column(nullable = false)
+    @Builder.Default
     private boolean soundNotify = true; // sound enable/disable
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean emailNotify = true;  //enable/ disable user notifications
 
     // Tickets created by this user

@@ -22,18 +22,30 @@ public class SecurityUtils {
      * Returns the full User entity for the currently authenticated principal.
      */
     public User getCurrentUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new UsernameNotFoundException("No authenticated user found in security context");
+        }
+
+        Object principal = authentication.getPrincipal();
         String email;
 
         if (principal instanceof UserDetails userDetails) {
             email = userDetails.getUsername();
+        } else if (principal instanceof String s) {
+            email = s;
         } else {
             email = principal.toString();
         }
 
+        if (email == null || email.equals("anonymousUser")) {
+            throw new UsernameNotFoundException("Anonymous user is not allowed here");
+        }
+
         return userRepository.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("Authenticated user not found in database"));
+            .orElseThrow(() -> new UsernameNotFoundException("User not found in database: " + email));
     }
+
 
     /**
      * Returns the email of the currently authenticated user without a DB call.
@@ -44,5 +56,10 @@ public class SecurityUtils {
             return userDetails.getUsername();
         }
         return principal.toString();
+    }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
     }
 }

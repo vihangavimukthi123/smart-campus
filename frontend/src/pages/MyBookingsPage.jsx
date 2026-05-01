@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { getMyBookings, cancelBooking, updateBooking } from '../api/bookingService'
 import toast from 'react-hot-toast'
 import { Calendar, Clock, MapPin, Users, AlertCircle, Trash2, Search, Filter, QrCode, Edit3 } from 'lucide-react'
@@ -28,7 +29,7 @@ export default function MyBookingsPage() {
     try {
       const data = await getMyBookings()
       const list = Array.isArray(data) ? data : data.data || []
-      const sorted = list.sort((a, b) => new Date(b.startDateTime) - new Date(a.startDateTime))
+      const sorted = list.sort((a, b) => b.id - a.id)
       setBookings(sorted)
     } catch (error) {
       toast.error('Failed to load your bookings')
@@ -298,16 +299,33 @@ export default function MyBookingsPage() {
       />
 
       {/* Cancellation Dialog Overlay */}
-      {showCancelDialog && (
+      {showCancelDialog && createPortal(
         <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          position: 'fixed', 
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.75)', 
+          backdropFilter: 'blur(8px)',
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          zIndex: 99999,
           padding: '1rem'
-        }}>
-          <div className="card" style={{ width: 'min(450px, 100%)', animation: 'fadeIn 0.3s ease' }}>
-            <h3 className="heading-3" style={{ marginBottom: '1rem' }}>Cancel Booking</h3>
+        }} onClick={() => setShowCancelDialog(false)}>
+          <div className="card fade-in" style={{ 
+            width: 'min(450px, 95%)', 
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+            border: '1px solid var(--clr-border)',
+            padding: '2rem'
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 className="heading-3" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <AlertCircle className="text-error" />
+              Cancel Booking
+            </h3>
             <p className="text-sm text-muted" style={{ marginBottom: '1.5rem' }}>
-              Are you sure you want to cancel this booking? This action cannot be undone.
+              Are you sure you want to cancel this booking? This action cannot be undone and the resource will be released for others.
             </p>
             
             <div className="form-group">
@@ -318,20 +336,23 @@ export default function MyBookingsPage() {
                 placeholder="Reason for cancellation..."
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
+                autoFocus
               />
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-              <button className="btn btn-secondary btn-sm" onClick={() => setShowCancelDialog(false)}>
+ 
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+              <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => setShowCancelDialog(false)}>
                 Go Back
               </button>
-              <button className="btn btn-danger btn-sm" onClick={handleConfirmCancel}>
+              <button className="btn btn-danger btn-sm" style={{ flex: 1 }} onClick={handleConfirmCancel}>
                 Confirm Cancellation
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+
     </div>
   )
 }

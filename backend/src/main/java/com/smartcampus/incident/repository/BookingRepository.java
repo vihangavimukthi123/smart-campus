@@ -5,6 +5,7 @@ import com.smartcampus.incident.dto.analytics.ResourceUsageDto;
 import com.smartcampus.incident.dto.analytics.TopResourceDto;
 import com.smartcampus.incident.entity.Booking;
 import com.smartcampus.incident.entity.User;
+
 import com.smartcampus.incident.enums.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -15,9 +16,15 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpecificationExecutor<Booking> {
+
+    List<Booking> findByUser(User user);
+
+    Optional<Booking> findByVerificationToken(String verificationToken);
+
 
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.resource.id = :resourceId " +
            "AND b.status = com.smartcampus.incident.enums.BookingStatus.APPROVED " +
@@ -40,8 +47,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
     @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.user.userId = :userId")
     List<Booking> findByUserId(@Param("userId") Long userId);
 
-    @Query("SELECT b FROM Booking b JOIN FETCH b.resource JOIN FETCH b.user WHERE b.verificationToken = :token")
-    java.util.Optional<Booking> findByVerificationToken(@Param("token") String token);
         @Query("SELECT DISTINCT b.resource.id FROM Booking b WHERE b.status = :status " +
                         "AND b.startDateTime <= :now AND b.endDateTime > :now")
         List<Long> findActiveResourceIds(@Param("status") BookingStatus status,
@@ -99,4 +104,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
                         ORDER BY COUNT(b) DESC
                         """)
         List<ResourceUsageDto> findResourceUsage();
+
+        /** Count of bookings by status. */
+        long countByStatus(BookingStatus status);
 }

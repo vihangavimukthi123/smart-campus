@@ -67,14 +67,21 @@ public class TicketServiceImpl implements TicketService {
             .build();
 
         ticket = ticketRepository.save(ticket);
+        ticketRepository.flush();
         log.info("Ticket #{} created by user {}", ticket.getId(), currentUser.getEmail());
 
-        List<User> admins = userRepository.findByRole(Role.ADMIN);
-        for (User admin : admins) {
-            notificationService.notifyNewTicket(ticket.getId(), admin, ticket.getTitle());
+
+        try {
+            List<User> admins = userRepository.findByRole(Role.ADMIN);
+            for (User admin : admins) {
+                notificationService.notifyNewTicket(ticket.getId(), admin, ticket.getTitle());
+            }
+        } catch (Exception e) {
+            log.error("Failed to send notifications for new ticket #{}: {}", ticket.getId(), e.getMessage());
         }
 
         return toResponse(ticket, currentUser);
+
     }
 
     // ── READ (with filters) ─────────────────────────────────────────────────────
@@ -309,7 +316,7 @@ public class TicketServiceImpl implements TicketService {
     // ── MAPPING HELPERS ────────────────────────────────────────────────────────
 
     private TicketResponse toResponse(Ticket ticket, User currentUser) {
-        long commentCount = commentRepository.countByTicket(ticket);
+        long commentCount = (ticket.getId() != null) ? commentRepository.countByTicket(ticket) : 0;
 
         return TicketResponse.builder()
             .id(ticket.getId())
@@ -328,14 +335,17 @@ public class TicketServiceImpl implements TicketService {
             .ttfrDuration(ticket.getTtfrDuration())
             .ttrDuration(ticket.getTtrDuration())
             .secondsUntilBreach(slaService.getSecondsUntilBreach(ticket))
-            .createdBy(toUserSummary(ticket.getCreatedBy()))
+            .createdBy(ticket.getCreatedBy() != null ? toUserSummary(ticket.getCreatedBy()) : null)
             .assignedTo(ticket.getAssignedTo() != null ? toUserSummary(ticket.getAssignedTo()) : null)
             .commentCount(commentCount)
-            .attachments(ticket.getAttachments().stream().map(this::toAttachmentSummary).toList())
+            .attachments(ticket.getAttachments() != null 
+                ? ticket.getAttachments().stream().map(this::toAttachmentSummary).toList() 
+                : Collections.emptyList())
             .createdAt(ticket.getCreatedAt())
             .updatedAt(ticket.getUpdatedAt())
             .build();
     }
+
 
     private TicketResponse.UserSummary toUserSummary(User user) {
         return TicketResponse.UserSummary.builder()

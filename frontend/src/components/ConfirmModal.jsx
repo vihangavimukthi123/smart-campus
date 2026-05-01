@@ -1,4 +1,5 @@
 import { AlertTriangle, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
 
 export default function ConfirmModal({ 
   isOpen, 
@@ -33,17 +34,20 @@ export default function ConfirmModal({
   const themeColor = getThemeColor()
   const themeBg = getThemeBg()
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
         backdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 10000,
+        zIndex: 99999,
         padding: '1rem',
       }}
       onClick={onClose}
@@ -144,6 +148,8 @@ export default function ConfirmModal({
           to { opacity: 1; transform: scale(1) translateY(0); }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   )
 }
+

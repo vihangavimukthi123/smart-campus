@@ -128,13 +128,14 @@ public class SlaServiceImpl implements SlaService {
 
     @Override
     public long getSecondsUntilBreach(Ticket ticket) {
-        if (ticket.getSlaStatus() == SlaStatus.BREACHED) {
+        if (ticket.getSlaStatus() == SlaStatus.BREACHED || ticket.getCreatedAt() == null) {
             return 0;
         }
 
         Instant created = ticket.getCreatedAt().toInstant(ZoneOffset.UTC);
         Instant now = Instant.now();
         long secondsSinceCreation = Duration.between(created, now).getSeconds();
+
 
         if (ticket.getFirstResponseAt() == null) {
             // Check TTFR breach time

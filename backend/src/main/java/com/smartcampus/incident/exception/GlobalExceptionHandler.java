@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -90,6 +91,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiError> handleBadCredentials(BadCredentialsException ex) {
         return buildResponse(HttpStatus.UNAUTHORIZED, "Authentication Failed", "Invalid email or password");
+    }
+
+    // -- Account status (Disabled, Locked, Expired) ----------------------------
+    @ExceptionHandler(AccountStatusException.class)
+    public ResponseEntity<ApiError> handleAccountStatus(AccountStatusException ex) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Account Status Error", ex.getMessage());
     }
 
     // ── File upload too large ─────────────────────────────────────────────────

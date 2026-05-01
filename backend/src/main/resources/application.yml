@@ -8,9 +8,9 @@ spring:
     name: smart-campus-incident-service
 
   datasource:
-    url: jdbc:mysql://localhost:3306/smartcampus?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: bombugala1234
+    url: ${DB_URL:jdbc:mysql://localhost:3306/smartcampus_incidents?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -42,7 +42,7 @@ spring:
     # Set to true to enable actual email delivery
     enabled: true
 
-#add google authentication details here
+  #add google authentication details here
   security:
     oauth2:
       client:
@@ -53,7 +53,6 @@ spring:
             scope:
               - profile
               - email
-
 
 # Application-specific settings
 app:

@@ -10,12 +10,15 @@ import com.smartcampus.incident.entity.Resource;
 import com.smartcampus.incident.entity.User;
 import com.smartcampus.incident.enums.BookingStatus;
 import com.smartcampus.incident.enums.ResourceStatus;
+import com.smartcampus.incident.enums.Role;
 import com.smartcampus.incident.exception.ResourceNotFoundException;
 import com.smartcampus.incident.exception.UnauthorizedException;
 import com.smartcampus.incident.repository.BookingRepository;
 import com.smartcampus.incident.repository.ResourceRepository;
+import com.smartcampus.incident.repository.UserRepository;
 import com.smartcampus.incident.repository.specification.BookingSpecification;
 import com.smartcampus.incident.service.BookingService;
+import com.smartcampus.incident.service.NotificationService;
 import com.smartcampus.incident.service.QrCodeService;
 import com.smartcampus.incident.service.impl.ResourceStatusSyncService;
 import com.smartcampus.incident.util.SecurityUtils;
@@ -42,66 +45,99 @@ public class BookingServiceImpl implements BookingService {
     private final ResourceStatusSyncService resourceStatusSyncService;
     private final SecurityUtils securityUtils;
     private final QrCodeService qrCodeService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
     public BookingResponse createBooking(CreateBookingRequest request) {
-        User currentUser = securityUtils.getCurrentUser();
+        try {
+            User currentUser = securityUtils.getCurrentUser();
 
-        Resource resource = resourceRepository.findById(request.getResourceId())
-                .orElseThrow(() -> new ResourceNotFoundException("Resource", request.getResourceId()));
+            Resource resource = resourceRepository.findById(request.getResourceId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Resource", request.getResourceId()));
 
-        // Validation 1: Resource must be ACTIVE or AVAILABLE
-        if (resource.getStatus() != ResourceStatus.ACTIVE && resource.getStatus() != ResourceStatus.AVAILABLE) {
+            // Validation 1: Resource must be ACTIVE or AVAILABLE
+            if (resource.getStatus() != ResourceStatus.ACTIVE && resource.getStatus() != ResourceStatus.AVAILABLE) {
+                throw new IllegalArgumentException(
+                        "Resource is not available for booking. Current status: " + resource.getStatus());
+            }
+
+            // Validation 2: End time must be later than start time
+            if (request.getEndDateTime().isBefore(request.getStartDateTime()) ||
+                    request.getEndDateTime().isEqual(request.getStartDateTime())) {
+                throw new IllegalArgumentException("End time must be later than start time");
+            }
+
+            // Validation 3: Attendees cannot exceed resource capacity
+            if (request.getAttendees() != null && request.getAttendees() > resource.getCapacity()) {
+                throw new IllegalArgumentException(
+                        String.format("Expected attendees (%d) exceeds resource capacity (%d)", 
+                        request.getAttendees(), resource.getCapacity()));
+            }
+
+            // Validation 3: Start time must not be in the past (with 1-minute buffer for network lag)
+            if (request.getStartDateTime().isBefore(LocalDateTime.now().minusMinutes(1))) {
+                throw new IllegalArgumentException("Booking cannot be made in the past");
+            }
+        if (resource.getType() == com.smartcampus.incident.enums.ResourceType.EQUIPMENT) {
+            if (request.getAttendees() == null || request.getAttendees() < 1) {
+                throw new IllegalArgumentException("Please enter the quantity you want to book");
+            }
+
+            if (request.getAttendees() > resource.getCapacity()) {
+                throw new IllegalArgumentException(
+                        "Requested quantity cannot exceed the available quantity (" + resource.getCapacity() + ")");
+            }
+        } else if (request.getAttendees() != null && request.getAttendees() > resource.getCapacity()) {
             throw new IllegalArgumentException(
-                    "Resource is not available for booking. Current status: " + resource.getStatus());
+                    "Expected attendees cannot exceed the resource quantity (" + resource.getCapacity() + ")");
         }
 
-        // Validation 2: End time must be later than start time
-        if (request.getEndDateTime().isBefore(request.getStartDateTime()) ||
-                request.getEndDateTime().isEqual(request.getStartDateTime())) {
-            throw new IllegalArgumentException("End time must be later than start time");
+
+            // Validation 4: Conflict checking (excludeId = 0L means no existing booking to
+            // exclude)
+            boolean hasConflict = bookingRepository.existsOverlappingBooking(
+                    request.getResourceId(),
+                    request.getStartDateTime(),
+                    request.getEndDateTime(),
+                    0L);
+
+            if (hasConflict) {
+                throw new IllegalArgumentException("Resource can't be booked for this time because it is already booked.");
+            }
+
+            Booking booking = Booking.builder()
+                    .resource(resource)
+                    .user(currentUser)
+                    .startDateTime(request.getStartDateTime())
+                    .endDateTime(request.getEndDateTime())
+                    .purpose(request.getPurpose())
+                    .attendees(request.getAttendees())
+                    .status(BookingStatus.PENDING)
+                    .build();
+
+            booking = bookingRepository.save(booking);
+            log.info("Booking request #{} created by user {} for resource {}",
+                    booking.getId(), currentUser.getEmail(), resource.getName());
+
+            // Notify Admins
+            try {
+                List<User> admins = userRepository.findByRole(Role.ADMIN);
+                log.info("Found {} admins to notify for booking #{}", admins.size(), booking.getId());
+                for (User admin : admins) {
+                    log.info("Sending NEW_BOOKING notification to admin: {}", admin.getEmail());
+                    notificationService.notifyNewBooking(booking.getId(), admin, resource.getName(), currentUser.getName());
+                }
+            } catch (Exception e) {
+                log.error("Failed to send notification for new booking #{}: {}", booking.getId(), e.getMessage(), e);
+            }
+
+            return toResponse(booking);
+        } catch (Exception e) {
+            log.error("CRITICAL ERROR in createBooking: {}", e.getMessage(), e);
+            throw e; // rethrow to keep transactional behavior but log it
         }
-
-        // Validation 3: Attendees cannot exceed resource capacity
-        if (request.getAttendees() != null && request.getAttendees() > resource.getCapacity()) {
-            throw new IllegalArgumentException(
-                    String.format("Expected attendees (%d) exceeds resource capacity (%d)", 
-                    request.getAttendees(), resource.getCapacity()));
-        }
-
-        // Validation 3: Start time must not be in the past
-        if (request.getStartDateTime().isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Booking cannot be made in the past");
-        }
-
-        // Validation 4: Conflict checking (excludeId = 0L means no existing booking to
-        // exclude)
-        boolean hasConflict = bookingRepository.existsOverlappingBooking(
-                request.getResourceId(),
-                request.getStartDateTime(),
-                request.getEndDateTime(),
-                0L);
-
-        if (hasConflict) {
-            throw new IllegalArgumentException("Resource can't be booked for this time because it is already booked.");
-        }
-
-        Booking booking = Booking.builder()
-                .resource(resource)
-                .user(currentUser)
-                .startDateTime(request.getStartDateTime())
-                .endDateTime(request.getEndDateTime())
-                .purpose(request.getPurpose())
-                .attendees(request.getAttendees())
-                .status(BookingStatus.PENDING)
-                .build();
-
-        booking = bookingRepository.save(booking);
-        log.info("Booking request #{} created by user {} for resource {}",
-                booking.getId(), currentUser.getEmail(), resource.getName());
-
-        return toResponse(booking);
     }
 
     @Override
@@ -109,7 +145,7 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingResponse> getMyBookings() {
         User currentUser = securityUtils.getCurrentUser();
         List<Booking> bookings = bookingRepository.findByUserId(currentUser.getUserId());
-        
+
         // Ensure approved bookings have verification tokens
         boolean updated = false;
         for (Booking booking : bookings) {
@@ -205,6 +241,19 @@ public class BookingServiceImpl implements BookingService {
                     conflictingBooking.setRejectionReason(request.getReason() != null ? request.getReason() : "Conflict resolution: Another booking was approved for this slot.");
                     bookingRepository.save(conflictingBooking);
                     log.info("Conflicting booking #{} ({}) automatically REJECTED due to approval of #{}", conflictingBooking.getId(), oldStatus, id);
+
+                    // Notify owner of conflicting booking
+                    try {
+                        notificationService.notifyBookingStatusUpdate(
+                            conflictingBooking.getId(),
+                            conflictingBooking.getUser(),
+                            "REJECTED",
+                            conflictingBooking.getResource().getName(),
+                            conflictingBooking.getRejectionReason()
+                        );
+                    } catch (Exception e) {
+                        log.error("Failed to notify conflicting booking owner for #{}", conflictingBooking.getId());
+                    }
                 }
             }
 
@@ -237,6 +286,19 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(newStatus);
         bookingRepository.save(booking);
         resourceStatusSyncService.refreshResourceStatus(booking.getResource().getId());
+
+        // Notify the user about status change
+        try {
+            notificationService.notifyBookingStatusUpdate(
+                booking.getId(), 
+                booking.getUser(), 
+                newStatus.name(), 
+                booking.getResource().getName(), 
+                booking.getRejectionReason()
+            );
+        } catch (Exception e) {
+            log.error("Failed to send status update notification for booking #{}: {}", id, e.getMessage());
+        }
     }
 
     @Override
@@ -269,10 +331,10 @@ public class BookingServiceImpl implements BookingService {
             throw new UnauthorizedException("You are not authorized to cancel this booking");
         }
 
-        // Requirements check: Only APPROVED bookings can be cancelled
-        if (booking.getStatus() != BookingStatus.APPROVED) {
+        // Requirements check: Only PENDING or APPROVED bookings can be cancelled
+        if (booking.getStatus() != BookingStatus.APPROVED && booking.getStatus() != BookingStatus.PENDING) {
             throw new IllegalArgumentException(
-                    "Only APPROVED bookings can be cancelled. Current status: " + booking.getStatus());
+                    "Only PENDING or APPROVED bookings can be cancelled. Current status: " + booking.getStatus());
         }
 
         // Prevent cancelling past bookings
@@ -290,6 +352,22 @@ public class BookingServiceImpl implements BookingService {
         resourceStatusSyncService.refreshResourceStatus(booking.getResource().getId());
         log.info("Booking #{} cancelled by user {}. Reason: {}", id, currentUser.getEmail(),
                 booking.getCancellationReason());
+
+        // Notify Admins about cancellation
+        try {
+            List<User> admins = userRepository.findByRole(Role.ADMIN);
+            for (User admin : admins) {
+                notificationService.notifyBookingStatusUpdate(
+                    booking.getId(),
+                    admin,
+                    "CANCELLED",
+                    booking.getResource().getName(),
+                    "Cancelled by user: " + currentUser.getName()
+                );
+            }
+        } catch (Exception e) {
+            log.error("Failed to send cancellation notification for booking #{}", id);
+        }
     }
 
     @Override
@@ -318,8 +396,8 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalArgumentException("Only PENDING or APPROVED bookings can be edited");
         }
 
-        // 3. Time check: Only upcoming (not past)
-        if (booking.getStartDateTime().isBefore(LocalDateTime.now())) {
+        // 3. Time check: Only upcoming (allow 1-minute buffer for processing delay)
+        if (booking.getStartDateTime().isBefore(LocalDateTime.now().minusMinutes(1))) {
             log.error("Cannot edit past booking #{} (start: {})", id, booking.getStartDateTime());
             throw new IllegalArgumentException("Cannot edit a booking that has already started or passed");
         }
@@ -375,6 +453,33 @@ public class BookingServiceImpl implements BookingService {
         resourceStatusSyncService.refreshResourceStatus(booking.getResource().getId());
         log.info("Booking #{} successfully updated by user {}", id, currentUser.getEmail());
 
+        // Notify user if Admin edited their booking
+        if (currentUser.getRole() == Role.ADMIN && !currentUser.getUserId().equals(booking.getUser().getUserId())) {
+            try {
+                notificationService.notifyBookingStatusUpdate(
+                    booking.getId(),
+                    booking.getUser(),
+                    "UPDATED",
+                    booking.getResource().getName(),
+                    "Your booking details have been updated by an administrator."
+                );
+            } catch (Exception e) {
+                log.error("Failed to notify user of Admin update for booking #{}", id);
+            }
+        }
+
+        // If it moved back to PENDING, notify admins
+        if (booking.getStatus() == BookingStatus.PENDING) {
+            try {
+                List<User> admins = userRepository.findByRole(Role.ADMIN);
+                for (User admin : admins) {
+                    notificationService.notifyNewBooking(booking.getId(), admin, booking.getResource().getName(), currentUser.getName() + " (Updated)");
+                }
+            } catch (Exception e) {
+                log.error("Failed to notify admins of updated booking #{}", id);
+            }
+        }
+
         return toResponse(booking);
     }
 
@@ -410,8 +515,8 @@ public class BookingServiceImpl implements BookingService {
                 .cancellationReason(booking.getCancellationReason())
                 .createdAt(booking.getCreatedAt())
                 .verificationToken(booking.getVerificationToken())
-                .qrCodeImage(booking.getStatus() == BookingStatus.APPROVED && booking.getVerificationToken() != null 
-                        ? qrCodeService.generateQrCodeImage(booking.getVerificationToken()) 
+                .qrCodeImage(booking.getStatus() == BookingStatus.APPROVED && booking.getVerificationToken() != null
+                        ? qrCodeService.generateQrCodeImage(booking.getVerificationToken())
                         : null)
                 .build();
     }
