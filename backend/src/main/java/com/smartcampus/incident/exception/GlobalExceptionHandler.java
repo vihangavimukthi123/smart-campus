@@ -117,8 +117,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneric(Exception ex, WebRequest request) {
         log.error("Unhandled exception: {}", ex.getMessage(), ex);
+        
+        String rootCause = ex.getMessage();
+        Throwable cause = ex.getCause();
+        while(cause != null) {
+            rootCause = cause.getMessage();
+            cause = cause.getCause();
+        }
+
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
-                "An unexpected error occurred. Please try again later.");
+                "DB Error: " + rootCause);
     }
 
     // ── Builder helper ────────────────────────────────────────────────────────

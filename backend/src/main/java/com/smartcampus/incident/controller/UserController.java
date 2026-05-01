@@ -67,7 +67,7 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> updateMe(@RequestBody com.smartcampus.incident.dto.user.UpdateProfileRequest request) {
         User user = securityUtils.getCurrentUser();
         
-        // විස්තර වෙනස් කිරීම
+        // change details
         user.setName(request.getName());
         user.setPhone(request.getPhone());
         user.setDepartment(request.getDepartment());

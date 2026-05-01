@@ -49,7 +49,7 @@ spring:
         registration:
           google:
             client-id: 740053735303-a4q4934k70lpd505u7ufejsmk01ntp26.apps.googleusercontent.com
-            client-secret: ${GOOGLE_CLIENT_SECRET:your_client_secret_here}
+            client-secret: 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
             scope:
               - profile
               - email
