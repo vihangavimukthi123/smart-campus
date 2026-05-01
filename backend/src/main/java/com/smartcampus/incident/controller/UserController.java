@@ -24,6 +24,7 @@ public class UserController {
     private final UserRepository userRepository;
     private final TicketRepository ticketRepository;
     private final SecurityUtils securityUtils;
+    private final com.smartcampus.incident.service.AuthService authService;
 
     @GetMapping("/technicians")
     @Operation(summary = "List all active technicians (ADMIN only)")
@@ -78,5 +79,12 @@ public class UserController {
         response.put("message", "Profile updated successfully");
         response.put("id", user.getUserId());
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/me/password")
+    @Operation(summary = "Change password")
+    public ResponseEntity<Map<String, String>> changePassword(@RequestBody com.smartcampus.incident.dto.user.ChangePasswordRequest request) {
+        authService.changePassword(securityUtils.getCurrentUser(), request);
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
     }
 }

@@ -145,4 +145,15 @@ public String resendOtp(String email) {
             .build();
     }
 
+    @Override
+    @Transactional
+    public void changePassword(User currentUser, com.smartcampus.incident.dto.user.ChangePasswordRequest request) {
+        if (!passwordEncoder.matches(request.getCurrentPassword(), currentUser.getPassword())) {
+            throw new UnauthorizedException("Current password is incorrect");
+        }
+        currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(currentUser);
+        log.info("Password changed for user: {}", currentUser.getEmail());
+    }
+
 }
