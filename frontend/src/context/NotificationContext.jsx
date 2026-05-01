@@ -93,6 +93,19 @@ export function NotificationProvider({ children }) {
     } catch {}
   }, [])
 
+  const dismissNotification = useCallback(async (id) => {
+    try {
+      await notificationService.delete(id)
+      setNotifications(prev => {
+        const item = prev.find(n => n.id === id)
+        if (item && !item.read) {
+          setUnreadCount(count => Math.max(0, count - 1))
+        }
+        return prev.filter(n => n.id !== id)
+      })
+    } catch {}
+  }, [])
+
   // Start polling when user logs in, stop when they log out
   useEffect(() => {
     if (user) {
@@ -109,7 +122,7 @@ export function NotificationProvider({ children }) {
   return (
     <NotificationContext.Provider value={{
       notifications, unreadCount, loading,
-      fetchNotifications, markAsRead, markAllAsRead
+      fetchNotifications, markAsRead, markAllAsRead, dismissNotification
     }}>
       {children}
     </NotificationContext.Provider>

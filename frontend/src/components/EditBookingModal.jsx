@@ -10,6 +10,17 @@ export default function EditBookingModal({ isOpen, onClose, onSave, booking }) {
     attendees: 0
   })
   const [submitting, setSubmitting] = useState(false)
+  const [minDateTime, setMinDateTime] = useState('')
+
+  const getLocalISOString = () => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day}T${hours}:${minutes}`
+  }
 
   useEffect(() => {
     if (booking) {
@@ -25,11 +36,16 @@ export default function EditBookingModal({ isOpen, onClose, onSave, booking }) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-    return () => {
-      document.body.style.overflow = 'unset'
+      setMinDateTime(getLocalISOString())
+      
+      // Update min time every minute while open
+      const interval = setInterval(() => {
+        setMinDateTime(getLocalISOString())
+      }, 60000)
+      return () => {
+        document.body.style.overflow = 'unset'
+        clearInterval(interval)
+      }
     }
   }, [isOpen])
 
@@ -90,9 +106,20 @@ export default function EditBookingModal({ isOpen, onClose, onSave, booking }) {
               type="datetime-local" 
               className="form-input" 
               required
-              min={new Date().toISOString().substring(0, 16)}
+              min={minDateTime}
               value={formData.startDateTime}
-              onChange={(e) => setFormData({...formData, startDateTime: e.target.value})}
+              onChange={(e) => {
+                const val = e.target.value
+                if (val && new Date(val) < new Date()) {
+                   // Only block if it's significantly in the past (to allow for the few seconds it takes to type)
+                   const now = new Date();
+                   now.setMinutes(now.getMinutes() - 1); 
+                   if (new Date(val) < now) {
+                     return; 
+                   }
+                }
+                setFormData({...formData, startDateTime: val})
+              }}
             />
           </div>
 

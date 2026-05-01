@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import { 
   CheckCircle, XCircle, Info, Search, Filter, Eye,
@@ -279,12 +280,12 @@ export default function AdminBookingsPage() {
                           <Eye size={16} />
                         </button>
 
-                        {(b.status === 'PENDING' || b.status === 'REJECTED') && new Date(b.startDateTime) >= new Date() && (
+                        {(b.status === 'PENDING' || b.status === 'REJECTED') && new Date(b.endDateTime) >= new Date() && (
                           <button className="btn btn-success btn-icon btn-sm" title="Approve" onClick={() => handleApprove(b.id)}>
                             <CheckCircle size={16} />
                           </button>
                         )}
-                        {(b.status === 'PENDING' || b.status === 'APPROVED') && new Date(b.startDateTime) >= new Date() && (
+                        {(b.status === 'PENDING' || b.status === 'APPROVED') && (
                           <button 
                             className="btn btn-danger btn-icon btn-sm" 
                             title="Reject" 
@@ -317,21 +318,37 @@ export default function AdminBookingsPage() {
       )}
 
       {/* View Details Modal */}
-      {showViewModal && selectedBooking && (
+      {showViewModal && selectedBooking && createPortal(
         <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-          backdropFilter: 'blur(4px)'
-        }}>
-          <div className="card-glass" style={{ width: '500px', padding: 'var(--space-8)', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div className="flex-between" style={{ marginBottom: 'var(--space-6)' }}>
+          position: 'fixed', 
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.75)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          zIndex: 99999,
+          backdropFilter: 'blur(8px)',
+          padding: '1rem'
+        }} onClick={() => setShowViewModal(false)}>
+          <div className="card-glass fade-in" style={{ 
+            width: 'min(550px, 95%)', 
+            padding: '2.5rem', 
+            maxHeight: '90vh', 
+            overflowY: 'auto',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+            border: '1px solid var(--clr-border)'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
               <h3 className="heading-3">Booking Details</h3>
               {getStatusBadge(selectedBooking.status)}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
               <div className="detail-item">
-                <label className="text-xs text-muted" style={{ display: 'block', marginBottom: '2px' }}>RESOURCE</label>
+                <label className="text-xs text-muted" style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>RESOURCE</label>
                 <div className="flex" style={{ gap: '0.75rem' }}>
                   <Building2 size={18} className="text-muted" />
                   <div>
@@ -344,7 +361,7 @@ export default function AdminBookingsPage() {
               </div>
 
               <div className="detail-item">
-                <label className="text-xs text-muted" style={{ display: 'block', marginBottom: '2px' }}>SCHEDULE</label>
+                <label className="text-xs text-muted" style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>SCHEDULE</label>
                 <div className="flex" style={{ gap: '0.75rem' }}>
                   <Calendar size={18} className="text-muted" />
                   <div>
@@ -357,7 +374,7 @@ export default function AdminBookingsPage() {
               </div>
 
               <div className="detail-item">
-                <label className="text-xs text-muted" style={{ display: 'block', marginBottom: '2px' }}>REQUESTER</label>
+                <label className="text-xs text-muted" style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>REQUESTER</label>
                 <div className="flex" style={{ gap: '0.75rem' }}>
                   <User size={18} className="text-muted" />
                   <div>
@@ -368,7 +385,7 @@ export default function AdminBookingsPage() {
               </div>
 
               <div className="detail-item">
-                <label className="text-xs text-muted" style={{ display: 'block', marginBottom: '4px' }}>PURPOSE</label>
+                <label className="text-xs text-muted" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>PURPOSE</label>
                 <div className="card" style={{ background: 'var(--clr-surface-2)', padding: 'var(--space-3)', fontSize: '0.9rem' }}>
                   {selectedBooking.purpose}
                 </div>
@@ -383,7 +400,7 @@ export default function AdminBookingsPage() {
 
               {(selectedBooking.rejectionReason || selectedBooking.cancellationReason) && (
                 <div className="detail-item">
-                   <label className="text-xs text-muted" style={{ display: 'block', marginBottom: '4px' }}>
+                   <label className="text-xs text-muted" style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>
                      {selectedBooking.status} REASON
                    </label>
                    <div className="card" style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: 'var(--space-3)', fontSize: '0.9rem', color: 'var(--clr-error)' }}>
@@ -394,12 +411,12 @@ export default function AdminBookingsPage() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: 'var(--space-8)' }}>
-              {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'REJECTED') && new Date(selectedBooking.startDateTime) >= new Date() && (
+              {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'REJECTED') && new Date(selectedBooking.endDateTime) >= new Date() && (
                 <button className="btn btn-success btn-sm" onClick={() => { handleApprove(selectedBooking.id); setShowViewModal(false); }}>
                   Approve Booking
                 </button>
               )}
-              {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'APPROVED') && new Date(selectedBooking.startDateTime) >= new Date() && (
+              {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'APPROVED') && (
                 <button 
                   className="btn btn-danger btn-sm" 
                   onClick={() => { setRejectId(selectedBooking.id); setShowRejectModal(true); setShowViewModal(false); }}
@@ -410,18 +427,36 @@ export default function AdminBookingsPage() {
               <button className="btn btn-secondary btn-sm" onClick={() => setShowViewModal(false)}>Close</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Reject Modal */}
-      {showRejectModal && (
+      {showRejectModal && createPortal(
         <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-          backdropFilter: 'blur(4px)'
-        }}>
-          <div className="card-glass" style={{ width: '400px', padding: '2rem' }}>
-            <h3 className="heading-3" style={{ marginBottom: '1rem' }}>Reject Booking</h3>
+          position: 'fixed', 
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.75)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          zIndex: 99999,
+          backdropFilter: 'blur(8px)',
+          padding: '1rem'
+        }} onClick={() => setShowRejectModal(false)}>
+          <div className="card-glass fade-in" style={{ 
+            width: 'min(450px, 95%)', 
+            padding: '2.5rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+            border: '1px solid var(--clr-border)'
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 className="heading-3" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <XCircle className="text-error" />
+              Reject Booking Request
+            </h3>
             <div className="form-group">
               <label className="form-label">Reason for rejection</label>
               <textarea 
@@ -430,17 +465,20 @@ export default function AdminBookingsPage() {
                 placeholder="Explain why the booking is rejected..."
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
+                autoFocus
               />
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-              <button className="btn btn-secondary btn-sm" onClick={() => setShowRejectModal(false)}>Cancel</button>
-              <button className="btn btn-danger btn-sm" onClick={handleReject} disabled={submitting}>
-                {submitting ? 'Rejecting...' : 'Reject Booking'}
+              <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => setShowRejectModal(false)}>Cancel</button>
+              <button className="btn btn-danger btn-sm" style={{ flex: 1 }} onClick={handleReject} disabled={submitting}>
+                {submitting ? 'Rejecting...' : 'Confirm Rejection'}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+
 
       <ConfirmModal
         isOpen={showConfirmModal}

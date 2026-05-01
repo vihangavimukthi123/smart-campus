@@ -10,8 +10,14 @@ public interface NotificationService {
     void notifyNewComment(Long ticketId, User recipient, String commenterName);
     void notifyAssignment(Long ticketId, User technician, String ticketTitle);
     void notifyNewTicket(Long ticketId, User admin, String ticketTitle);
+
+    // Booking Notifications
+    void notifyNewBooking(Long bookingId, User admin, String resourceName, String userName);
+    void notifyBookingStatusUpdate(Long bookingId, User recipient, String status, String resourceName, String reason);
+
     Page<NotificationResponse> getMyNotifications(Pageable pageable);
     NotificationResponse markAsRead(Long notificationId);
     long getUnreadCount();
     void markAllAsRead();
+    void deleteNotification(Long notificationId);
 }

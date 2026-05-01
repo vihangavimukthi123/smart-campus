@@ -5,6 +5,7 @@ import com.smartcampus.incident.dto.analytics.ResourceUsageDto;
 import com.smartcampus.incident.dto.analytics.TopResourceDto;
 import com.smartcampus.incident.entity.Booking;
 import com.smartcampus.incident.entity.User;
+
 import com.smartcampus.incident.enums.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -18,6 +19,9 @@ import java.util.List;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpecificationExecutor<Booking> {
+
+    List<Booking> findByUser(User user);
+
 
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.resource.id = :resourceId " +
            "AND b.status = com.smartcampus.incident.enums.BookingStatus.APPROVED " +

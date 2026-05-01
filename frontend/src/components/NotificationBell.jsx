@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bell, CheckCheck } from 'lucide-react' // අනවශ්‍ය imports අයින් කළා
+import { Bell, CheckCheck, X } from 'lucide-react' 
 import { formatDistanceToNow } from 'date-fns'
 import { useNotifications } from '../hooks/useNotifications'
 import { useNavigate } from 'react-router-dom'
@@ -8,11 +8,13 @@ const TYPE_ICON = {
   STATUS_CHANGE: '🔄',
   NEW_COMMENT:   '💬',
   ASSIGNMENT:    '🔧',
-  NEW_TICKET:    '🎫' // new ticket icon
+  NEW_TICKET:    '🎫',
+  NEW_BOOKING:   '📅',
+  BOOKING_STATUS: '🔔'
 }
 
 export default function NotificationBell() {
-  const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotifications()
+  const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead, dismissNotification } = useNotifications()
   const [open, setOpen] = useState(false)
   const [prevUnreadCount, setPrevUnreadCount] = useState(unreadCount) // Sound logic එක සඳහා
   const ref = useRef(null)
@@ -46,7 +48,13 @@ export default function NotificationBell() {
     
     // using relatedId
     if (n.relatedId) {
-      navigate(`/tickets/${n.relatedId}`)
+      if (n.type === 'NEW_BOOKING') {
+        navigate('/admin/bookings')
+      } else if (n.type === 'BOOKING_STATUS') {
+        navigate('/bookings/my')
+      } else {
+        navigate(`/tickets/${n.relatedId}`)
+      }
     }
   }
 
@@ -95,7 +103,16 @@ export default function NotificationBell() {
                       {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
                     </span>
                   </div>
-                  {!n.read && <span className="notif-dot" />}
+                  <div className="notif-actions">
+                    {!n.read && <span className="notif-dot" />}
+                    <button 
+                      className="btn-dismiss" 
+                      onClick={(e) => { e.stopPropagation(); dismissNotification(n.id); }}
+                      title="Dismiss"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -270,8 +287,36 @@ export default function NotificationBell() {
           height: 8px;
           background: var(--clr-primary);
           border-radius: 50%;
-          margin-top: 6px;
           flex-shrink: 0;
+        }
+
+        .notif-actions {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          justify-content: space-between;
+          padding-top: 4px;
+        }
+
+        .btn-dismiss {
+          opacity: 0;
+          background: transparent;
+          border: none;
+          color: var(--clr-text-3);
+          cursor: pointer;
+          padding: 4px;
+          border-radius: var(--radius-sm);
+          transition: var(--transition);
+          margin-top: auto;
+        }
+
+        .notif-item:hover .btn-dismiss {
+          opacity: 1;
+        }
+
+        .btn-dismiss:hover {
+          background: var(--clr-surface-3);
+          color: var(--clr-error);
         }
 
         .notif-empty {
