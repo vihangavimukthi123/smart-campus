@@ -4,8 +4,8 @@ Write-Host "====================================================="
 Write-Host " Smart Campus Incident Hub - Backend Startup"
 Write-Host "====================================================="
 Write-Host ""
-Write-Host "Starting Spring Boot on http://localhost:8080/api"
-Write-Host "Swagger UI: http://localhost:8080/api/swagger-ui.html"
+Write-Host "Starting Spring Boot on http://localhost:8081/api"
+Write-Host "Swagger UI: http://localhost:8081/api/swagger-ui.html"
 Write-Host ""
 
 $ScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
