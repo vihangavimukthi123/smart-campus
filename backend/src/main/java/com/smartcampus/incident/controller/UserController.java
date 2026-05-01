@@ -58,4 +58,25 @@ public class UserController {
         profile.put("createdAt", user.getCreatedAt());
         return ResponseEntity.ok(profile);
     }
+
+    @PutMapping("/me")
+    @Operation(summary = "Update current authenticated user profile")
+    public ResponseEntity<Map<String, Object>> updateMe(@RequestBody com.smartcampus.incident.dto.user.UpdateProfileRequest request) {
+        User user = securityUtils.getCurrentUser();
+        
+        // විස්තර වෙනස් කිරීම
+        user.setName(request.getName());
+        user.setPhone(request.getPhone());
+        user.setDepartment(request.getDepartment());
+        user.setProfilePictureUrl(request.getProfilePictureUrl());
+        user.setSoundNotify(request.isSoundNotify());
+        user.setEmailNotify(request.isEmailNotify());
+        
+        userRepository.save(user);
+        
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("message", "Profile updated successfully");
+        response.put("id", user.getUserId());
+        return ResponseEntity.ok(response);
+    }
 }
